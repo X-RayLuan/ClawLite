@@ -11,18 +11,20 @@
 }
 
 body {
-  @apply bg-sand text-ink font-body antialiased;
+  @apply bg-[#fcfcfa] text-[#171712] font-body antialiased;
 }
 
 .gradient-bg {
-  background: radial-gradient(circle at top, rgba(14, 165, 166, 0.2), transparent 45%),
-    radial-gradient(circle at 20% 20%, rgba(249, 115, 22, 0.16), transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(14, 165, 166, 0.18), transparent 40%),
-    linear-gradient(180deg, #fff5e6 0%, #ffffff 100%);
+  background:
+    radial-gradient(circle at top, rgba(255, 74, 26, 0.10), transparent 42%),
+    radial-gradient(circle at 20% 20%, rgba(255, 74, 26, 0.08), transparent 36%),
+    radial-gradient(circle at 85% 5%, rgba(255, 140, 90, 0.10), transparent 30%),
+    linear-gradient(180deg, #fcfcfa 0%, #ffffff 100%);
 }
 
 .section-card {
-  @apply rounded-3xl border border-black/5 bg-white/80 shadow-soft backdrop-blur;
+  @apply rounded-[20px] border bg-white shadow-soft backdrop-blur;
+  border-color: #e8e5dc;
 }
 
 .command-code {
