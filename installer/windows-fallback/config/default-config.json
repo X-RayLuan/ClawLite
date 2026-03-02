@@ -1,0 +1,22 @@
+{
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 4545,
+    "autoConnect": true,
+    "reconnectInterval": 5000
+  },
+  "ui": {
+    "theme": "system",
+    "minimizeToTray": true,
+    "startMinimized": false,
+    "showNotifications": true
+  },
+  "autoStart": false,
+  "checkUpdates": true,
+  "telemetry": false,
+  "logging": {
+    "level": "info",
+    "maxFiles": 7,
+    "maxSize": "10m"
+  }
+}

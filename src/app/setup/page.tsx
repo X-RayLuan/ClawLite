@@ -95,6 +95,7 @@ export default function SetupPage() {
     return "https://nodejs.org/dist/v22.15.0/node-v22.15.0.pkg";
   }, [os]);
 
+  const windowsInstallerUrl = "https://www.clawlite.ai/downloads/ClawLite-Setup-Windows-x64.exe";
   const openclawDownloadUrl = "https://github.com/openclaw/openclaw/releases/latest";
 
   const startLocalInstall = async (kind: "node" | "openclaw") => {
@@ -233,10 +234,18 @@ export default function SetupPage() {
                         <p className="text-sm font-medium text-ink/70">{t.node.installTitle}</p>
                         <p className="mt-2 text-sm text-ink/60">No terminal required. Install through the official GUI installer.</p>
                         <div className="mt-4 flex flex-wrap gap-3">
-                          <Button type="button" onClick={() => startLocalInstall("node")}>One-click install (beta)</Button>
-                          <Button type="button" variant="secondary" asChild>
-                            <a href={nodeDownloadUrl} target="_blank" rel="noreferrer">{t.node.download}</a>
-                          </Button>
+                          {os === "windows" ? (
+                            <Button type="button" asChild>
+                              <a href={windowsInstallerUrl} target="_blank" rel="noreferrer">Download for Windows</a>
+                            </Button>
+                          ) : (
+                            <>
+                              <Button type="button" onClick={() => startLocalInstall("node")}>One-click install (beta)</Button>
+                              <Button type="button" variant="secondary" asChild>
+                                <a href={nodeDownloadUrl} target="_blank" rel="noreferrer">{t.node.download}</a>
+                              </Button>
+                            </>
+                          )}
                         </div>
                         <p className="mt-3 text-xs text-ink/50">OS detected: {t.os[os]}</p>
                       </div>
