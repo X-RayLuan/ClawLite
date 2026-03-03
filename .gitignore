@@ -14,3 +14,6 @@ lazyclaw-*.json
 *.json
 .vercel
 !package-lock.json
+!package.json
+!package-lock.json
+!tsconfig.json
