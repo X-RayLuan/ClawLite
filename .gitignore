@@ -13,3 +13,4 @@ node_modules/
 lazyclaw-*.json
 *.json
 .vercel
+!package-lock.json
