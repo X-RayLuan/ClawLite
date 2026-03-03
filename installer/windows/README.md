@@ -42,17 +42,17 @@ dir build\clawlite.exe
 ### 2. Compile Installer
 ```powershell
 # Open Inno Setup Compiler
-# File > Open > installer\windows-fallback\clawlite-setup.iss
+# File > Open > installer\windows-fallback\clawsitesetup.iss
 # Build > Compile
 
 # Or use command line:
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\windows-fallback\clawlite-setup.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\windows-fallback\clawsitesetup.iss
 ```
 
 ### 3. Output Location
 Compiled installer will be in:
 ```
-installer/windows-fallback/output/clawlite-setup-2026.2.26.exe
+installer/windows-fallback/output/clawsitesetup-2026.2.26.exe
 ```
 
 ## Verification Steps
@@ -158,7 +158,7 @@ mkdir $env:USERPROFILE\.clawlite
 
 ```
 installer/windows-fallback/
-├── clawlite-setup.iss           # Inno Setup script
+├── clawsitesetup.iss           # Inno Setup script
 ├── scripts/
 │   ├── check-node.ps1           # Node.js verification
 │   ├── install-openclaw.ps1     # OpenClaw installation
@@ -185,7 +185,7 @@ Edit `config/default-config.json`:
 ```
 
 ### Change OpenClaw Version
-Edit `clawlite-setup.iss`:
+Edit `clawsitesetup.iss`:
 ```ini
 #define MyAppVersion "2026.2.26"
 ```
@@ -197,7 +197,7 @@ $OpenClawVersion = "2026.2.26"
 
 ### Add Custom Scripts
 1. Add script to `scripts/` directory
-2. Reference in `clawlite-setup.iss` [Run] section:
+2. Reference in `clawsitesetup.iss` [Run] section:
 ```ini
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\scripts\your-script.ps1"""
 ```
@@ -207,13 +207,13 @@ Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\s
 ### Signing (Recommended)
 ```powershell
 # Sign the installer with code signing certificate
-signtool sign /f "certificate.pfx" /p "password" /t http://timestamp.digicert.com "clawlite-setup-2026.2.26.exe"
+signtool sign /f "certificate.pfx" /p "password" /t http://timestamp.digicert.com "clawsitesetup-2026.2.26.exe"
 ```
 
 ### Checksums
 ```powershell
 # Generate SHA256 checksum
-Get-FileHash "clawlite-setup-2026.2.26.exe" -Algorithm SHA256 | Format-List
+Get-FileHash "clawsitesetup-2026.2.26.exe" -Algorithm SHA256 | Format-List
 ```
 
 ### Upload Locations
