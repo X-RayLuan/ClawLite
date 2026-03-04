@@ -18,16 +18,16 @@ export const content = {
       previewTitle: "Quick peek",
       previewSteps: [
         {
-          title: "Detect OS & install Node",
-          body: "Get the right commands for your system."
+          title: "Detect OS",
+          body: "Auto-detect your platform and confirm in one click."
         },
         {
-          title: "Install OpenClaw CLI",
-          body: "One command and you are ready."
+          title: "Install Wizard",
+          body: "Click Install to download and run the setup wizard."
         },
         {
-          title: "Connect a channel",
-          body: "Telegram or Web Chat in minutes."
+          title: "API + Channel",
+          body: "Choose LazyClaw Tokens/BYOK, then follow channel instructions."
         }
       ],
       highlights: [
@@ -39,37 +39,27 @@ export const content = {
     },
     setup: {
       title: "Setup Wizard",
-      subtitle: "Follow the 6 steps. You can switch language anytime.",
+      subtitle: "Follow 4 steps: OS → Install Wizard → API → Channel.",
       steps: [
         {
           id: "os",
           title: "Detect Your OS",
-          description: "We tailor the setup flow based on your system. No terminal required."
+          description: "We tailor the setup flow based on your system."
         },
         {
-          id: "node",
-          title: "Install Node.js",
-          description: "Install Node.js with the official installer (GUI only). No terminal required."
-        },
-        {
-          id: "openclaw",
-          title: "Install OpenClaw",
-          description: "Install OpenClaw with the guided UI flow. No terminal required."
+          id: "install",
+          title: "One Click Install",
+          description: "Click Install to download and run the ClawLite wizard."
         },
         {
           id: "api",
-          title: "Configure API Key",
-          description: "Use the default ClawLite Token or bring your own key."
+          title: "Configure API",
+          description: "Default to LazyClaw Tokens (50% discount) or choose BYOK."
         },
         {
           id: "channel",
-          title: "Choose Channel",
-          description: "Connect Telegram or Web Chat to talk with your agent."
-        },
-        {
-          id: "launch",
-          title: "Launch & Celebrate",
-          description: "Launch from the page and send your first message."
+          title: "Select Channel",
+          description: "Follow Telegram/Web Chat instructions only."
         }
       ],
       sidebar: {
@@ -93,26 +83,17 @@ export const content = {
         linux: "Linux",
         checkCommandTitle: "Detect OS automatically"
       },
-      node: {
-        checkTitle: "Check if Node.js is installed (assistant verifies)",
-        pasteLabel: "Version check is handled automatically",
-        installTitle: "Install Node.js",
-        download: "Download Node.js"
-      },
-      openclaw: {
-        installTitle: "Install OpenClaw",
-        resultLabel: "Paste install result (optional)",
-        tipsTitle: "Common issues",
-        tips: [
-          "Permission error? Try running with sudo (Linux/macOS).",
-          "Slow network? Switch npm registry or retry later.",
-          "Windows: run terminal as Administrator."
-        ]
+      install: {
+        wizardTitle: "Install ClawLite Wizard",
+        wizardDesc: "One click to install. We download the installer wizard for your operating system.",
+        installButton: "Install",
+        allDownloads: "All Downloads",
+        commandTitle: "Wizard install flow"
       },
       api: {
         modeTitle: "Choose API setup",
-        clawliteTitle: "ClawLite Token (Recommended)",
-        clawliteDesc: "Sign in with email to get a token. We configure everything for you.",
+        clawliteTitle: "LazyClaw Tokens (Default)",
+        clawliteDesc: "50% discount from official API price. Recommended for fastest setup.",
         byokTitle: "Bring Your Own Key",
         byokDesc: "Use your OpenAI / Anthropic / other provider key.",
         emailLabel: "Email for token",
@@ -124,8 +105,8 @@ export const content = {
         note: "We never store your API key in the browser beyond this session."
       },
       channel: {
-        title: "Pick a channel",
-        telegram: "Telegram (Recommended)",
+        title: "Select a channel (instructions only)",
+        telegram: "Telegram",
         webchat: "Web Chat",
         telegramSteps: [
           "Open Telegram and search @BotFather",
@@ -205,16 +186,16 @@ export const content = {
       previewTitle: "快速预览",
       previewSteps: [
         {
-          title: "检测系统并安装 Node",
-          body: "自动推荐对应命令。"
+          title: "检测系统",
+          body: "自动识别平台，一键确认。"
         },
         {
-          title: "安装 OpenClaw CLI",
-          body: "一个命令即可完成。"
+          title: "下载安装向导",
+          body: "点击 Install 即可下载并运行向导。"
         },
         {
-          title: "连接渠道（无需终端）",
-          body: "Telegram 或 Web Chat 任选。"
+          title: "API + 渠道",
+          body: "默认 LazyClaw Tokens，也可 BYOK，再按指引选渠道。"
         }
       ],
       highlights: [
@@ -226,37 +207,27 @@ export const content = {
     },
     setup: {
       title: "安装向导",
-      subtitle: "跟着 6 个步骤完成配置，可随时切换语言。",
+      subtitle: "4 步完成：系统识别 → 一键安装 → API 配置 → 渠道选择。",
       steps: [
         {
           id: "os",
           title: "检测操作系统",
-          description: "根据你的系统自动调整流程。全程无需终端命令。"
+          description: "根据你的系统自动调整安装流程。"
         },
         {
-          id: "node",
-          title: "安装 Node.js",
-          description: "通过官方安装器安装 Node.js（图形界面）。无需终端命令。"
-        },
-        {
-          id: "openclaw",
-          title: "安装 OpenClaw",
-          description: "通过页面引导完成 OpenClaw 安装，无需终端命令。"
+          id: "install",
+          title: "一键安装",
+          description: "点击 Install 下载并运行 ClawLite 安装向导。"
         },
         {
           id: "api",
-          title: "配置 API Key",
-          description: "默认推荐 ClawLite Token，也可自带 Key。"
+          title: "配置 API",
+          description: "默认 LazyClaw Tokens（比官方 API 便宜 50%），也可 BYOK。"
         },
         {
           id: "channel",
-          title: "选择连接渠道（无需终端）",
-          description: "连接 Telegram 或 Web Chat。"
-        },
-        {
-          id: "launch",
-          title: "启动完成",
-          description: "在页面内启动并发送第一条消息。"
+          title: "选择渠道",
+          description: "仅提供 Telegram/Web Chat 操作指引。"
         }
       ],
       sidebar: {
@@ -280,26 +251,17 @@ export const content = {
         linux: "Linux",
         checkCommandTitle: "自动检测系统"
       },
-      node: {
-        checkTitle: "检查 Node.js 是否安装（由助手自动验证）",
-        pasteLabel: "版本检查由系统自动完成",
-        installTitle: "安装 Node.js",
-        download: "下载 Node.js"
-      },
-      openclaw: {
-        installTitle: "安装 OpenClaw",
-        resultLabel: "粘贴安装结果（可选）",
-        tipsTitle: "常见问题",
-        tips: [
-          "权限不足？macOS/Linux 可尝试 sudo。",
-          "网络慢？可切换 npm 源或稍后重试。",
-          "Windows 请以管理员身份运行终端。"
-        ]
+      install: {
+        wizardTitle: "安装 ClawLite 向导",
+        wizardDesc: "一键安装：根据你的系统下载对应安装向导。",
+        installButton: "Install",
+        allDownloads: "全部下载",
+        commandTitle: "向导安装流程"
       },
       api: {
         modeTitle: "选择 API 配置方式",
-        clawliteTitle: "ClawLite Token（推荐）",
-        clawliteDesc: "邮箱注册/登录即可获得 Token，自动配置。",
+        clawliteTitle: "LazyClaw Tokens（默认）",
+        clawliteDesc: "比官方 API 价格低 50%，推荐优先使用。",
         byokTitle: "自带 API Key",
         byokDesc: "使用 OpenAI / Anthropic / 其他提供方的 Key。",
         emailLabel: "接收 Token 的邮箱",
@@ -311,8 +273,8 @@ export const content = {
         note: "我们不会在浏览器中保存你的 API Key。"
       },
       channel: {
-        title: "选择一个渠道",
-        telegram: "Telegram（推荐）",
+        title: "选择渠道（仅操作指引）",
+        telegram: "Telegram",
         webchat: "Web Chat",
         telegramSteps: [
           "打开 Telegram，搜索 @BotFather",
