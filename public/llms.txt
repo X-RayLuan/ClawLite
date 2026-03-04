@@ -1,0 +1,18 @@
+# ClawLite
+
+> One click to install OpenClaw with cheaper tokens.
+
+## Canonical
+- https://clawlite.ai/
+
+## Core Pages
+- https://clawlite.ai/
+- https://clawlite.ai/setup
+- https://clawlite.ai/docs
+- https://clawlite.ai/troubleshoot
+
+## Product Summary
+ClawLite helps users install and run OpenClaw with a UI-first flow and no terminal required for standard onboarding.
+
+## Contact
+- hello@clawlite.ai
