@@ -38,7 +38,7 @@ jobs:
           name: windows-installer
           path: |
             dist/*.exe
-            dist/*.msi
+      
           retention-days: 30
       
       - name: Upload portable version
@@ -48,3 +48,5 @@ jobs:
           path: dist/*.zip
           retention-days: 30
           if-no-files-found: ignore
+
+         
