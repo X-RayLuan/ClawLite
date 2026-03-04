@@ -159,19 +159,14 @@ export default function SetupPage() {
                         </p>
                         <div className="mt-4 flex flex-wrap gap-3">
                           <Button type="button" onClick={nextStep}>
-                            Start web onboarding
-                          </Button>
-                          <Button type="button" variant="secondary" asChild>
-                            <a href="https://www.clawlite.ai/downloads" target="_blank" rel="noreferrer">
-                              {t.install.allDownloads}
-                            </a>
+                            Continue web onboarding
                           </Button>
                         </div>
                       </div>
 
                       <CommandBlock
                         label={t.install.commandTitle}
-                        command="Setup button starts web onboarding flow (no installer auto-launch)"
+command="Web onboarding only (no installer launch in setup flow)"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
