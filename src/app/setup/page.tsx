@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { content } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
@@ -38,12 +38,6 @@ export default function SetupPage() {
   useEffect(() => {
     setOs(detectOS());
   }, []);
-
-  const wizardDownloadUrl = useMemo(() => {
-    if (os === "windows") return "https://www.clawlite.ai/downloads/ClawLite-Setup-Windows-x64.exe";
-    if (os === "macos") return "https://www.clawlite.ai/downloads/ClawLite-Setup-macOS-arm64.dmg";
-    return "https://www.clawlite.ai/downloads";
-  }, [os]);
 
   const osCommand = "Auto-detected in page";
   const apiCommand =
@@ -164,10 +158,8 @@ export default function SetupPage() {
                           {t.os.autoDetected}: {t.os[os]}
                         </p>
                         <div className="mt-4 flex flex-wrap gap-3">
-                          <Button type="button" asChild>
-                            <a href={wizardDownloadUrl} target="_blank" rel="noreferrer">
-                              {t.install.installButton}
-                            </a>
+                          <Button type="button" onClick={nextStep}>
+                            Start web onboarding
                           </Button>
                           <Button type="button" variant="secondary" asChild>
                             <a href="https://www.clawlite.ai/downloads" target="_blank" rel="noreferrer">
@@ -179,7 +171,7 @@ export default function SetupPage() {
 
                       <CommandBlock
                         label={t.install.commandTitle}
-                        command="One click to install → download wizard and run"
+                        command="Setup button starts web onboarding flow (no installer auto-launch)"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
