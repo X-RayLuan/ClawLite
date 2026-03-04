@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { content } from "@/lib/content";
 import { LangToggle } from "@/components/lang-toggle";
@@ -13,7 +14,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-black/5 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-          <span className="text-2xl">🦞</span>
+          <Image src="/lazyclawlogo.png" alt="LazyClaw logo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" priority />
           <span>ClawLite</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
