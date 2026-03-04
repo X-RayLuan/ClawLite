@@ -26,6 +26,9 @@ export function SiteFooter() {
           <Link href="/docs" className="text-ink hover:text-ink/70">
             {nav.docs}
           </Link>
+          <Link href="/blog" className="text-ink hover:text-ink/70">
+            {nav.blog ?? "Blog"}
+          </Link>
         </div>
       </div>
     </footer>

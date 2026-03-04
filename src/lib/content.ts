@@ -6,7 +6,8 @@ export const content = {
       home: "Home",
       setup: "Setup",
       troubleshoot: "Troubleshoot",
-      docs: "Docs"
+      docs: "Docs",
+      blog: "Blog"
     },
     hero: {
       eyebrow: "OpenClaw in 5 minutes · No terminal required",
@@ -174,7 +175,8 @@ export const content = {
       home: "首页",
       setup: "安装向导",
       troubleshoot: "排障",
-      docs: "文档"
+      docs: "文档",
+      blog: "博客"
     },
     hero: {
       eyebrow: "5 分钟启动 OpenClaw（无需终端）",
