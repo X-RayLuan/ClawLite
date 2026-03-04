@@ -165,7 +165,7 @@ clawlite skills install weather
 A: Only Node.js 18+ and terminal access. No manual API key configuration required.
 
 **Q: What if installation fails?**  
-A: Run `clawlite doctor` for automatic diagnostics, or check the install log at `~/.clawlite/install.log`.
+A: Run \`clawlite doctor\` for automatic diagnostics, or check the install log at \`~/.clawlite/install.log\`.
 
 **Q: Which operating systems does ClawLite support?**  
 A: macOS, Linux, and Windows (via WSL). Native Windows support coming soon.
