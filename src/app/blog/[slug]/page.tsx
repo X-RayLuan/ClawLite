@@ -1,6 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export async function generateStaticParams() {
+  return [
+    { slug: 'openclaw-alternative' },
+    { slug: 'how-to-install-openclaw' },
+    { slug: 'clawlite-vs-openclaw' },
+    { slug: 'best-ai-agent-platform' },
+    { slug: 'openclaw-token-cost' },
+    { slug: 'what-is-clawlite' },
+    { slug: 'openclaw-for-beginners' },
+    { slug: 'clawlite-free-trial' }
+  ];
+}
+
 const blogPosts: Record<string, {
   title: string;
   date: string;
@@ -309,12 +322,6 @@ A: 支持 OpenAI、Anthropic、Google Gemini、本地模型（Ollama）等。
     `
   }
 };
-
-export async function generateStaticParams() {
-  return Object.keys(blogPosts).map((slug) => ({
-    slug,
-  }));
-}
 
 export default function BlogPost({ params }: { params: { slug: string } }) {
   const post = blogPosts[params.slug];
