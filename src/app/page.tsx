@@ -109,8 +109,11 @@ export default function HomePage() {
               <li>• One-click setup, no provider key hunting</li>
               <li>• Token packs for predictable operations</li>
             </ul>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
+                <Link href="https://openrouter.ezsite.ai" target="_blank">Get Tokens via EZRouter</Link>
+              </Button>
+              <Button asChild variant="secondary">
                 <Link href="/setup">Start Setup</Link>
               </Button>
             </div>
