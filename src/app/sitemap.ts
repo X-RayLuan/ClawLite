@@ -19,6 +19,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9
     },
     {
+      url: `${BASE_URL}/blog`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.85
+    },
+    {
       url: `${BASE_URL}/docs`,
       lastModified: now,
       changeFrequency: 'weekly',

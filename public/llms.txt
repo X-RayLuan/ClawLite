@@ -10,6 +10,7 @@
 - https://clawlite.ai/setup
 - https://clawlite.ai/docs
 - https://clawlite.ai/troubleshoot
+- https://clawlite.ai/blog
 
 ## Product Summary
 ClawLite helps users install and run OpenClaw with a UI-first flow and no terminal required for standard onboarding.
