@@ -9,50 +9,50 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build Next.js app
-        run: npm run build:next
-      
-      - name: Build Windows installer
-        run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: List build outputs
-       shell: pwsh
-        run: |
-      Get-ChildItem -Path . -Recurse -Include *.exe,*.msi,*.zip | Select-Object FullName
-      
-      - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-      name: win
-      path: |
-      dist/**/*.exe
-      dist/**/*.zip
-      if-no-files-found: warn
-      retention-days: 30
+runs-on: windows-latest
+
+steps:
+- name: Checkout code
+uses: actions/checkout@v4
+
+- name: Setup Node.js
+uses: actions/setup-node@v4
+with:
+node-version: '20'
+cache: 'npm'
+
+- name: Install dependencies
+run: npm ci
+
+- name: Build Next.js app
+run: npm run build:next
+
+- name: Build Windows installer
+run: npm run build:win
+env:
+GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+- name: List build outputs
+shell: pwsh
+run: |
+Get-ChildItem -Path . -Recurse -Include *.exe,*.msi,*.zip | Select-Object FullName
+
+- name: Upload artifacts
+uses: actions/upload-artifact@v4
+with:
+name: win
+path: |
+dist/**/*.exe
+dist/**/*.zip
+if-no-files-found: warn
+retention-days: 30
             
-      - name: Upload portable version
-              uses: actions/upload-artifact@v4
-              with:
-          name: windows-portable
-          path: dist/*.zip
-          retention-days: 30
-          if-no-files-found: ignore
+- name: Upload portable version
+uses: actions/upload-artifact@v4
+with:
+name: windows-portable
+path: dist/*.zip
+retention-days: 30
+if-no-files-found: ignore
 
          
