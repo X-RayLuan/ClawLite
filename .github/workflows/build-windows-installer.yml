@@ -32,6 +32,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: List build outputs
+shell: pwsh
+run: |
+Get-ChildItem -Path . -Recurse -Include *.exe,*.msi,*.zip | Select-Object FullName
+      
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
