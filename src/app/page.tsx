@@ -79,6 +79,44 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <section id="pricing" className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="mb-5">
+          <Badge className="border-coral/20 bg-coral/10 text-coral">Pricing</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink">BYOK or LazyClaw Tokens. Your choice.</h2>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Flexible</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">BYOK</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">$0 platform fee</div>
+            <p className="mt-2 text-sm text-ink/65">Your key. Your usage. Your bill.</p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/75">
+              <li>• Connect your own OpenAI/Anthropic/other keys</li>
+              <li>• Full control over spend and provider choice</li>
+              <li>• Great for technical users and experiments</li>
+            </ul>
+          </article>
+
+          <article className="rounded-3xl border border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">Recommended</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">LazyClaw Tokens</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">Usage-based</div>
+            <p className="mt-2 text-sm text-ink/65">Managed billing for fast-moving teams.</p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/75">
+              <li>• 50% discount from official API price</li>
+              <li>• One-click setup, no provider key hunting</li>
+              <li>• Token packs for predictable operations</li>
+            </ul>
+            <div className="mt-6">
+              <Button asChild>
+                <Link href="/setup">Start Setup</Link>
+              </Button>
+            </div>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }
