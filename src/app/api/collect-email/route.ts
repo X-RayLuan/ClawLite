@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +36,22 @@ export async function POST(request: NextRequest) {
         values: [[new Date().toISOString(), email, source || 'unknown']],
       },
     });
+
+    // Optional confirmation email via Resend
+    // Will be skipped automatically if env vars are missing.
+    if (process.env.RESEND_API_KEY && process.env.RESEND_FROM) {
+      try {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM,
+          to: [email],
+          subject: 'You are on the ClawLite waitlist ✅',
+          html: '<p>Thanks for joining ClawLite. We\'ll notify you when your access is ready.</p>',
+          text: 'Thanks for joining ClawLite. We\'ll notify you when your access is ready.'
+        });
+      } catch (mailError) {
+        console.error('Resend send failed (non-blocking):', mailError);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
