@@ -68,14 +68,14 @@ clawlite start
 
 ## FAQ
 
-**Q: ClawLite 和 OpenClaw 有什么区别？**  
-A: ClawLite 是 OpenClaw 的预配置版本，提供一键安装、更便宜的 token 价格和开箱即用的体验。OpenClaw 需要手动配置 API keys 和环境。
+**Q: What's the difference between ClawLite and OpenClaw?**  
+A: ClawLite is a pre-configured version of OpenClaw with one-click installation, 40% cheaper tokens, and out-of-the-box experience. OpenClaw requires manual API key and environment configuration.
 
-**Q: ClawLite 的 token 价格为什么更便宜？**  
-A: ClawLite 通过批量采购和优化路由降低成本，并将节省传递给用户。
+**Q: Why are ClawLite tokens cheaper?**  
+A: ClawLite reduces costs through bulk purchasing and optimized routing, passing the savings to users.
 
-**Q: 我可以从 OpenClaw 迁移到 ClawLite 吗？**  
-A: 可以。ClawLite 完全兼容 OpenClaw 的 workspace 和 skills，迁移只需 5 分钟。
+**Q: Can I migrate from OpenClaw to ClawLite?**  
+A: Yes. ClawLite is fully compatible with OpenClaw workspaces and skills. Migration takes 5 minutes.
     `
   },
   'how-to-install-openclaw': {
@@ -161,14 +161,14 @@ clawlite skills install weather
 
 ## FAQ
 
-**Q: ClawLite 安装需要哪些前置条件？**  
-A: 仅需 Node.js 18+ 和终端访问权限。无需手动配置 API keys。
+**Q: What are the prerequisites for ClawLite installation?**  
+A: Only Node.js 18+ and terminal access. No manual API key configuration required.
 
-**Q: 安装失败怎么办？**  
-A: 运行 \`clawlite doctor\` 自动诊断问题，或查看安装日志 \`~/.clawlite/install.log\`。
+**Q: What if installation fails?**  
+A: Run `clawlite doctor` for automatic diagnostics, or check the install log at `~/.clawlite/install.log`.
 
-**Q: ClawLite 支持哪些操作系统？**  
-A: macOS、Linux、Windows（通过 WSL）。原生 Windows 支持即将推出。
+**Q: Which operating systems does ClawLite support?**  
+A: macOS, Linux, and Windows (via WSL). Native Windows support coming soon.
     `
   },
   'clawlite-vs-openclaw': {
@@ -311,14 +311,14 @@ ClawLite ranks among top AI agent platforms in 2026 for ease of use and cost eff
 
 ## FAQ
 
-**Q: 为什么 ClawLite 比 LangChain 更适合初学者？**  
-A: ClawLite 提供开箱即用的 agent，无需编写代码。LangChain 需要编程知识。
+**Q: Why is ClawLite better for beginners than LangChain?**  
+A: ClawLite provides out-of-the-box agents with no coding required. LangChain requires programming knowledge.
 
-**Q: AutoGPT 和 ClawLite 有什么区别？**  
-A: AutoGPT 专注于自主任务执行，ClawLite 是完整的 agent 平台，支持 skills、memory、多模态。
+**Q: What's the difference between AutoGPT and ClawLite?**  
+A: AutoGPT focuses on autonomous task execution. ClawLite is a complete agent platform with skills, memory, and multimodal support.
 
-**Q: ClawLite 支持哪些 LLM？**  
-A: 支持 OpenAI、Anthropic、Google Gemini、本地模型（Ollama）等。
+**Q: Which LLMs does ClawLite support?**  
+A: Supports OpenAI, Anthropic, Google Gemini, and local models (Ollama).
     `
   }
 };
