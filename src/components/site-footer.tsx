@@ -30,7 +30,7 @@ export function SiteFooter() {
             {nav.blog ?? "Blog"}
           </Link>
           <a
-            href="https://discord.com/invite/vpkgh2U6kN"
+            href="https://discord.com/invite/YgxA4HWJMx"
             target="_blank"
             rel="noopener noreferrer"
             className="text-ink hover:text-ink/70"
