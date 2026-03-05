@@ -40,15 +40,6 @@ export default function SetupPage() {
   }, []);
 
   const osCommand = "Auto-detected in page";
-  const apiCommand =
-    apiMode === "clawlite"
-      ? "Use LazyClaw Tokens (default, 50% discount vs official API pricing)"
-      : `Provider: ${provider}\nAPI Key: ${apiKey ? "Configured in wizard" : "Pending"}`;
-
-  const channelCommand =
-    channel === "telegram"
-      ? "Follow Telegram steps in wizard (instructions only)"
-      : "Follow Web Chat steps in wizard (instructions only)";
 
   const steps = t.steps;
   const copyLabel = t.buttons.copy;
@@ -150,32 +141,39 @@ export default function SetupPage() {
                   )}
 
                   {current === 1 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6" id="installer">
                       <div className="rounded-2xl border border-black/10 bg-white p-5">
-                        <p className="text-sm font-semibold text-ink">{t.install.wizardTitle}</p>
-                        <p className="mt-2 text-sm text-ink/65">{t.install.wizardDesc}</p>
+                        <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw</p>
+                        <p className="mt-2 text-sm text-ink/65">
+                          Follow tutorial Step 2. Install OpenClaw first. If you want the fastest path, use the ClawLite installer (Windows/macOS).
+                        </p>
                         <p className="mt-2 text-xs text-ink/50">
                           {t.os.autoDetected}: {t.os[os]}
                         </p>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          <Button type="button" onClick={nextStep}>
-                            Continue web onboarding
-                          </Button>
-                        </div>
                       </div>
 
                       <CommandBlock
-                        label={t.install.commandTitle}
-command="Web onboarding only (no installer launch in setup flow)"
+                        label="OpenClaw install command"
+                        command={
+                          os === "macos"
+                            ? "brew tap openclaw/openclaw && brew install openclaw"
+                            : os === "windows"
+                              ? "winget install OpenClaw.OpenClaw"
+                              : "curl -fsSL https://raw.githubusercontent.com/openclaw/openclaw/main/install.sh | bash"
+                        }
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
+
+                      <div className="rounded-2xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-ink/75">
+                        Optional shortcut: use the ClawLite installer to install OpenClaw with fewer manual steps.
+                      </div>
                     </div>
                   )}
 
                   {current === 2 && (
-                    <div className="space-y-6">
-                      <p className="text-sm font-medium text-ink/70">{t.api.modeTitle}</p>
+                    <div className="space-y-6" id="wizard">
+                      <p className="text-sm font-medium text-ink/70">Step 3 — Initialize OpenClaw and configure API</p>
                       <div className="grid gap-4 md:grid-cols-2">
                         <button
                           type="button"
@@ -187,9 +185,9 @@ command="Web onboarding only (no installer launch in setup flow)"
                               : "border-black/10 bg-white"
                           )}
                         >
-                          <p className="text-sm font-semibold">{t.api.clawliteTitle}</p>
+                          <p className="text-sm font-semibold">Use ClawLite tokens</p>
                           <p className={cn("mt-2 text-sm", apiMode === "clawlite" ? "text-white/80" : "text-ink/70")}>
-                            {t.api.clawliteDesc}
+                            Faster start, managed billing, no manual provider setup.
                           </p>
                         </button>
                         <button
@@ -202,9 +200,9 @@ command="Web onboarding only (no installer launch in setup flow)"
                               : "border-black/10 bg-white"
                           )}
                         >
-                          <p className="text-sm font-semibold">{t.api.byokTitle}</p>
+                          <p className="text-sm font-semibold">BYOK</p>
                           <p className={cn("mt-2 text-sm", apiMode === "byok" ? "text-white/80" : "text-ink/70")}>
-                            {t.api.byokDesc}
+                            Use your own provider and API key (tutorial-compatible path).
                           </p>
                         </button>
                       </div>
@@ -225,18 +223,23 @@ command="Web onboarding only (no installer launch in setup flow)"
                       )}
 
                       <CommandBlock
-                        label={t.api.commandTitle}
-                        command={apiCommand}
+                        label="Initialize command"
+                        command="openclaw init"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
-                      <p className="text-xs text-ink/60">{t.api.note}</p>
+                      <CommandBlock
+                        label="Optional direct config"
+                        command={apiMode === "byok" ? `openclaw config set providers.${provider}.apiKey \"${apiKey || "<YOUR_API_KEY>"}\"` : "Use wizard defaults for ClawLite tokens"}
+                        copyLabel={copyLabel}
+                        copiedLabel={copiedLabel}
+                      />
                     </div>
                   )}
 
                   {current === 3 && (
                     <div className="space-y-6">
-                      <p className="text-sm font-medium text-ink/70">{t.channel.title}</p>
+                      <p className="text-sm font-medium text-ink/70">Step 4 — Connect channel and complete first hello conversation</p>
                       <div className="grid gap-4 md:grid-cols-2">
                         <button
                           type="button"
@@ -275,11 +278,14 @@ command="Web onboarding only (no installer launch in setup flow)"
                       </div>
 
                       <CommandBlock
-                        label={t.channel.commandTitle}
-                        command={channelCommand}
+                        label="Verification command"
+                        command="Send: hello"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
+                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
+                        Setup is only complete when you receive a real assistant reply to <strong>hello</strong>.
+                      </div>
                     </div>
                   )}
                 </CardContent>
