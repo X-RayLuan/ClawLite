@@ -1,0 +1,31 @@
+# typed: false
+# Homebrew formula template for ClawLite
+# Usage:
+# 1) Fill VERSION + SHA256
+# 2) Save as clawlite.rb in tap repo
+# 3) Run validation script in homebrew/homebrew-validation.sh
+
+class Clawlite < Formula
+  desc "One-click installer and workflow layer for OpenClaw"
+  homepage "https://clawlite.ai"
+  url "https://github.com/X-RayLuan/ClawLite/archive/refs/tags/v0.1.0.tar.gz"
+  sha256 "REPLACE_WITH_SHA256"
+  license "MIT"
+
+  # Keep this if runtime needs Node.js
+  depends_on "node"
+
+  def install
+    # Install package under libexec and expose binary symlink
+    system "npm", "install", *std_npm_args
+
+    # If package bin is named differently, adjust here
+    bin.install_symlink libexec/"bin/clawlite"
+  end
+
+  test do
+    # Keep tests minimal and deterministic
+    output = shell_output("#{bin}/clawlite --help")
+    assert_match "clawlite", output.downcase
+  end
+end
