@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { content } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
@@ -325,6 +326,20 @@ export default function SetupPage() {
                       />
                       <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
                         Setup is only complete when you receive a real assistant reply to <strong>hello</strong>.
+                      </div>
+
+                      <div className="rounded-2xl border border-black/10 bg-white p-5">
+                        <p className="text-sm font-semibold text-ink">Need full tutorial?</p>
+                        <p className="mt-2 text-sm text-ink/70">
+                          Download the complete beginner-to-intermediate OpenClaw tutorial PDF.
+                        </p>
+                        <div className="mt-4">
+                          <Button asChild variant="secondary">
+                            <Link href="/downloads/openclaw-tutorial-beginner-to-intermediate-en.pdf" target="_blank" download>
+                              Download Tutorial PDF
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
