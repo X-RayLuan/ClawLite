@@ -31,10 +31,10 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="shadow-glow" asChild>
-              <Link href="/setup">{hero.start}</Link>
+              <Link href="/setup#wizard">Start Onboarding Wizard</Link>
             </Button>
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/troubleshoot">{hero.secondary}</Link>
+              <Link href="/setup#installer">Use Installer Path</Link>
             </Button>
           </div>
 
@@ -77,6 +77,60 @@ export default function HomePage() {
               <p className="mt-1 text-sm text-ink/65">{step.description}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <div className="mb-5 text-center">
+          <Badge className="border-coral/20 bg-coral/10 text-coral">Two Launch Paths</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+            Choose your path: Onboarding Wizard or Installer.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-lg text-ink/70">
+            Same OpenClaw engine. Two different ways to get productive fast.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-black/10 bg-white/90 p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
+              <span className="text-2xl">🧭</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">Path 1 — Onboarding Wizard</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Best for first-time users who want a guided setup flow and clear checkpoints.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/75">
+              <li>• Step-by-step setup with guardrails</li>
+              <li>• API/provider setup guidance</li>
+              <li>• Great for learning OpenClaw fundamentals</li>
+            </ul>
+            <div className="mt-6">
+              <Button asChild>
+                <Link href="/setup#wizard">Open Wizard</Link>
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-soft">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">Path 2 — ClawLite Installer</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Fastest path: install OpenClaw with the ClawLite installer on Windows or macOS.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/75">
+              <li>• Electron installer flow</li>
+              <li>• Installs OpenClaw itself</li>
+              <li>• Minimal manual configuration</li>
+            </ul>
+            <div className="mt-6">
+              <Button asChild>
+                <Link href="/setup#installer">Use Installer</Link>
+              </Button>
+            </div>
+          </Card>
         </div>
       </section>
 
