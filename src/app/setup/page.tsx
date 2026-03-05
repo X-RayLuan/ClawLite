@@ -116,6 +116,16 @@ export default function SetupPage() {
                       <div className="rounded-2xl border border-black/5 bg-mist px-4 py-3 text-sm">
                         {t.os.autoDetected}: <strong>{t.os[os]}</strong>
                       </div>
+
+                      <div className="rounded-2xl border border-black/10 bg-white p-5 text-sm text-ink/75">
+                        <p className="font-semibold text-ink">Step 1 — Environment Preparation (Beginner)</p>
+                        <ul className="mt-2 space-y-1">
+                          <li>• OS: macOS / Linux / Windows (WSL required)</li>
+                          <li>• Node.js: v18 or higher</li>
+                          <li>• API key: Claude or GPT</li>
+                        </ul>
+                      </div>
+
                       <div>
                         <p className="text-sm font-medium text-ink/70">{t.os.prompt}</p>
                         <div className="mt-3 flex flex-wrap gap-3">
@@ -131,49 +141,88 @@ export default function SetupPage() {
                           ))}
                         </div>
                       </div>
+
                       <CommandBlock
-                        label={t.os.checkCommandTitle}
-                        command={osCommand}
+                        label="Check Node.js version"
+                        command="node --version"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
+
+                      <CommandBlock
+                        label="If Node < 18 (macOS/Linux)"
+                        command="nvm install 18\nnvm use 18"
+                        copyLabel={copyLabel}
+                        copiedLabel={copiedLabel}
+                      />
+
+                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
+                        ✅ Completion criteria: terminal shows Node.js version <strong>&gt;= v18.0.0</strong>
+                      </div>
                     </div>
                   )}
 
                   {current === 1 && (
                     <div className="space-y-6" id="installer">
                       <div className="rounded-2xl border border-black/10 bg-white p-5">
-                        <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw</p>
+                        <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw (Choose 1 method)</p>
                         <p className="mt-2 text-sm text-ink/65">
-                          Follow tutorial Step 2. Install OpenClaw first. If you want the fastest path, use the ClawLite installer (Windows/macOS).
-                        </p>
-                        <p className="mt-2 text-xs text-ink/50">
-                          {t.os.autoDetected}: {t.os[os]}
+                          Beginner recommended: NPM global install. If you already use Docker, pick Docker. Developers can use source install.
                         </p>
                       </div>
 
                       <CommandBlock
-                        label="OpenClaw install command"
-                        command={
-                          os === "macos"
-                            ? "brew tap openclaw/openclaw && brew install openclaw"
-                            : os === "windows"
-                              ? "winget install OpenClaw.OpenClaw"
-                              : "curl -fsSL https://raw.githubusercontent.com/openclaw/openclaw/main/install.sh | bash"
-                        }
+                        label="Method 1 (Beginner recommended): NPM"
+                        command="npm install -g openclaw\nopenclaw --version"
+                        copyLabel={copyLabel}
+                        copiedLabel={copiedLabel}
+                      />
+
+                      <CommandBlock
+                        label="Method 2: Docker"
+                        command="docker pull openclaw/openclaw:latest\ndocker run -d --name openclaw \\\n-v ~/.openclaw:/root/.openclaw \\\nopenclaw/openclaw:latest"
+                        copyLabel={copyLabel}
+                        copiedLabel={copiedLabel}
+                      />
+
+                      <CommandBlock
+                        label="Method 3: Source (Developer)"
+                        command="git clone https://github.com/openclaw/openclaw.git\ncd openclaw\nnpm install\nnpm run start"
                         copyLabel={copyLabel}
                         copiedLabel={copiedLabel}
                       />
 
                       <div className="rounded-2xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-ink/75">
-                        Optional shortcut: use the ClawLite installer to install OpenClaw with fewer manual steps.
+                        Optional shortcut: use the ClawLite installer to install OpenClaw with fewer manual steps (Windows/macOS).
+                      </div>
+
+                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
+                        ✅ Completion criteria: <strong>openclaw --version</strong> or <strong>openclaw --help</strong> works normally.
                       </div>
                     </div>
                   )}
 
                   {current === 2 && (
                     <div className="space-y-6" id="wizard">
-                      <p className="text-sm font-medium text-ink/70">Step 3 — Initialize OpenClaw and configure API</p>
+                      <p className="text-sm font-medium text-ink/70">Step 3 — Initial Configuration (Wizard-first, beginner mode)</p>
+
+                      <CommandBlock
+                        label="Start onboarding wizard"
+                        command="openclaw onboard"
+                        copyLabel={copyLabel}
+                        copiedLabel={copiedLabel}
+                      />
+
+                      <div className="rounded-2xl border border-black/10 bg-white p-5 text-sm text-ink/75">
+                        <p className="font-semibold text-ink">The wizard will guide you through:</p>
+                        <ul className="mt-2 space-y-1">
+                          <li>1) Choose provider (Claude / GPT / local model)</li>
+                          <li>2) Enter API key</li>
+                          <li>3) Select messaging platform (Telegram / Discord / WhatsApp / Web)</li>
+                          <li>4) Configure permissions (sandbox recommended)</li>
+                        </ul>
+                      </div>
+
                       <div className="grid gap-4 md:grid-cols-2">
                         <button
                           type="button"
@@ -202,7 +251,7 @@ export default function SetupPage() {
                         >
                           <p className="text-sm font-semibold">BYOK</p>
                           <p className={cn("mt-2 text-sm", apiMode === "byok" ? "text-white/80" : "text-ink/70")}>
-                            Use your own provider and API key (tutorial-compatible path).
+                            Use your own provider and API key.
                           </p>
                         </button>
                       </div>
@@ -222,18 +271,9 @@ export default function SetupPage() {
                         </div>
                       )}
 
-                      <CommandBlock
-                        label="Initialize command"
-                        command="openclaw init"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
-                      <CommandBlock
-                        label="Optional direct config"
-                        command={apiMode === "byok" ? `openclaw config set providers.${provider}.apiKey \"${apiKey || "<YOUR_API_KEY>"}\"` : "Use wizard defaults for ClawLite tokens"}
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
+                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
+                        ✅ Completion criteria: API key configured + at least one channel selected + permission settings completed (sandbox recommended).
+                      </div>
                     </div>
                   )}
 
