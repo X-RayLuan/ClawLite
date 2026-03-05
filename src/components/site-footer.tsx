@@ -29,6 +29,30 @@ export function SiteFooter() {
           <Link href="/blog" className="text-ink hover:text-ink/70">
             {nav.blog ?? "Blog"}
           </Link>
+          <a
+            href="https://discord.com/invite/vpkgh2U6kN"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink hover:text-ink/70"
+          >
+            Discord
+          </a>
+          <a
+            href="https://x.com/Rockwood_Ray"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink hover:text-ink/70"
+          >
+            X
+          </a>
+          <a
+            href="https://www.facebook.com/groups/clawlite"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink hover:text-ink/70"
+          >
+            Facebook
+          </a>
         </div>
       </div>
     </footer>
