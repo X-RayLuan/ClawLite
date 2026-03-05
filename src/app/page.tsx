@@ -80,6 +80,110 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="mb-8 text-center">
+          <Badge className="border-sea/20 bg-sea/10 text-sea">Done = Verified</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+            Not just installed — proven to work.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-lg text-ink/70">
+            ClawLite is the only OpenClaw installer that verifies every step, backs up your configs, and guarantees 40% cheaper tokens.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="border-black/10 bg-white/90 p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">5 minutes. Zero DevOps. Verified.</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              One-click install. Every dependency verified. First query successful.
+            </p>
+            <div className="mt-4 space-y-1 text-xs text-ink/60">
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>Installation complete</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>Dependencies verified</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>API keys authenticated</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>First query successful</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
+              <span className="text-2xl">💰</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">40% cheaper tokens. Verified savings.</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Not a promise. A verified 40% savings on every single call.
+            </p>
+            <div className="mt-4 space-y-1 text-xs text-ink/60">
+              <div className="flex items-center gap-2">
+                <span className="text-coral">✓</span>
+                <span>Token pricing locked in</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-coral">✓</span>
+                <span>No hidden fees</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-coral">✓</span>
+                <span>Real-time usage dashboard</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-coral">✓</span>
+                <span>Monthly savings report</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-black/10 bg-white/90 p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
+              <span className="text-2xl">🔒</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">Your configs are assets. Verified safe.</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Automatic backups. Encrypted storage. One-click restore. Zero data loss.
+            </p>
+            <div className="mt-4 space-y-1 text-xs text-ink/60">
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>Automatic daily backups</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>Encrypted at rest (AES-256)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>One-click restore</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sea">✓</span>
+                <span>Audit trail</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center">
+          <Button size="lg" className="shadow-glow" asChild>
+            <Link href="/setup">Get Started Free</Link>
+          </Button>
+        </div>
+      </section>
+
       <section id="pricing" className="mx-auto max-w-6xl px-6 pb-16">
         <div className="mb-5">
           <Badge className="border-coral/20 bg-coral/10 text-coral">Pricing</Badge>

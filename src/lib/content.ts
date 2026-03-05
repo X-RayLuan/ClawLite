@@ -36,7 +36,26 @@ export const content = {
         "One-click copy for every command",
         "Bilingual English + Chinese",
         "Telegram and Web Chat ready"
-      ]
+      ],
+      doneVerified: {
+        title: "Done = Verified",
+        subtitle: "Not just installed — proven to work.",
+        pillars: [
+          {
+            title: "5 minutes. Zero DevOps. Verified.",
+            description: "One-click install. Every dependency verified. First query successful."
+          },
+          {
+            title: "40% cheaper tokens. Verified savings.",
+            description: "Not a promise. A verified 40% savings on every single call."
+          },
+          {
+            title: "Your configs are assets. Verified safe.",
+            description: "Automatic backups. Encrypted storage. One-click restore. Zero data loss."
+          }
+        ],
+        cta: "Get Started Free"
+      }
     },
     setup: {
       title: "Setup Wizard",
