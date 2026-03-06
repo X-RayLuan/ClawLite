@@ -199,7 +199,7 @@ export default function SetupPage() {
                       {os === 'macos' ? (
                         <>
 
-                          <div className="rounded-2xl border border-black/10 bg-white p-5 space-y-3">
+                          <div className="space-y-3">
                             <label className="text-sm font-medium text-ink/80">Email</label>
                             <Input
                               type="email"
