@@ -67,7 +67,8 @@ export default function SetupPage() {
   const prevStep = () => setCurrent((prev) => Math.max(prev - 1, 0));
 
   const sendInstallerLink = async () => {
-    if (!installerEmail.trim()) {
+    const email = installerEmail.trim();
+    if (!email) {
       setInstallerMsg("Please enter your email first.");
       return;
     }
@@ -75,20 +76,36 @@ export default function SetupPage() {
     setSendingInstallerLink(true);
     setInstallerMsg(null);
     try {
-      const response = await fetch('/api/send-installer-link', {
+      // 1) Persist lead first
+      const collectResponse = await fetch('/api/collect-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: installerEmail.trim(), os })
+        body: JSON.stringify({
+          email,
+          source: `installer-download-${os}`
+        })
       });
 
-      const data = await response.json();
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Failed to send installer link');
+      const collectData = await collectResponse.json().catch(() => ({}));
+      if (!collectResponse.ok || !collectData?.success) {
+        throw new Error(collectData?.error || 'Failed to save email');
+      }
+
+      // 2) Send installer link email
+      const sendResponse = await fetch('/api/send-installer-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, os })
+      });
+
+      const sendData = await sendResponse.json();
+      if (!sendResponse.ok || !sendData?.success) {
+        throw new Error(sendData?.error || 'Failed to send installer link');
       }
 
       setInstallerMsg('Installer link sent. Please check your inbox.');
     } catch (error: any) {
-      setInstallerMsg(error?.message || 'Failed to send installer link');
+      setInstallerMsg(error?.message || 'Failed to process your request');
     } finally {
       setSendingInstallerLink(false);
     }
