@@ -34,7 +34,7 @@ export default function HomePage() {
               <Link href="/setup#wizard">Start Onboarding Wizard</Link>
             </Button>
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/setup#installer">Use Installer Path</Link>
+              <Link href="/setup#installer">Free Installer Download</Link>
             </Button>
           </div>
 
