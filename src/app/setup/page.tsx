@@ -201,11 +201,12 @@ export default function SetupPage() {
 
                           <div className="space-y-3">
                             <label className="text-sm font-medium text-ink/80">Email</label>
-                            <Input
+                            <input
                               type="email"
                               placeholder="you@company.com"
                               value={installerEmail}
                               onChange={(event) => setInstallerEmail(event.target.value)}
+                              className="w-full bg-transparent border-0 border-b border-black/15 px-0 py-2 text-sm text-ink outline-none focus:border-ink"
                             />
                             <Button type="button" onClick={sendInstallerLink} disabled={sendingInstallerLink}>
                               {sendingInstallerLink ? 'Sending...' : 'Download Installer'}
