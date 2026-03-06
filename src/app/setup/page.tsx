@@ -40,6 +40,9 @@ export default function SetupPage() {
   const [installerEmail, setInstallerEmail] = useState("");
   const [sendingInstallerLink, setSendingInstallerLink] = useState(false);
   const [installerMsg, setInstallerMsg] = useState<string | null>(null);
+  const [tutorialEmail, setTutorialEmail] = useState("");
+  const [downloadingTutorial, setDownloadingTutorial] = useState(false);
+  const [tutorialMsg, setTutorialMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setOs(detectOS());
@@ -108,6 +111,39 @@ export default function SetupPage() {
       setInstallerMsg(error?.message || 'Failed to process your request');
     } finally {
       setSendingInstallerLink(false);
+    }
+  };
+
+  const collectAndDownloadTutorial = async () => {
+    const email = tutorialEmail.trim();
+    if (!email) {
+      setTutorialMsg('Please enter your email first.');
+      return;
+    }
+
+    setDownloadingTutorial(true);
+    setTutorialMsg(null);
+    try {
+      const collectResponse = await fetch('/api/collect-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'wizard-pdf-download'
+        })
+      });
+
+      const collectData = await collectResponse.json().catch(() => ({}));
+      if (!collectResponse.ok || !collectData?.success) {
+        throw new Error(collectData?.error || 'Failed to save email');
+      }
+
+      setTutorialMsg('Downloading tutorial PDF...');
+      window.open('/downloads/openclaw-tutorial-beginner-to-intermediate-en.pdf', '_blank');
+    } catch (error: any) {
+      setTutorialMsg(error?.message || 'Failed to process your request');
+    } finally {
+      setDownloadingTutorial(false);
     }
   };
 
@@ -395,14 +431,20 @@ export default function SetupPage() {
                       <div className="rounded-2xl border border-black/10 bg-white p-5">
                         <p className="text-sm font-semibold text-ink">Need full tutorial?</p>
                         <p className="mt-2 text-sm text-ink/70">
-                          Download the complete beginner-to-intermediate OpenClaw tutorial PDF.
+                          Enter your email to download the beginner-to-intermediate OpenClaw tutorial PDF.
                         </p>
-                        <div className="mt-4">
-                          <Button asChild variant="secondary">
-                            <Link href="/downloads/openclaw-tutorial-beginner-to-intermediate-en.pdf" target="_blank" download>
-                              Download Tutorial PDF
-                            </Link>
+                        <div className="mt-4 space-y-3">
+                          <input
+                            type="email"
+                            placeholder="you@company.com"
+                            value={tutorialEmail}
+                            onChange={(event) => setTutorialEmail(event.target.value)}
+                            className="w-full bg-transparent border-0 border-b border-black/15 px-0 py-2 text-sm text-ink outline-none focus:border-ink"
+                          />
+                          <Button type="button" variant="secondary" onClick={collectAndDownloadTutorial} disabled={downloadingTutorial}>
+                            {downloadingTutorial ? 'Processing...' : 'Download Tutorial PDF'}
                           </Button>
+                          {tutorialMsg && <p className="text-sm text-ink/70">{tutorialMsg}</p>}
                         </div>
                       </div>
                     </div>
