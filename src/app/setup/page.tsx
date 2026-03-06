@@ -35,6 +35,9 @@ export default function SetupPage() {
   const [provider, setProvider] = useState("openai");
   const [apiKey, setApiKey] = useState("");
   const [channel, setChannel] = useState<Channel>("telegram");
+  const [installerEmail, setInstallerEmail] = useState("");
+  const [sendingInstallerLink, setSendingInstallerLink] = useState(false);
+  const [installerMsg, setInstallerMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setOs(detectOS());
@@ -48,6 +51,34 @@ export default function SetupPage() {
 
   const nextStep = () => setCurrent((prev) => Math.min(prev + 1, steps.length - 1));
   const prevStep = () => setCurrent((prev) => Math.max(prev - 1, 0));
+
+  const sendInstallerLink = async () => {
+    if (!installerEmail.trim()) {
+      setInstallerMsg("Please enter your email first.");
+      return;
+    }
+
+    setSendingInstallerLink(true);
+    setInstallerMsg(null);
+    try {
+      const response = await fetch('/api/send-installer-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: installerEmail.trim(), os })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to send installer link');
+      }
+
+      setInstallerMsg('Installer link sent. Please check your inbox.');
+    } catch (error: any) {
+      setInstallerMsg(error?.message || 'Failed to send installer link');
+    } finally {
+      setSendingInstallerLink(false);
+    }
+  };
 
   return (
     <main className="gradient-bg min-h-screen">
@@ -165,41 +196,70 @@ export default function SetupPage() {
 
                   {current === 1 && (
                     <div className="space-y-6" id="installer">
-                      <div className="rounded-2xl border border-black/10 bg-white p-5">
-                        <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw (Choose 1 method)</p>
-                        <p className="mt-2 text-sm text-ink/65">
-                          Beginner recommended: NPM global install. If you already use Docker, pick Docker. Developers can use source install.
-                        </p>
-                      </div>
+                      {os === 'macos' ? (
+                        <>
+                          <div className="rounded-2xl border border-black/10 bg-white p-5">
+                            <p className="text-sm font-semibold text-ink">Step 2 — Download Installer</p>
+                            <p className="mt-2 text-sm text-ink/65">
+                              Enter your email and we will send the latest GitHub Release installer link from <strong>hello@clawlite.ai</strong>.
+                            </p>
+                          </div>
 
-                      <CommandBlock
-                        label="Method 1 (Beginner recommended): NPM"
-                        command="npm install -g openclaw\nopenclaw --version"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
+                          <div className="rounded-2xl border border-black/10 bg-white p-5 space-y-3">
+                            <label className="text-sm font-medium text-ink/80">Email</label>
+                            <Input
+                              type="email"
+                              placeholder="you@company.com"
+                              value={installerEmail}
+                              onChange={(event) => setInstallerEmail(event.target.value)}
+                            />
+                            <Button type="button" onClick={sendInstallerLink} disabled={sendingInstallerLink}>
+                              {sendingInstallerLink ? 'Sending...' : 'Download Installer'}
+                            </Button>
+                            {installerMsg && (
+                              <p className="text-sm text-ink/70">{installerMsg}</p>
+                            )}
+                          </div>
 
-                      <CommandBlock
-                        label="Method 2: Docker"
-                        command="docker pull openclaw/openclaw:latest\ndocker run -d --name openclaw \\\n-v ~/.openclaw:/root/.openclaw \\\nopenclaw/openclaw:latest"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
+                          <div className="rounded-2xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-ink/75">
+                            If you do not receive the email within 1-2 minutes, check spam/junk folder.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="rounded-2xl border border-black/10 bg-white p-5">
+                            <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw (Choose 1 method)</p>
+                            <p className="mt-2 text-sm text-ink/65">
+                              Beginner recommended: NPM global install. If you already use Docker, pick Docker. Developers can use source install.
+                            </p>
+                          </div>
 
-                      <CommandBlock
-                        label="Method 3: Source (Developer)"
-                        command="git clone https://github.com/openclaw/openclaw.git\ncd openclaw\nnpm install\nnpm run start"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
+                          <CommandBlock
+                            label="Method 1 (Beginner recommended): NPM"
+                            command="npm install -g openclaw\nopenclaw --version"
+                            copyLabel={copyLabel}
+                            copiedLabel={copiedLabel}
+                          />
 
-                      <div className="rounded-2xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-ink/75">
-                        Optional shortcut: use the ClawLite installer to install OpenClaw with fewer manual steps (Windows/macOS).
-                      </div>
+                          <CommandBlock
+                            label="Method 2: Docker"
+                            command="docker pull openclaw/openclaw:latest\ndocker run -d --name openclaw \\\n-v ~/.openclaw:/root/.openclaw \\\nopenclaw/openclaw:latest"
+                            copyLabel={copyLabel}
+                            copiedLabel={copiedLabel}
+                          />
 
-                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
-                        ✅ Completion criteria: <strong>openclaw --version</strong> or <strong>openclaw --help</strong> works normally.
-                      </div>
+                          <CommandBlock
+                            label="Method 3: Source (Developer)"
+                            command="git clone https://github.com/openclaw/openclaw.git\ncd openclaw\nnpm install\nnpm run start"
+                            copyLabel={copyLabel}
+                            copiedLabel={copiedLabel}
+                          />
+
+                          <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
+                            ✅ Completion criteria: <strong>openclaw --version</strong> or <strong>openclaw --help</strong> works normally.
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
