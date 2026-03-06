@@ -174,23 +174,7 @@ export default function SetupPage() {
                         </div>
                       </div>
 
-                      <CommandBlock
-                        label="Check Node.js version"
-                        command="node --version"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
 
-                      <CommandBlock
-                        label="If Node < 18 (macOS/Linux)"
-                        command="nvm install 18\nnvm use 18"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
-
-                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
-                        ✅ Completion criteria: terminal shows Node.js version <strong>&gt;= v18.0.0</strong>
-                      </div>
                     </div>
                   )}
 
