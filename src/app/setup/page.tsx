@@ -215,9 +215,9 @@ export default function SetupPage() {
                             )}
                           </div>
 
-                          <div className="rounded-2xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-ink/75">
+                          <p className="text-sm text-ink/60">
                             If you do not receive the email within 1-2 minutes, check spam/junk folder.
-                          </div>
+                          </p>
                         </>
                       ) : (
                         <>
