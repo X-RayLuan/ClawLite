@@ -198,12 +198,6 @@ export default function SetupPage() {
                     <div className="space-y-6" id="installer">
                       {os === 'macos' ? (
                         <>
-                          <div className="rounded-2xl border border-black/10 bg-white p-5">
-                            <p className="text-sm font-semibold text-ink">Step 2 — Download Installer</p>
-                            <p className="mt-2 text-sm text-ink/65">
-                              Enter your email and we will send the latest GitHub Release installer link from <strong>hello@clawlite.ai</strong>.
-                            </p>
-                          </div>
 
                           <div className="rounded-2xl border border-black/10 bg-white p-5 space-y-3">
                             <label className="text-sm font-medium text-ink/80">Email</label>
@@ -227,12 +221,6 @@ export default function SetupPage() {
                         </>
                       ) : (
                         <>
-                          <div className="rounded-2xl border border-black/10 bg-white p-5">
-                            <p className="text-sm font-semibold text-ink">Step 2 — Install OpenClaw (Choose 1 method)</p>
-                            <p className="mt-2 text-sm text-ink/65">
-                              Beginner recommended: NPM global install. If you already use Docker, pick Docker. Developers can use source install.
-                            </p>
-                          </div>
 
                           <CommandBlock
                             label="Method 1 (Beginner recommended): NPM"
