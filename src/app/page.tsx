@@ -31,10 +31,10 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="shadow-glow" asChild>
-              <Link href="/setup#wizard">Start Onboarding Wizard</Link>
+              <Link href="/setup?path=wizard#wizard">Start Onboarding Wizard</Link>
             </Button>
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/setup#installer">Free Installer Download</Link>
+              <Link href="/setup?path=installer#installer">Free Installer Download</Link>
             </Button>
           </div>
 
@@ -107,7 +107,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6">
               <Button asChild>
-                <Link href="/setup#wizard">Open Wizard</Link>
+                <Link href="/setup?path=wizard#wizard">Open Wizard</Link>
               </Button>
             </div>
           </Card>
@@ -127,7 +127,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6">
               <Button asChild>
-                <Link href="/setup#installer">Use Installer</Link>
+                <Link href="/setup?path=installer#installer">Use Installer</Link>
               </Button>
             </div>
           </Card>

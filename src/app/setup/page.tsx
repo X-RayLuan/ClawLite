@@ -16,6 +16,7 @@ const osOptions = ["macos", "windows", "linux"] as const;
 type OSOption = (typeof osOptions)[number];
 type ApiMode = "clawlite" | "byok";
 type Channel = "telegram" | "web";
+type SetupPath = "wizard" | "installer";
 
 function detectOS(): OSOption {
   if (typeof navigator === "undefined") return "macos";
@@ -35,12 +36,25 @@ export default function SetupPage() {
   const [provider, setProvider] = useState("openai");
   const [apiKey, setApiKey] = useState("");
   const [channel, setChannel] = useState<Channel>("telegram");
+  const [setupPath, setSetupPath] = useState<SetupPath>("wizard");
   const [installerEmail, setInstallerEmail] = useState("");
   const [sendingInstallerLink, setSendingInstallerLink] = useState(false);
   const [installerMsg, setInstallerMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setOs(detectOS());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('path');
+    const hash = window.location.hash;
+    if (q === 'installer' || hash === '#installer') {
+      setSetupPath('installer');
+    } else {
+      setSetupPath('wizard');
+    }
   }, []);
 
   const osCommand = "Auto-detected in page";
@@ -180,7 +194,7 @@ export default function SetupPage() {
 
                   {current === 1 && (
                     <div className="space-y-6" id="installer">
-                      {os === 'macos' ? (
+                      {setupPath === 'installer' ? (
                         <>
 
                           <div className="space-y-3">
