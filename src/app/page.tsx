@@ -80,6 +80,89 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="mb-6 text-center">
+          <Badge className="border-sea/20 bg-sea/10 text-sea">Why ClawLite</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+            Install fast. Run cheaper. Stay safe.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-lg text-ink/70">
+            ClawLite gives you one-click setup, lower token costs, and a built-in SOUL Backup safety layer.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="border-black/10 bg-white/90 p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">One-Click Install</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Go from zero to a working OpenClaw stack in minutes, without manual setup friction.
+            </p>
+          </Card>
+
+          <Card className="border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-soft">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
+              <span className="text-2xl">💰</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">Cheaper Token Routing</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Cut ongoing model spend with optimized routing and predictable usage control.
+            </p>
+          </Card>
+
+          <Card className="border-black/10 bg-white/90 p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
+              <span className="text-2xl">🛡️</span>
+            </div>
+            <h3 className="text-xl font-semibold text-ink">SOUL Backup</h3>
+            <p className="mt-2 text-sm text-ink/70">
+              Versioned backup and restore for your OpenClaw brain, with safer rollback when changes go wrong.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="grid gap-6 rounded-3xl border border-black/10 bg-white/90 p-6 shadow-soft md:grid-cols-[1.2fr_0.8fr] md:p-8">
+          <div>
+            <Badge className="border-coral/20 bg-coral/10 text-coral">SOUL Backup</Badge>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+              Never lose your OpenClaw brain.
+            </h2>
+            <p className="mt-3 max-w-2xl text-lg text-ink/70">
+              Backup, diff, and restore your critical configs from the UI — so recovery is fast, visible, and auditable.
+            </p>
+
+            <ul className="mt-5 space-y-2 text-sm text-ink/75">
+              <li>• One-click backup with integrity validation</li>
+              <li>• Diff preview before restore (sensitive fields masked)</li>
+              <li>• Failure alerts and audit trail for every action</li>
+            </ul>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/setup">Enable SOUL Backup</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/docs">View Backup Docs</Link>
+              </Button>
+            </div>
+          </div>
+
+          <Card className="border-black/10 bg-black/5 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/55">Recovery Flow</p>
+            <div className="mt-3 space-y-3 text-sm text-ink/75">
+              <div className="rounded-xl bg-white/80 p-3">1. Choose backup version</div>
+              <div className="rounded-xl bg-white/80 p-3">2. Review diff preview</div>
+              <div className="rounded-xl bg-white/80 p-3">3. Confirm restore safely</div>
+              <div className="rounded-xl bg-white/80 p-3">4. Verify + audit log</div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl px-6 pb-10">
         <div className="mb-5 text-center">
           <Badge className="border-coral/20 bg-coral/10 text-coral">Two Launch Paths</Badge>
