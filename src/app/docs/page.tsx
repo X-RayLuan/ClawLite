@@ -21,12 +21,16 @@ export default function DocsPage() {
               {nav.docs}
             </a>
           </Button>
-          <Button asChild variant="secondary">
-            <a href="/docs/OpenClaw-Tutorial-Beginner-to-Intermediate-English.pdf" target="_blank" rel="noreferrer">
-              OpenClaw Tutorial PDF (English)
-            </a>
-          </Button>
         </div>
+
+        <div className="w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-soft">
+          <iframe
+            src="/docs/OpenClaw-Tutorial-Beginner-to-Intermediate-English.pdf#view=FitH"
+            title="OpenClaw Tutorial PDF"
+            className="h-[80vh] w-full"
+          />
+        </div>
+
         <Link href="/setup" className="text-sm text-ink/60 underline-offset-4 hover:underline">
           {docs.back}
         </Link>
