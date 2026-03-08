@@ -2,7 +2,12 @@ import Link from 'next/link';
 
 export default function BlogPage() {
   const posts = [
-
+    {
+      slug: 'best-ai-browser-automation-tools',
+      title: 'Best AI Browser Automation Tools for SMB Ops Teams (and Why ClawLite Is Built for Fast Time-to-Value)',
+      excerpt: 'An SMB-focused buying guide to evaluate AI browser automation tools by time-to-value, control, and maintenance cost.',
+      date: '2026-03-08'
+    },
     {
       slug: 'ai-browser-agent-vs-rpa',
       title: 'AI Browser Agent vs RPA: Which Automation Stack Should You Choose in 2026?',
