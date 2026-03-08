@@ -159,6 +159,10 @@ export const content = {
       subtitle: "Quick fixes for common setup issues.",
       issues: [
         {
+          title: "\"ClawLite\" Not Opened on macOS",
+          body: "In Finder, locate ClawLite.app (or drag it to Applications first), right-click and choose Open, then click Open again. If still blocked, go to System Settings → Privacy & Security and click Open Anyway. Terminal (advanced): xattr -dr com.apple.quarantine /Applications/ClawLite.app && open /Applications/ClawLite.app"
+        },
+        {
           title: "Node.js command not found",
           body: "Reinstall Node.js and reopen your terminal. On macOS, verify Homebrew is in PATH."
         },
@@ -327,6 +331,10 @@ export const content = {
       title: "常见问题排查",
       subtitle: "快速解决安装中的高频问题。",
       issues: [
+        {
+          title: "macOS 提示“ClawLite”无法打开",
+          body: "在 Finder 找到 ClawLite.app（或先拖到 Applications），右键选择“打开”，弹窗里再点一次“打开”。如果仍被拦截：System Settings → Privacy & Security → Open Anyway。终端（高级）：xattr -dr com.apple.quarantine /Applications/ClawLite.app && open /Applications/ClawLite.app"
+        },
         {
           title: "找不到 Node.js 命令",
           body: "重新安装 Node.js 并重启终端。macOS 请确认 Homebrew 在 PATH 中。"
