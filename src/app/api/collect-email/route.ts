@@ -16,8 +16,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Google Service Account credentials from environment variable
-    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}');
-    
+    const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
+    if (!rawKey) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not configured');
+    }
+
+    let credentials: any;
+    try {
+      credentials = JSON.parse(rawKey);
+    } catch {
+      // Support base64-encoded JSON secrets
+      credentials = JSON.parse(Buffer.from(rawKey, 'base64').toString('utf-8'));
+    }
+
+    if (typeof credentials?.private_key === 'string') {
+      credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -33,7 +48,8 @@ export async function POST(request: NextRequest) {
     // Append row: [timestamp, email, source]
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A:C',
+      // Avoid hard dependency on sheet tab name (e.g., not always "Sheet1")
+      range: 'A:C',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[new Date().toISOString(), email, source || 'unknown']],
