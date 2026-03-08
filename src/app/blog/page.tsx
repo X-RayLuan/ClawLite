@@ -2,6 +2,13 @@ import Link from 'next/link';
 
 export default function BlogPage() {
   const posts = [
+
+    {
+      slug: 'ai-browser-agent-vs-rpa',
+      title: 'AI Browser Agent vs RPA: Which Automation Stack Should You Choose in 2026?',
+      excerpt: 'A practical 2026 decision framework for choosing AI browser agents, RPA, or a hybrid automation stack.',
+      date: '2026-03-08'
+    },
     {
       slug: 'openclaw-alternative',
       title: 'OpenClaw Alternative — ClawLite',

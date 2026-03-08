@@ -10,7 +10,8 @@ export async function generateStaticParams() {
     { slug: 'openclaw-token-cost' },
     { slug: 'what-is-clawlite' },
     { slug: 'openclaw-for-beginners' },
-    { slug: 'clawlite-free-trial' }
+    { slug: 'clawlite-free-trial' },
+    { slug: 'ai-browser-agent-vs-rpa' }
   ];
 }
 
@@ -509,6 +510,155 @@ Supports OpenAI, Anthropic, Google Gemini, and local models (Ollama).
     title: 'OpenClaw for Beginners',
     date: '2026-03-04',
     content: `Content for openclaw-for-beginners`
+  },
+
+  'ai-browser-agent-vs-rpa': {
+    title: 'AI Browser Agent vs RPA: Which Automation Stack Should You Choose in 2026?',
+    date: '2026-03-08',
+    content: `# AI Browser Agent vs RPA: Which Automation Stack Should You Choose in 2026?
+
+**Disclosure (T04):** This draft is AI-assisted and intended for informational planning. Validate requirements and compliance with your internal governance before implementation.
+
+If your operations work is mostly stable, rules-based, and system-to-system, **RPA is still a strong fit**. If your team works in fast-changing web UIs, frequent exceptions, and cross-tool workflows, an **AI browser agent** is often the better first investment. In 2026, most teams should not frame this as a winner-take-all debate. The practical answer is architecture layering: use RPA for deterministic back-office routines, and use browser agents where UI drift, edge cases, and human review are common. 
+
+For decision speed, evaluate five criteria: change tolerance, setup speed, exception handling, maintenance load, and governance control. If your current automations break every time a webpage changes, your stack is likely underweighted on adaptive browser automation.
+
+## Key Takeaways
+
+- RPA remains useful for deterministic, repetitive, low-variance processes.
+- AI browser agents are stronger in dynamic web environments.
+- The best operating model is often **hybrid**, not replacement.
+- Maintenance economics matter more than demo speed.
+- Governance (approvals, logs, rollback) should be designed from day one.
+
+## Decision Table: AI Browser Agent vs RPA
+
+| Decision Factor | AI Browser Agent | RPA |
+|---|---|---|
+| Best for | Dynamic web tasks with variable paths | Stable workflows with fixed rules |
+| Build model | Goal + policy + prompts + guardrails | Rules + selectors + explicit process maps |
+| Exception handling | Context-aware fallback and human handoff | Explicitly pre-modeled exceptions |
+| UI changes | Better tolerance | More brittle unless heavily maintained |
+| Maintenance profile | Prompt/policy tuning + monitoring | Bot/script updates + selector upkeep |
+| Governance | Human-in-the-loop checkpoints | Mature controls in many enterprise suites |
+| Typical recommendation | Start with attended workflows | Use for repetitive deterministic automation |
+
+## Verifiable Data Points (Snapshot: 2026-03-08)
+
+1. **OpenClaw stars: 277,901; forks: 53,049** (open ecosystem momentum).[1]
+2. **Playwright monthly downloads: 138,542,524**.[2]
+3. **Puppeteer monthly downloads: 33,048,218**.[3]
+4. **selenium-webdriver monthly downloads: 7,894,308**.[4]
+5. **Robot Framework stars: 11,456** (rule-driven test/automation ecosystem baseline).[5]
+6. **Selenium stars: 34,091** (longstanding automation foundation).[6]
+
+Interpretation: browser-centric and agent-friendly tooling ecosystems are growing fast, while traditional automation frameworks still carry meaningful installed-base gravity.
+
+## A Practical Selection Framework for Ops Leaders
+
+### Choose RPA-first when:
+- process steps are fixed and rarely change,
+- compliance requires highly deterministic flow control,
+- exceptions are limited and predictable,
+- you already have RPA governance and talent in place.
+
+### Choose AI browser agent-first when:
+- operators currently babysit browser tasks,
+- page layouts and paths change frequently,
+- exception volume is high,
+- business teams need quicker iteration without long bot rebuild cycles.
+
+### Choose hybrid when:
+- you have both stable back-office logic and dynamic front-end tasks.
+
+## Why ClawLite Positioning Works in This Debate
+
+ClawLite’s strongest angle in this category is not “replace everything.” It is enabling faster time-to-value on browser-heavy operations while keeping human approvals and auditability in the loop.
+
+## Limitations
+
+- Open-source ecosystem metrics are not a full proxy for enterprise procurement behavior.
+- Public GitHub and npm data do not include private enterprise automation workloads.
+- RPA value depends heavily on process stability and governance maturity, which vary by company.
+- Final stack choice should include security, legal, and integration constraints not captured in public metrics.
+
+## FAQ
+
+### 1) Is AI browser automation replacing RPA in 2026?
+No. In most organizations, it complements RPA. Replacement usually happens only in specific UI-heavy workflows.
+
+### 2) Which has lower maintenance cost?
+It depends on change frequency. In volatile web UIs, adaptive browser agents can reduce rework. In fixed workflows, RPA can remain cheaper.
+
+### 3) Should SMB teams start with RPA or AI browser agents?
+If the immediate pain is browser operations with frequent edge cases, start with AI browser agents plus human approvals.
+
+### 4) Is governance easier with RPA?
+Mature RPA suites often have strong governance features, but browser-agent stacks can also be governed well with approvals, logging, and policy constraints.
+
+### 5) What KPI should decide the winner?
+Use post-deployment maintenance hours per month and exception resolution time, not just initial setup speed.
+
+## FAQ Schema (JSON-LD)
+
+\`\`\`json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is AI browser automation replacing RPA in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. In most organizations, it complements RPA. Replacement usually happens only in specific UI-heavy workflows."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which has lower maintenance cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on change frequency. In volatile web UIs, adaptive browser agents can reduce rework. In fixed workflows, RPA can remain cheaper."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should SMB teams start with RPA or AI browser agents?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "If the immediate pain is browser operations with frequent edge cases, start with AI browser agents plus human approvals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is governance easier with RPA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Mature RPA suites often have strong governance features, but browser-agent stacks can also be governed well with approvals, logging, and policy constraints."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What KPI should decide the winner?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use post-deployment maintenance hours per month and exception resolution time, not just initial setup speed."
+      }
+    }
+  ]
+}
+\`\`\`
+
+## Sources
+
+[1] GitHub API — openclaw/openclaw: https://api.github.com/repos/openclaw/openclaw  
+[2] npm downloads API — Playwright: https://api.npmjs.org/downloads/point/last-month/playwright  
+[3] npm downloads API — Puppeteer: https://api.npmjs.org/downloads/point/last-month/puppeteer  
+[4] npm downloads API — selenium-webdriver: https://api.npmjs.org/downloads/point/last-month/selenium-webdriver  
+[5] GitHub API — robotframework/robotframework: https://api.github.com/repos/robotframework/robotframework  
+[6] GitHub API — SeleniumHQ/selenium: https://api.github.com/repos/SeleniumHQ/selenium
+`
   },
   'clawlite-free-trial': {
     title: 'ClawLite Free Trial',
