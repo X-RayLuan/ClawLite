@@ -277,6 +277,18 @@ export default function SetupPage() {
                           <p className="text-sm text-ink/60">
                             If you do not receive the email within 1-2 minutes, check spam/junk folder.
                           </p>
+
+                          {os === 'macos' && (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                              <p className="font-semibold">If macOS blocks ClawLite</p>
+                              <ol className="mt-2 list-decimal space-y-1 pl-5">
+                                <li>Open Finder and locate ClawLite.app (or drag it to Applications first).</li>
+                                <li>Right-click ClawLite.app → Open.</li>
+                                <li>In the dialog, click Open again.</li>
+                              </ol>
+                              <p className="mt-2">If still blocked: System Settings → Privacy &amp; Security → Open Anyway.</p>
+                            </div>
+                          )}
                         </>
                       ) : (
                         <>
