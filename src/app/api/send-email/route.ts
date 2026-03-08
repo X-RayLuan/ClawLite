@@ -3,6 +3,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+export const runtime = 'nodejs';
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   try {
     const { to, subject, html, text } = await req.json();
