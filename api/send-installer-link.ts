@@ -5,9 +5,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getReleaseLink(os: string) {
   if (os === 'windows') {
-    return 'https://github.com/X-RayLuan/Mac-Installer/releases/latest/download/clawlite-setup.exe';
+    return 'https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe';
   }
-  return 'https://github.com/X-RayLuan/Mac-Installer/releases/latest/download/clawlite.dmg';
+  return 'https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite.dmg';
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

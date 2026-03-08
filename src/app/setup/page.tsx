@@ -106,7 +106,12 @@ export default function SetupPage() {
         throw new Error(sendData?.error || 'Failed to send installer link');
       }
 
-      setInstallerMsg('Installer link sent. Please check your inbox.');
+      if (sendData?.downloadUrl) {
+        window.open(sendData.downloadUrl, '_blank');
+        setInstallerMsg(sendData?.sent ? 'Installer link sent. Please check your inbox.' : 'Email failed, direct download opened.');
+      } else {
+        setInstallerMsg('Installer link sent. Please check your inbox.');
+      }
     } catch (error: any) {
       setInstallerMsg(error?.message || 'Failed to process your request');
     } finally {
