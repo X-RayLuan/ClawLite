@@ -20,6 +20,7 @@ const blogPosts: Record<string, {
   title: string;
   date: string;
   content: string;
+  faqSchema?: string;
 }> = {
   'openclaw-alternative': {
     title: 'ClawLite: The Faster, Cheaper Way to Run OpenClaw',
@@ -519,9 +520,9 @@ Supports OpenAI, Anthropic, Google Gemini, and local models (Ollama).
     date: '2026-03-08',
     content: `# Best AI Browser Automation Tools for SMB Ops Teams (and Why ClawLite Is Built for Fast Time-to-Value)
 
-**Disclosure (T04):** This is an AI-assisted commercial draft for evaluation. It is not legal, security, or procurement advice. Re-validate pricing/features directly with vendors before purchase.
+Disclosure (T04): This is an AI-assisted commercial draft for evaluation. It is not legal, security, or procurement advice. Re-validate pricing/features directly with vendors before purchase.
 
-For most SMB operations teams, the “best” AI browser automation tool is the one that can be deployed in days, controlled by non-engineers, and governed safely. That usually means: clear human-approval checkpoints, simple onboarding, browser reliability, and transparent operating costs. If your team is small and moves fast, you should prioritize **time-to-first-value** over enterprise-style platform sprawl. In this context, ClawLite’s practical fit is strong: it aligns with browser-heavy workflows, supports human-in-the-loop control, and avoids overcomplicated rollout paths for teams that just need repetitive web work done correctly.
+For most SMB operations teams, the “best” AI browser automation tool is the one that can be deployed in days, controlled by non-engineers, and governed safely. That usually means: clear human-approval checkpoints, simple onboarding, browser reliability, and transparent operating costs. If your team is small and moves fast, you should prioritize time-to-first-value over enterprise-style platform sprawl. In this context, ClawLite’s practical fit is strong: it aligns with browser-heavy workflows, supports human-in-the-loop control, and avoids overcomplicated rollout paths for teams that just need repetitive web work done correctly.
 
 A buying rule that works: shortlist tools only if they pass your security baseline, then compare how quickly each can automate one real weekly workflow end-to-end.
 
@@ -546,12 +547,12 @@ A buying rule that works: shortlist tools only if they pass your security baseli
 
 ## Verifiable Market Signals (Snapshot: 2026-03-08)
 
-1. **Playwright monthly downloads: 138,542,524**.[1]
-2. **Puppeteer monthly downloads: 33,048,218**.[2]
-3. **selenium-webdriver monthly downloads: 7,894,308**.[3]
-4. **OpenClaw stars: 277,901** and **forks: 53,049**.[4]
-5. **n8n stars: 178,081** (automation builder ecosystem momentum).[5]
-6. **Apache Airflow stars: 44,540** (workflow orchestration baseline in data/ops teams).[6]
+1. Playwright monthly downloads: 138,542,524.[1]
+2. Puppeteer monthly downloads: 33,048,218.[2]
+3. selenium-webdriver monthly downloads: 7,894,308.[3]
+4. OpenClaw stars: 277,901 and forks: 53,049.[4]
+5. n8n stars: 178,081 (automation builder ecosystem momentum).[5]
+6. Apache Airflow stars: 44,540 (workflow orchestration baseline in data/ops teams).[6]
 
 These data points indicate sustained demand for automation tooling, especially in browser and workflow orchestration ecosystems relevant to SMB operations.
 
@@ -559,11 +560,11 @@ These data points indicate sustained demand for automation tooling, especially i
 
 Score each tool 1–5 on these dimensions:
 
-- **Setup speed** (can you automate one workflow this week?)
-- **Operator usability** (can ops run it without daily engineering help?)
-- **Control model** (can you require approvals for risky steps?)
-- **Maintenance burden** (how often does it break after UI changes?)
-- **Cost transparency** (can finance predict monthly spend?)
+- Setup speed (can you automate one workflow this week?)
+- Operator usability (can ops run it without daily engineering help?)
+- Control model (can you require approvals for risky steps?)
+- Maintenance burden (how often does it break after UI changes?)
+- Cost transparency (can finance predict monthly spend?)
 
 A practical procurement move: run a 14-day pilot on one recurring browser workflow, then compare baseline vs pilot results.
 
@@ -601,10 +602,17 @@ In browser-heavy, operator-led workflows where quick deployment and review check
 ### 5) What can go wrong in tool selection?
 Overbuying for enterprise scenarios, skipping governance design, or choosing based on demos instead of real workflow pilots.
 
-## FAQ Schema (JSON-LD)
+## Sources
 
-\`\`\`json
-{
+[1] npm downloads API — Playwright: https://api.npmjs.org/downloads/point/last-month/playwright  
+[2] npm downloads API — Puppeteer: https://api.npmjs.org/downloads/point/last-month/puppeteer  
+[3] npm downloads API — selenium-webdriver: https://api.npmjs.org/downloads/point/last-month/selenium-webdriver  
+[4] GitHub API — openclaw/openclaw: https://api.github.com/repos/openclaw/openclaw  
+[5] GitHub API — n8n-io/n8n: https://api.github.com/repos/n8n-io/n8n  
+[6] GitHub API — apache/airflow: https://api.github.com/repos/apache/airflow
+
+`,
+    faqSchema: `{
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
@@ -649,19 +657,7 @@ Overbuying for enterprise scenarios, skipping governance design, or choosing bas
       }
     }
   ]
-}
-\`\`\`
-
-## Sources
-
-[1] npm downloads API — Playwright: https://api.npmjs.org/downloads/point/last-month/playwright  
-[2] npm downloads API — Puppeteer: https://api.npmjs.org/downloads/point/last-month/puppeteer  
-[3] npm downloads API — selenium-webdriver: https://api.npmjs.org/downloads/point/last-month/selenium-webdriver  
-[4] GitHub API — openclaw/openclaw: https://api.github.com/repos/openclaw/openclaw  
-[5] GitHub API — n8n-io/n8n: https://api.github.com/repos/n8n-io/n8n  
-[6] GitHub API — apache/airflow: https://api.github.com/repos/apache/airflow
-
-`
+}`,
   },
 
   'ai-browser-agent-vs-rpa': {
@@ -854,6 +850,13 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
             return <p key={i} className="mb-6 text-gray-700 leading-relaxed">{trimmed}</p>;
           })}
         </div>
+
+        {post.faqSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: post.faqSchema }}
+          />
+        )}
 
         <footer className="mt-16 pt-8 border-t border-gray-200">
           <Link 
