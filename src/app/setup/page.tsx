@@ -90,11 +90,9 @@ export default function SetupPage() {
       });
 
       const collectData = await collectResponse.json().catch(() => ({}));
-      if (!collectResponse.ok || !collectData?.success) {
-        throw new Error(collectData?.error || 'Failed to save email');
-      }
+      const collectOk = collectResponse.ok && !!collectData?.success;
 
-      // 2) Send installer link email
+      // 2) Send installer link email (non-blocking even if collect failed)
       const sendResponse = await fetch('/api/send-installer-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,9 +106,13 @@ export default function SetupPage() {
 
       if (sendData?.downloadUrl) {
         window.open(sendData.downloadUrl, '_blank');
-        setInstallerMsg(sendData?.sent ? 'Installer link sent. Please check your inbox.' : 'Email failed, direct download opened.');
+        if (sendData?.sent) {
+          setInstallerMsg(collectOk ? 'Installer link sent. Please check your inbox.' : 'Installer link sent. Email capture failed this time.');
+        } else {
+          setInstallerMsg('Email failed, direct download opened.');
+        }
       } else {
-        setInstallerMsg('Installer link sent. Please check your inbox.');
+        setInstallerMsg(collectOk ? 'Installer link sent. Please check your inbox.' : 'Installer link sent. Email capture failed this time.');
       }
     } catch (error: any) {
       setInstallerMsg(error?.message || 'Failed to process your request');
