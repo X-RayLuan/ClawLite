@@ -779,7 +779,7 @@ Estimated weekly time saved.
 
 If the pilot shows clear ROI and manageable maintenance, move to a paid plan with production guardrails and team operating procedures.`,
   }
-};};
+};
 
 export default function BlogPost({ params }: { params: { slug: string } }) {
   const post = blogPosts[params.slug];
