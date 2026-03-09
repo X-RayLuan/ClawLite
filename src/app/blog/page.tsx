@@ -3,6 +3,12 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
+      slug: 'what-is-an-ai-browser-agent',
+      title: 'What Is an AI Browser Agent? A Practical Guide for Ops Teams',
+      excerpt: 'A practical guide for operations teams: what AI browser agents are, where they fit, and how to deploy safely with human checkpoints.',
+      date: '2026-03-09'
+    },
+    {
       slug: 'best-ai-browser-automation-tools',
       title: 'Best AI Browser Automation Tools for SMB Ops Teams (and Why ClawLite Is Built for Fast Time-to-Value)',
       excerpt: 'An SMB-focused buying guide to evaluate AI browser automation tools by time-to-value, control, and maintenance cost.',

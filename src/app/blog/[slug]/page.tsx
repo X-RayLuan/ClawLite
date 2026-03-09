@@ -11,6 +11,7 @@ export async function generateStaticParams() {
     { slug: 'what-is-clawlite' },
     { slug: 'openclaw-for-beginners' },
     { slug: 'clawlite-free-trial' },
+    { slug: 'what-is-an-ai-browser-agent' },
     { slug: 'ai-browser-agent-vs-rpa' },
     { slug: 'best-ai-browser-automation-tools' }
   ];
