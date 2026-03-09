@@ -10,12 +10,12 @@ export const content = {
       blog: "Blog"
     },
     hero: {
-      eyebrow: "OpenClaw in 5 minutes · No terminal required",
-      title: "ClawLite Web Wizard",
+      eyebrow: "One-click setup + SOUL Backup for OpenClaw",
+      title: "Install OpenClaw in minutes. Keep your AI brain recoverable.",
       subtitle:
-        "A friendly step-by-step guide to install and launch OpenClaw. No terminal required.",
-      start: "Start Setup",
-      secondary: "View Troubleshoot",
+        "ClawLite gives you a fast one-click install path and built-in SOUL Backup so setup is easy and rollback is safe.",
+      start: "Free Installer Download",
+      secondary: "Open Onboarding Wizard",
       previewTitle: "Quick peek",
       previewSteps: [
         {
@@ -32,10 +32,10 @@ export const content = {
         }
       ],
       highlights: [
-        "Pure front-end, no login required",
-        "One-click copy for every command",
-        "Bilingual English + Chinese",
-        "Telegram and Web Chat ready"
+        "Free installer download for macOS + Windows",
+        "One-click setup path with fewer manual steps",
+        "SOUL Backup for safer restore and rollback",
+        "Onboarding Wizard available as guided fallback"
       ],
       doneVerified: {
         title: "Done = Verified",
@@ -202,12 +202,12 @@ export const content = {
       blog: "博客"
     },
     hero: {
-      eyebrow: "5 分钟启动 OpenClaw（无需终端）",
-      title: "ClawLite Web 向导",
+      eyebrow: "One-click setup + SOUL Backup",
+      title: "几分钟安装 OpenClaw，并且可恢复",
       subtitle:
-        "一步步带你完成 OpenClaw 安装和启动。全程无需终端命令。",
-      start: "开始安装",
-      secondary: "查看排障",
+        "ClawLite 提供快速安装路径和内置 SOUL Backup，让你装得快、回滚稳。",
+      start: "免费下载安装器",
+      secondary: "打开 Onboarding Wizard",
       previewTitle: "快速预览",
       previewSteps: [
         {
@@ -224,10 +224,10 @@ export const content = {
         }
       ],
       highlights: [
-        "纯前端，无需登录",
-        "所有命令一键复制",
-        "中英双语随时切换",
-        "支持 Telegram 与 Web Chat"
+        "macOS + Windows 免费下载安装器",
+        "One-click setup，减少手动步骤",
+        "SOUL Backup 支持安全恢复与回滚",
+        "Onboarding Wizard 作为引导备选"
       ]
     },
     setup: {
