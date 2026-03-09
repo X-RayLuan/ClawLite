@@ -33,9 +33,6 @@ export default function HomePage() {
             <Button size="lg" className="shadow-glow" asChild>
               <Link href="/setup?path=installer#installer">{hero.start}</Link>
             </Button>
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/setup?path=wizard#wizard">{hero.secondary}</Link>
-            </Button>
           </div>
 
 
