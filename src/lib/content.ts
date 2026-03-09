@@ -11,7 +11,7 @@ export const content = {
     },
     hero: {
       eyebrow: "One-click setup + SOUL Backup for OpenClaw",
-      title: "Install OpenClaw in minutes. Keep your AI brain recoverable.",
+      title: "Install OpenClaw in 5 minutes. Keep your AI brain recoverable.",
       subtitle:
         "ClawLite gives you a fast one-click install path and built-in SOUL Backup so setup is easy and rollback is safe.",
       start: "Free Installer Download",
