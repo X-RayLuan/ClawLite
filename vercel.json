@@ -1,13 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/blog",
-      "destination": "https://clawlite.vercel.app/blog"
-    },
-    {
-      "source": "/blog/:path*",
-      "destination": "https://clawlite.vercel.app/blog/:path*"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
