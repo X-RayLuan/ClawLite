@@ -25,7 +25,7 @@ export default function LoginPage() {
       return;
     }
 
-    const redirectTo = `${window.location.origin}/downloads`;
+    const redirectTo = `${window.location.origin}/auth/callback`;
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },

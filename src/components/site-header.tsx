@@ -49,9 +49,6 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="flex items-center gap-3">
-          <Link href="/downloads" className="hidden text-sm text-ink/80 hover:text-ink md:inline-block">
-            Downloads
-          </Link>
           {loggedIn ? (
             <button type="button" onClick={handleLogout} className="text-sm text-ink/80 hover:text-ink">
               Logout
