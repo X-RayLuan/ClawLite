@@ -28,7 +28,7 @@ export const content = {
         },
         {
           title: "API + Channel",
-          body: "Choose LazyClaw Tokens/BYOK, then follow channel instructions."
+          body: "Choose ClawLite Tokens/BYOK, then follow channel instructions."
         }
       ],
       highlights: [
@@ -74,7 +74,7 @@ export const content = {
         {
           id: "api",
           title: "Configure API",
-          description: "Default to LazyClaw Tokens (50% discount) or choose BYOK."
+          description: "Default to ClawLite Tokens (50% discount) or choose BYOK."
         },
         {
           id: "channel",
@@ -112,7 +112,7 @@ export const content = {
       },
       api: {
         modeTitle: "Choose API setup",
-        clawliteTitle: "LazyClaw Tokens (Default)",
+        clawliteTitle: "ClawLite Tokens (Default)",
         clawliteDesc: "50% discount from official API price. Recommended for fastest setup.",
         byokTitle: "Bring Your Own Key",
         byokDesc: "Use your OpenAI / Anthropic / other provider key.",
@@ -220,7 +220,7 @@ export const content = {
         },
         {
           title: "API + 渠道",
-          body: "默认 LazyClaw Tokens，也可 BYOK，再按指引选渠道。"
+          body: "默认 ClawLite Tokens，也可 BYOK，再按指引选渠道。"
         }
       ],
       highlights: [
@@ -247,7 +247,7 @@ export const content = {
         {
           id: "api",
           title: "配置 API",
-          description: "默认 LazyClaw Tokens（比官方 API 便宜 50%），也可 BYOK。"
+          description: "默认 ClawLite Tokens（比官方 API 便宜 50%），也可 BYOK。"
         },
         {
           id: "channel",
@@ -285,7 +285,7 @@ export const content = {
       },
       api: {
         modeTitle: "选择 API 配置方式",
-        clawliteTitle: "LazyClaw Tokens（默认）",
+        clawliteTitle: "ClawLite Tokens（默认）",
         clawliteDesc: "比官方 API 价格低 50%，推荐优先使用。",
         byokTitle: "自带 API Key",
         byokDesc: "使用 OpenAI / Anthropic / 其他提供方的 Key。",
