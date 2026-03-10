@@ -102,9 +102,13 @@ export default function DownloadsPage() {
             {copied ? "Copied" : "Copy Promo Code"}
           </Button>
           <div className="mt-4 space-y-2 text-sm text-ink/75">
-            <p>1. Go to EZROUTER.</p>
-            <p>2. Create or log into your account.</p>
-            <p>3. Apply the code during checkout or recharge.</p>
+            <p className="font-medium text-ink">How to redeem:</p>
+            <p>1. Go to ClawLite.ai → Pricing</p>
+            <p>2. Click “Get Tokens via EZRouter”</p>
+            <p>3. Register/login at openrouter.ezsite.ai</p>
+            <p>4. Select Add Credit</p>
+            <p>5. Enter promo code WELCOMEEZROUTER2X</p>
+            <p>6. Checkout</p>
           </div>
         </section>
       </div>
