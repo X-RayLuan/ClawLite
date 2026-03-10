@@ -31,7 +31,7 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="shadow-glow" asChild>
-              <Link href="/setup?path=installer#installer">{hero.start}</Link>
+              <Link href="/login">{hero.start}</Link>
             </Button>
           </div>
 
@@ -133,10 +133,10 @@ export default function HomePage() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/setup">Enable SOUL Backup</Link>
+                <Link href="/login">Enable SOUL Backup</Link>
               </Button>
               <Button asChild variant="secondary">
-                <Link href="/docs">View Backup Docs</Link>
+                <Link href="/login">View Backup Docs</Link>
               </Button>
             </div>
           </div>
@@ -253,7 +253,7 @@ export default function HomePage() {
 
         <div className="mt-8 text-center">
           <Button size="lg" className="shadow-glow" asChild>
-            <Link href="/setup">Get Started Free</Link>
+            <Link href="/login">Get Started Free</Link>
           </Button>
         </div>
       </section>
@@ -291,7 +291,7 @@ export default function HomePage() {
                 <Link href="https://openrouter.ezsite.ai" target="_blank">Get Tokens via EZRouter</Link>
               </Button>
               <Button asChild variant="secondary">
-                <Link href="/setup">Start Setup</Link>
+                <Link href="/login">Start Setup</Link>
               </Button>
             </div>
           </article>

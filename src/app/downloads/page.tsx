@@ -64,13 +64,14 @@ export default function DownloadsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
-      <h1 className="font-display text-3xl font-semibold text-ink">Downloads & Benefits</h1>
+      <h1 className="font-display text-3xl font-semibold text-ink">Your ClawLite Access</h1>
       <p className="mt-2 text-sm text-ink/65">Logged in as {email}</p>
 
       <div className="mt-8 grid gap-5 md:grid-cols-3">
         <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
-          <h2 className="text-lg font-semibold text-ink">Installer</h2>
-          <p className="mt-2 text-sm text-ink/70">Download the latest ClawLite installer.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">1</p>
+          <h2 className="mt-2 text-lg font-semibold text-ink">Free Download Installer</h2>
+          <p className="mt-2 text-sm text-ink/70">Download the latest ClawLite installer for macOS or Windows.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild>
               <a href={MAC_LINK} target="_blank" rel="noreferrer">Download macOS</a>
@@ -82,8 +83,9 @@ export default function DownloadsPage() {
         </section>
 
         <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
-          <h2 className="text-lg font-semibold text-ink">Backup Skills</h2>
-          <p className="mt-2 text-sm text-ink/70">Access soul backup skill for safer OpenClaw recovery.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">2</p>
+          <h2 className="mt-2 text-lg font-semibold text-ink">Backup Skills</h2>
+          <p className="mt-2 text-sm text-ink/70">Get the soul-backup-skill to protect configs and make recovery easier.</p>
           <div className="mt-4">
             <Button asChild>
               <a href={backupUrl} target="_blank" rel="noreferrer">Open Backup Skills</a>
@@ -92,12 +94,18 @@ export default function DownloadsPage() {
         </section>
 
         <section className="rounded-2xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
-          <h2 className="text-lg font-semibold text-ink">EZROUTER Coupon</h2>
-          <p className="mt-2 text-sm text-ink/70">50% welcome discount code.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">3</p>
+          <h2 className="mt-2 text-lg font-semibold text-ink">Promo Code & Instructions</h2>
+          <p className="mt-2 text-sm text-ink/70">Use this 50% welcome code on EZROUTER.</p>
           <div className="mt-4 rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm text-ink">{couponCode}</div>
           <Button className="mt-3" variant="secondary" onClick={copyCoupon}>
-            {copied ? "Copied" : "Copy Coupon"}
+            {copied ? "Copied" : "Copy Promo Code"}
           </Button>
+          <div className="mt-4 space-y-2 text-sm text-ink/75">
+            <p>1. Go to EZROUTER.</p>
+            <p>2. Create or log into your account.</p>
+            <p>3. Apply the code during checkout or recharge.</p>
+          </div>
         </section>
       </div>
     </main>
