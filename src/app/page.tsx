@@ -23,7 +23,7 @@ export default function HomePage() {
           <h1 className="font-display text-4xl font-semibold leading-[1.05] text-ink md:text-6xl">
             {hero.title}
             <span className="ml-3 inline-flex items-center align-middle">
-              <Image src="/lazyclawlogo.png" alt="LazyClaw logo" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
+              <Image src="/clawlitelogo.png" alt="clawlite logo" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
             </span>
           </h1>
 
@@ -51,7 +51,7 @@ export default function HomePage() {
             <div className="relative space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">{hero.previewTitle}</p>
               <div className="overflow-hidden rounded-2xl border border-black/5 bg-black/5">
-                <img src="/lazyclaw-install.gif" alt="LazyClaw install preview" className="h-auto w-full" />
+                <img src="/clawlite-install.gif" alt="clawlite install preview" className="h-auto w-full" />
               </div>
             </div>
           </Card>
@@ -261,7 +261,7 @@ export default function HomePage() {
       <section id="pricing" className="mx-auto max-w-6xl px-6 pb-16">
         <div className="mb-5">
           <Badge className="border-coral/20 bg-coral/10 text-coral">Pricing</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink">BYOK or LazyClaw Tokens. Your choice.</h2>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink">BYOK or ClawLite Tokens. Your choice.</h2>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -279,13 +279,12 @@ export default function HomePage() {
 
           <article className="rounded-3xl border border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">Recommended</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">LazyClaw Tokens</h3>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">ClawLite Tokens</h3>
             <div className="mt-2 text-3xl font-semibold text-ink">Usage-based</div>
             <p className="mt-2 text-sm text-ink/65">Managed billing for fast-moving teams.</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
               <li>• 50% discount from official API price</li>
               <li>• One-click setup, no provider key hunting</li>
-              <li>• Token packs for predictable operations</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
