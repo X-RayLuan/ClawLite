@@ -3,6 +3,24 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
+      slug: 'clawlite-vs-chatgpt-plus',
+      title: 'ClawLite vs ChatGPT Plus: Which AI Assistant Is Better for Cost Control and Customization?',
+      excerpt: 'A practical buyer\'s guide comparing fixed subscription convenience with BYOK flexibility, backup/recovery, and cost control.',
+      date: '2026-03-11'
+    },
+    {
+      slug: 'what-is-a-self-hosted-ai-assistant',
+      title: 'What Is a Self-Hosted AI Assistant? Benefits, Tradeoffs, and Who It’s For',
+      excerpt: 'A practical guide to what a self-hosted AI assistant is, where local-first control helps, and the tradeoffs teams should understand before choosing one.',
+      date: '2026-03-11'
+    },
+    {
+      slug: 'best-affordable-ai-assistant-for-developers',
+      title: 'Best Affordable AI Assistant for Developers in 2026',
+      excerpt: 'A practical buyer’s guide comparing ClawLite, Cursor, ChatGPT Plus, and OpenClaw on real developer affordability: pricing model, setup time, BYOK flexibility, and recovery overhead.',
+      date: '2026-03-11'
+    },
+    {
       slug: 'what-is-an-ai-browser-agent',
       title: 'What Is an AI Browser Agent? A Practical Guide for Ops Teams',
       excerpt: 'A practical guide for operations teams: what AI browser agents are, where they fit, and how to deploy safely with human checkpoints.',
