@@ -40,7 +40,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       text: bodyText || undefined,
     });
 
-    return res.status(200).json({ success: true, id: result.data?.id });
+    if (result.error) {
+      return res.status(502).json({
+        success: false,
+        error: result.error.message || 'Resend send failed',
+        resendError: result.error,
+      });
+    }
+
+    const messageId = result.data?.id;
+    if (!messageId) {
+      return res.status(502).json({
+        success: false,
+        error: 'Resend accepted request but did not return a message id',
+        resendResponse: result.data ?? null,
+      });
+    }
+
+    return res.status(200).json({ success: true, id: messageId });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Failed to send email' });
   }
