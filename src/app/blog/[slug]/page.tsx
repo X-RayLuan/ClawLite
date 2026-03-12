@@ -1761,30 +1761,28 @@ function renderContent(content: string) {
 
   lines.forEach((line, index) => {
     const trimmed = line.trim();
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
 
     if (!trimmed) {
-      flushParagraph(`p-${index}`);
-      flushList(`l-${index}`);
+      flushAll(String(index));
       return;
     }
 
     if (trimmed.startsWith('## ')) {
-      flushParagraph(`p-${index}`);
-      flushList(`l-${index}`);
+      flushAll(String(index));
       elements.push(
         <h2 key={`h2-${index}`} className="text-2xl font-semibold mt-10 mb-4 text-gray-900">
-          {trimmed.slice(3)}
+          {renderInlineMarkdown(trimmed.slice(3))}
         </h2>
       );
       return;
     }
 
     if (trimmed.startsWith('### ')) {
-      flushParagraph(`p-${index}`);
-      flushList(`l-${index}`);
+      flushAll(String(index));
       elements.push(
         <h3 key={`h3-${index}`} className="text-xl font-semibold mt-8 mb-3 text-gray-900">
-          {trimmed.slice(4)}
+          {renderInlineMarkdown(trimmed.slice(4))}
         </h3>
       );
       return;
@@ -1792,16 +1790,23 @@ function renderContent(content: string) {
 
     if (trimmed.startsWith('- ')) {
       flushParagraph(`p-${index}`);
-      listBuffer.push(trimmed.slice(2));
+      flushOrderedList(`ol-${index}`);
+      bulletListBuffer.push(trimmed.slice(2));
+      return;
+    }
+
+    if (orderedMatch) {
+      flushParagraph(`p-${index}`);
+      flushBulletList(`ul-${index}`);
+      orderedListBuffer.push(orderedMatch[1]);
       return;
     }
 
     if (trimmed.startsWith('> ')) {
-      flushParagraph(`p-${index}`);
-      flushList(`l-${index}`);
+      flushAll(String(index));
       elements.push(
         <blockquote key={`bq-${index}`} className="border-l-4 border-blue-500 pl-4 italic text-gray-700 my-6">
-          {trimmed.slice(2)}
+          {renderInlineMarkdown(trimmed.slice(2))}
         </blockquote>
       );
       return;
@@ -1810,8 +1815,7 @@ function renderContent(content: string) {
     paragraphBuffer.push(trimmed);
   });
 
-  flushParagraph('p-final');
-  flushList('l-final');
+  flushAll('final');
 
   return elements;
 }
