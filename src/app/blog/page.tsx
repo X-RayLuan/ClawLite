@@ -15,6 +15,12 @@ export default function BlogPage() {
       date: '2026-03-12'
     },
     {
+      slug: 'best-affordable-ai-assistant',
+      title: 'Best Affordable AI Assistant for Developers and Creators: Why ClawLite Is Worth Trying',
+      excerpt: 'A buyer-focused guide to affordable AI assistants, comparing BYOK flexibility, usage-based costs, setup speed, and why ClawLite fits budget-conscious teams.',
+      date: '2026-03-12'
+    },
+    {
       slug: 'what-is-a-self-hosted-ai-assistant',
       title: 'What Is a Self-Hosted AI Assistant? Benefits, Tradeoffs, and Who It’s For',
       excerpt: 'A practical guide to what a self-hosted AI assistant is, where local-first control helps, and the tradeoffs teams should understand before choosing one.',
