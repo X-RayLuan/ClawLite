@@ -3,6 +3,12 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
+      slug: 'how-to-install-an-ai-assistant-easily',
+      title: 'How to Install an AI Assistant in 3 Minutes Without a Messy Local Setup',
+      excerpt: 'A practical guide to getting a local-first AI assistant running fast with guided setup, BYOK flexibility, and a cleaner first-run path.',
+      date: '2026-03-12'
+    },
+    {
       slug: 'clawlite-vs-chatgpt-plus',
       title: 'ClawLite vs ChatGPT Plus: Which AI Assistant Is Better for Cost Control and Customization?',
       excerpt: 'A practical buyer\'s guide comparing fixed subscription convenience with BYOK flexibility, backup/recovery, and cost control.',
