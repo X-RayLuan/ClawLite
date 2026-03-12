@@ -3,100 +3,82 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
-      slug: 'how-to-install-an-ai-assistant-easily',
-      title: 'How to Install an AI Assistant in 3 Minutes Without a Messy Local Setup',
-      excerpt: 'A practical guide to getting a local-first AI assistant running fast with guided setup, BYOK flexibility, and a cleaner first-run path.',
-      date: '2026-03-12'
-    },
-    {
-      slug: 'clawlite-vs-chatgpt-plus',
-      title: 'ClawLite vs ChatGPT Plus: Which AI Assistant Makes More Sense for Developers in 2026?',
-      excerpt: 'A developer-focused comparison of subscription simplicity versus BYOK flexibility, local-first control, and workflow customization.',
-      date: '2026-03-12'
-    },
-    {
-      slug: 'best-affordable-ai-assistant',
-      title: 'Best Affordable AI Assistant for Developers and Creators: Why ClawLite Is Worth Trying',
-      excerpt: 'A buyer-focused guide to affordable AI assistants, comparing BYOK flexibility, usage-based costs, setup speed, and why ClawLite fits budget-conscious teams.',
-      date: '2026-03-12'
-    },
-    {
-      slug: 'what-is-a-self-hosted-ai-assistant',
-      title: 'What Is a Self-Hosted AI Assistant? Benefits, Tradeoffs, and Who It’s For',
-      excerpt: 'A practical guide to what a self-hosted AI assistant is, where local-first control helps, and the tradeoffs teams should understand before choosing one.',
+      slug: 'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
+      title: 'AI Browser Agents vs Traditional RPA: Which Fits Modern Operations Better?',
+      excerpt: 'A practical comparison framework for operations leaders choosing AI browser agents, traditional RPA, or a hybrid model in 2026.',
       date: '2026-03-11'
     },
     {
-      slug: 'best-affordable-ai-assistant-for-developers',
-      title: 'Best Affordable AI Assistant for Developers in 2026',
-      excerpt: 'A practical buyer’s guide comparing ClawLite, Cursor, ChatGPT Plus, and OpenClaw on real developer affordability: pricing model, setup time, BYOK flexibility, and recovery overhead.',
+      slug: 'how-ai-browser-agents-automate-web-workflows-for-smb-teams',
+      title: 'How AI Browser Agents Automate Repetitive Web Workflows for SMB Teams',
+      excerpt: 'A practical playbook for SMB teams to automate repetitive browser workflows with AI browser agents, governance checkpoints, and measurable ROI.',
       date: '2026-03-11'
-    },
-    {
-      slug: 'what-is-an-ai-browser-agent',
-      title: 'What Is an AI Browser Agent? A Practical Guide for Ops Teams',
-      excerpt: 'A practical guide for operations teams: what AI browser agents are, where they fit, and how to deploy safely with human checkpoints.',
-      date: '2026-03-09'
     },
     {
       slug: 'best-ai-browser-automation-tools',
-      title: 'Best AI Browser Automation Tools for SMB Ops Teams (and Why ClawLite Is Built for Fast Time-to-Value)',
+      title: 'Best AI Browser Automation Tools for SMB Ops Teams',
       excerpt: 'An SMB-focused buying guide to evaluate AI browser automation tools by time-to-value, control, and maintenance cost.',
-      date: '2026-03-08'
+      date: '2026-03-11'
     },
     {
       slug: 'ai-browser-agent-vs-rpa',
       title: 'AI Browser Agent vs RPA: Which Automation Stack Should You Choose in 2026?',
       excerpt: 'A practical 2026 decision framework for choosing AI browser agents, RPA, or a hybrid automation stack.',
-      date: '2026-03-08'
+      date: '2026-03-11'
     },
     {
       slug: 'openclaw-alternative',
-      title: 'OpenClaw Alternative — ClawLite',
+      title: 'Looking for an OpenClaw Alternative? Why Many Teams Choose ClawLite',
       excerpt: 'ClawLite is a one-click OpenClaw distribution with 40% cheaper tokens and 5-minute installation.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     },
     {
       slug: 'how-to-install-openclaw',
-      title: 'How to Install OpenClaw (ClawLite Edition)',
+      title: 'How to Install OpenClaw in 5 Minutes with ClawLite',
       excerpt: 'Install OpenClaw in 5 minutes with ClawLite\'s one-click script. No manual configuration needed.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     },
     {
       slug: 'clawlite-vs-openclaw',
-      title: 'ClawLite vs OpenClaw — Complete Comparison',
+      title: 'ClawLite vs OpenClaw: Which One Makes More Sense for You?',
       excerpt: 'Detailed comparison: ClawLite offers simplified deployment and lower costs, OpenClaw provides full control.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     },
     {
       slug: 'best-ai-agent-platform',
-      title: 'Best AI Agent Platform 2026',
-      excerpt: 'Compare top AI agent platforms: OpenClaw, ClawLite, LangChain, AutoGPT, and CrewAI.',
-      date: '2026-03-04'
+      title: 'Best AI Agent Platform in 2026: What Smart Buyers Should Actually Compare',
+      excerpt: 'A practical buyer\'s guide to comparing AI agent platforms by deployment speed, operating cost, control, and real-world fit for teams that need production-ready automation.',
+      date: '2026-03-11'
     },
     {
       slug: 'openclaw-token-cost',
-      title: 'OpenClaw Token Cost — How to Reduce AI Expenses',
+      title: 'OpenClaw Token Cost: How Teams Can Reduce AI Spend Without Losing Capability',
       excerpt: 'Learn how ClawLite reduces token costs by 40% through batch purchasing and routing optimization.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     },
     {
       slug: 'what-is-clawlite',
-      title: 'What is ClawLite?',
+      title: 'What Is ClawLite? A Straight Answer for Buyers, Builders, and Small Teams',
       excerpt: 'ClawLite is a commercial OpenClaw distribution with one-click installation and managed token pricing.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     },
     {
       slug: 'openclaw-for-beginners',
-      title: 'OpenClaw for Beginners — Complete Guide',
-      excerpt: 'Start with OpenClaw using ClawLite: installation, first commands, and common use cases.',
-      date: '2026-03-04'
+      title: 'OpenClaw for Beginners: Start Faster with ClawLite',
+      excerpt: 'A beginner-friendly guide to installing OpenClaw, choosing your first safe workflow, and using ClawLite to reduce setup friction, mistakes, and time to first success.',
+      date: '2026-03-11'
+    },
+    {
+      slug: 'what-is-an-ai-browser-agent',
+      title: 'What Is an AI Browser Agent? A Practical Guide for Teams That Want Real Automation',
+      excerpt: 'A practical guide for operations teams: what AI browser agents are, where they fit, and how to deploy safely with human checkpoints.',
+      date: '2026-03-11'
     },
     {
       slug: 'clawlite-free-trial',
-      title: 'ClawLite Free Trial — Get Started Today',
+      title: 'ClawLite Free Trial: How to Evaluate It Properly Before You Commit',
       excerpt: 'Try ClawLite free with 10,000 tokens. No credit card required, sign up in under 2 minutes.',
-      date: '2026-03-04'
+      date: '2026-03-11'
     }
   ];
 
