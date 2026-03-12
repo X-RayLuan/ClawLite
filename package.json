@@ -10,7 +10,8 @@
     "lint": "next lint",
     "build:next": "next build",
     "build:electron": "npm run build:next && electron-builder",
-    "build:win": "npm run build:next && electron-builder --win"
+    "build:win": "npm run build:next && electron-builder --win",
+    "sync:user-profiles": "node scripts/sync-user-profiles.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
