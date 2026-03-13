@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 function getReleaseLink(os: string) {
   if (os === 'windows') {
     return 'https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe'
@@ -36,6 +34,7 @@ export async function POST(request: NextRequest) {
           ? `<div style="margin-top:16px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;"><p style="margin:0 0 8px;font-weight:600;">If macOS blocks ClawLite</p><ol style="margin:0 0 8px 18px;padding:0;"><li>Open Finder and locate <code>ClawLite.app</code> (or drag it to Applications first).</li><li>Right-click <code>ClawLite.app</code> → <strong>Open</strong>.</li><li>In the dialog, click <strong>Open</strong> again.</li></ol><p style="margin:8px 0 4px;">If still blocked:</p><ul style="margin:0 0 8px 18px;padding:0;"><li>System Settings → Privacy & Security</li><li>Find “ClawLite was blocked...”</li><li>Click <strong>Open Anyway</strong></li></ul><p style="margin:8px 0 4px;">Terminal (advanced):</p><pre style="margin:0;padding:8px;border-radius:8px;background:#111827;color:#e5e7eb;overflow:auto;">xattr -dr com.apple.quarantine /Applications/ClawLite.app\nopen /Applications/ClawLite.app</pre></div>`
           : ''
 
+      const resend = new Resend(process.env.RESEND_API_KEY)
       const result = await resend.emails.send({
         from: process.env.RESEND_FROM,
         to: [email],

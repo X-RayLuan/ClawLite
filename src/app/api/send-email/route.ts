@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
@@ -18,10 +16,11 @@ export async function POST(req: NextRequest) {
     }
 
     const from = process.env.RESEND_FROM;
-    if (!from) {
-      return NextResponse.json({ error: "RESEND_FROM is not configured" }, { status: 500 });
+    if (!process.env.RESEND_API_KEY || !from) {
+      return NextResponse.json({ error: "Email service is not configured" }, { status: 500 });
     }
 
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const result = await resend.emails.send({
       from,
       to: Array.isArray(to) ? to : [to],
