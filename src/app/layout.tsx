@@ -17,7 +17,10 @@ const bodyFont = Manrope({
 
 export const metadata: Metadata = {
   title: "ClawLite Web Wizard",
-  description: "Install OpenClaw in minutes with a friendly, guided wizard."
+  description: "Install OpenClaw in minutes with a friendly, guided wizard.",
+  icons: {
+    icon: "/icon.svg"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
