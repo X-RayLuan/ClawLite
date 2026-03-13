@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:safe": "next build",
     "start": "next start",
     "lint": "next lint",
     "build:next": "next build",
     "build:electron": "npm run build:next && electron-builder",
-    "build:win": "npm run build:next && electron-builder --win",
-    "sync:user-profiles": "node scripts/sync-user-profiles.mjs"
+    "build:win": "npm run build:next && electron-builder --win"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
@@ -20,6 +20,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^11.0.0",
     "googleapis": "^171.4.0",
+    "lucide-react": "^0.577.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
