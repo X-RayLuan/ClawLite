@@ -24,6 +24,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.85
     },
+
+    {
+      url: `${BASE_URL}/blog/byok-ai-assistant-guide`,
+      lastModified: new Date('2026-03-14T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
+    {
+      url: `${BASE_URL}/blog/clawlite-vs-chatgpt-plus`,
+      lastModified: new Date('2026-03-13T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
     {
       url: `${BASE_URL}/docs`,
       lastModified: now,

@@ -3,6 +3,12 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
+      slug: 'byok-ai-assistant-guide',
+      title: 'What Is BYOK for AI Assistants? Why It Matters for Cost, Privacy, and Control',
+      excerpt: 'A practical guide to BYOK for AI assistants, including when it lowers costs, where it improves control, and how ClawLite makes BYOK easier to adopt.',
+      date: '2026-03-14'
+    },
+    {
       slug: 'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
       title: 'AI Browser Agents vs Traditional RPA: Which Fits Modern Operations Better?',
       excerpt: 'A practical comparison framework for operations leaders choosing AI browser agents, traditional RPA, or a hybrid model in 2026.',
