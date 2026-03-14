@@ -7,7 +7,8 @@ export const content = {
       setup: "Setup",
       troubleshoot: "Troubleshoot",
       docs: "Docs",
-      blog: "Blog"
+      blog: "Blog",
+      skills: "Skills"
     },
     hero: {
       eyebrow: "One-click setup + SOUL Backup for OpenClaw",
@@ -199,7 +200,8 @@ export const content = {
       setup: "安装向导",
       troubleshoot: "排障",
       docs: "文档",
-      blog: "博客"
+      blog: "博客",
+      skills: "Skills"
     },
     hero: {
       eyebrow: "One-click setup + SOUL Backup",
