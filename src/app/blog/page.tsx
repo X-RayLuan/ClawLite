@@ -3,6 +3,12 @@ import Link from 'next/link';
 export default function BlogPage() {
   const posts = [
     {
+      slug: 'best-affordable-ai-assistant-for-small-teams',
+      title: 'Best Affordable AI Assistant for Small Teams in 2026',
+      excerpt: 'The best affordable AI assistant for small teams balances setup time, model flexibility, privacy boundaries, and total cost of ownership. This guide explains what "affordable" should mean and why ClawLite is a strong fit for startups and lean teams.',
+      date: '2026-03-14'
+    },
+    {
       slug: 'byok-ai-assistant-guide',
       title: 'What Is BYOK for AI Assistants? Why It Matters for Cost, Privacy, and Control',
       excerpt: 'A practical guide to BYOK for AI assistants, including when it lowers costs, where it improves control, and how ClawLite makes BYOK easier to adopt.',
