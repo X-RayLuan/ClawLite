@@ -9,6 +9,12 @@ export default function BlogPage() {
       date: '2026-03-14'
     },
     {
+      slug: 'clawlite-vs-chatgpt-plus-for-developers',
+      title: 'ClawLite vs ChatGPT Plus for Developers: Cost Control, Privacy, and Flexibility in 2026',
+      excerpt: 'A practical developer-focused comparison of ClawLite and ChatGPT Plus across pricing model, provider control, privacy boundaries, and workflow flexibility.',
+      date: '2026-03-14'
+    },
+    {
       slug: 'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
       title: 'AI Browser Agents vs Traditional RPA: Which Fits Modern Operations Better?',
       excerpt: 'A practical comparison framework for operations leaders choosing AI browser agents, traditional RPA, or a hybrid model in 2026.',

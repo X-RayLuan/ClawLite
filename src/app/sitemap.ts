@@ -32,6 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8
     },
     {
+      url: `${BASE_URL}/blog/clawlite-vs-chatgpt-plus-for-developers`,
+      lastModified: new Date('2026-03-14T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
+    {
       url: `${BASE_URL}/blog/clawlite-vs-chatgpt-plus`,
       lastModified: new Date('2026-03-13T00:00:00Z'),
       changeFrequency: 'weekly',
