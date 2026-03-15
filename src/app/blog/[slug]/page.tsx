@@ -115,7 +115,12 @@ function renderContent(content: string) {
   const elements: React.ReactNode[] = [];
   let paragraphBuffer: string[] = [];
   let bulletListBuffer: string[] = [];
-  let orderedListBuffer: string[] = [];
+  type OrderedListItem = {
+    text: string;
+    extra: string[];
+  };
+
+  let orderedListBuffer: OrderedListItem[] = [];
   let tableBuffer: string[] = [];
 
   const parseTableRow = (row: string) => row.split('|').slice(1, -1).map((cell) => cell.trim());
@@ -152,7 +157,14 @@ function renderContent(content: string) {
     elements.push(
       <ol key={key} className="mb-6 list-decimal pl-6 space-y-2 text-gray-700 leading-8">
         {orderedListBuffer.map((item, index) => (
-          <li key={`${key}-${index}`}>{renderInlineMarkdown(item)}</li>
+          <li key={`${key}-${index}`}>
+            <div>{renderInlineMarkdown(item.text)}</div>
+            {item.extra.map((extraLine, extraIndex) => (
+              <p key={`${key}-${index}-extra-${extraIndex}`} className="mt-2 text-gray-700 leading-8">
+                {renderInlineMarkdown(extraLine)}
+              </p>
+            ))}
+          </li>
         ))}
       </ol>
     );
@@ -208,7 +220,9 @@ function renderContent(content: string) {
     const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
 
     if (!trimmed) {
-      flushAll(String(index));
+      if (tableBuffer.length || bulletListBuffer.length || paragraphBuffer.length) {
+        flushAll(String(index));
+      }
       return;
     }
 
@@ -252,7 +266,7 @@ function renderContent(content: string) {
       flushParagraph(`p-${index}`);
       flushBulletList(`ul-${index}`);
       flushTable(`table-${index}`);
-      orderedListBuffer.push(orderedMatch[1]);
+      orderedListBuffer.push({ text: orderedMatch[1], extra: [] });
       return;
     }
 
@@ -263,6 +277,11 @@ function renderContent(content: string) {
           {renderInlineMarkdown(trimmed.slice(2))}
         </blockquote>
       );
+      return;
+    }
+
+    if (orderedListBuffer.length) {
+      orderedListBuffer[orderedListBuffer.length - 1].extra.push(trimmed);
       return;
     }
 
