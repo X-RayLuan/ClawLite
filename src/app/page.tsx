@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { content } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
@@ -10,11 +12,53 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
 import { pricingConfig } from "@/lib/pricing";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export default function HomePage() {
   const { lang } = useLang();
+  const router = useRouter();
+  const supabase = useMemo(() => getSupabaseClient(), []);
   const hero = content[lang].hero;
   const setupSteps = content[lang].setup.steps.slice(0, 4);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const client = supabase;
+    let mounted = true;
+
+    async function settleSession() {
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await client.auth.getSession();
+        if (!mounted) return;
+
+        if (data.session?.user) {
+          router.replace("/downloads");
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    settleSession();
+
+    const { data: authListener } = client.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        router.replace("/downloads");
+        return;
+      }
+
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router, supabase]);
 
   return (
     <main className="gradient-bg">
