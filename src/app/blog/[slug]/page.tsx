@@ -116,6 +116,11 @@ function renderContent(content: string) {
   let paragraphBuffer: string[] = [];
   let bulletListBuffer: string[] = [];
   let orderedListBuffer: string[] = [];
+  let tableBuffer: string[] = [];
+
+  const parseTableRow = (row: string) => row.split('|').slice(1, -1).map((cell) => cell.trim());
+  const isTableRow = (line: string) => /^\|.+\|$/.test(line);
+  const isTableDivider = (line: string) => /^\|?(\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?$/.test(line);
 
   const flushParagraph = (key: string) => {
     if (!paragraphBuffer.length) return;
@@ -154,10 +159,48 @@ function renderContent(content: string) {
     orderedListBuffer = [];
   };
 
+  const flushTable = (key: string) => {
+    if (!tableBuffer.length) return;
+    const [headerLine, ...rest] = tableBuffer;
+    const bodyLines = rest.filter((line) => !isTableDivider(line));
+    const headers = parseTableRow(headerLine);
+    const rows = bodyLines.map(parseTableRow);
+
+    elements.push(
+      <div key={`table-wrap-${key}`} className="mb-8 overflow-x-auto">
+        <table className="min-w-full border border-gray-200 text-sm text-gray-700">
+          <thead className="bg-gray-50">
+            <tr>
+              {headers.map((header, index) => (
+                <th key={`th-${key}-${index}`} className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-900">
+                  {renderInlineMarkdown(header)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={`tr-${key}-${rowIndex}`} className="odd:bg-white even:bg-gray-50/50">
+                {row.map((cell, cellIndex) => (
+                  <td key={`td-${key}-${rowIndex}-${cellIndex}`} className="border border-gray-200 px-4 py-3 align-top">
+                    {renderInlineMarkdown(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+
+    tableBuffer = [];
+  };
+
   const flushAll = (key: string) => {
     flushParagraph(`p-${key}`);
     flushBulletList(`ul-${key}`);
     flushOrderedList(`ol-${key}`);
+    flushTable(`table-${key}`);
   };
 
   lines.forEach((line, index) => {
@@ -166,6 +209,14 @@ function renderContent(content: string) {
 
     if (!trimmed) {
       flushAll(String(index));
+      return;
+    }
+
+    if (isTableRow(trimmed) || (tableBuffer.length && isTableDivider(trimmed))) {
+      flushParagraph(`p-${index}`);
+      flushBulletList(`ul-${index}`);
+      flushOrderedList(`ol-${index}`);
+      tableBuffer.push(trimmed);
       return;
     }
 
@@ -192,6 +243,7 @@ function renderContent(content: string) {
     if (trimmed.startsWith('- ')) {
       flushParagraph(`p-${index}`);
       flushOrderedList(`ol-${index}`);
+      flushTable(`table-${index}`);
       bulletListBuffer.push(trimmed.slice(2));
       return;
     }
@@ -199,6 +251,7 @@ function renderContent(content: string) {
     if (orderedMatch) {
       flushParagraph(`p-${index}`);
       flushBulletList(`ul-${index}`);
+      flushTable(`table-${index}`);
       orderedListBuffer.push(orderedMatch[1]);
       return;
     }
