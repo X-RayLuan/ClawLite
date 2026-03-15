@@ -37,10 +37,15 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
   return nodes;
 }
 
-const slugAliases: Record<string, string> = {};
+const slugAliases: Record<string, string> = {
+  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-ai-assistant-guide'
+};
 
 export function generateStaticParams() {
-  return blogStaticParams();
+  return [
+    ...blogStaticParams(),
+    { slug: 'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control' }
+  ];
 }
 
 function getPost(slug: string): BlogPost | undefined {
