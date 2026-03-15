@@ -10,6 +10,7 @@ type PostListItem = {
 
 const excerptBySlug: Record<string, string> = {
   'what-is-a-self-hosted-ai-assistant': 'A self-hosted AI assistant runs under your control instead of inside a closed SaaS box. Here’s what it is, what it costs, where it helps, and when ClawLite is the easier way to get started.',
+  'clawlite-vs-chatgpt-plus': 'ClawLite and ChatGPT Plus solve different problems. ChatGPT Plus is simpler for general use; ClawLite is stronger for developers who want lower variable cost, BYOK, and local-first control.',
   'best-affordable-ai-assistant-for-small-teams': 'The best affordable AI assistant for small teams balances setup time, model flexibility, privacy boundaries, and total cost of ownership. This guide explains what "affordable" should mean and why ClawLite is a strong fit for startups and lean teams.',
   'byok-ai-assistant-guide': 'A practical guide to BYOK for AI assistants, including when it lowers costs, where it improves control, and how ClawLite makes BYOK easier to adopt.',
   'clawlite-vs-chatgpt-plus-for-developers': 'A practical developer-focused comparison of ClawLite and ChatGPT Plus across pricing model, provider control, privacy boundaries, and workflow flexibility.',
@@ -30,6 +31,7 @@ const excerptBySlug: Record<string, string> = {
 
 const orderedSlugs = [
   'what-is-a-self-hosted-ai-assistant',
+  'clawlite-vs-chatgpt-plus',
   'best-affordable-ai-assistant-for-small-teams',
   'byok-ai-assistant-guide',
   'clawlite-vs-chatgpt-plus-for-developers',
