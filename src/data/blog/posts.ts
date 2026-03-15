@@ -15,10 +15,11 @@ export type BlogPost = {
 };
 
 export const blogStaticParams = () => {
-  return [    { slug: 'what-is-a-self-hosted-ai-assistant' },
+  return [
+    { slug: 'what-is-a-self-hosted-ai-assistant' },
     { slug: 'clawlite-vs-chatgpt-plus' },
     { slug: 'how-to-install-an-ai-assistant-easily' },
-
+    { slug: 'byok-ai-assistant-guide' },
     { slug: 'how-ai-browser-agents-automate-web-workflows-for-smb-teams' },
     { slug: 'openclaw-alternative' },
     { slug: 'how-to-install-openclaw' },
