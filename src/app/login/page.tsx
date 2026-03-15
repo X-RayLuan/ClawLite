@@ -5,6 +5,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 
+function getSafeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/")) return "/downloads";
+  if (value.startsWith("//")) return "/downloads";
+  return value;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +31,9 @@ export default function LoginPage() {
       return;
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = getSafeReturnTo(params.get("returnTo"));
+    const redirectTo = `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`;
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },

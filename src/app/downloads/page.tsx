@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -10,7 +10,9 @@ const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/lates
 
 export default function DownloadsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = useMemo(() => getSupabaseClient(), []);
+  const loginHref = `/login?returnTo=${encodeURIComponent(pathname || "/downloads")}`;
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -21,7 +23,7 @@ export default function DownloadsPage() {
 
   useEffect(() => {
     if (!supabase) {
-      router.replace("/login");
+      router.replace(loginHref);
       return;
     }
 
@@ -32,7 +34,7 @@ export default function DownloadsPage() {
 
       const user = data.session?.user;
       if (!user) {
-        router.replace("/login");
+        router.replace(loginHref);
         return;
       }
 
@@ -42,7 +44,7 @@ export default function DownloadsPage() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
-        router.replace("/login");
+        router.replace(loginHref);
       }
     });
 
@@ -50,7 +52,7 @@ export default function DownloadsPage() {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [loginHref, router, supabase]);
 
   async function copyCoupon() {
     await navigator.clipboard.writeText(couponCode);

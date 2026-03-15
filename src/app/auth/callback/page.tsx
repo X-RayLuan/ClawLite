@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase";
 
+function getSafeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/")) return "/downloads";
+  if (value.startsWith("//")) return "/downloads";
+  return value;
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
@@ -11,8 +17,11 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     async function finishLogin() {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = getSafeReturnTo(params.get("returnTo"));
+
       if (!supabase) {
-        router.replace("/login");
+        router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
         return;
       }
 
@@ -29,19 +38,19 @@ export default function AuthCallbackPage() {
 
         if (error) {
           setMessage("Login failed. Please try again.");
-          setTimeout(() => router.replace("/login"), 1200);
+          setTimeout(() => router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`), 1200);
           return;
         }
       }
 
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
-        router.replace("/downloads");
+        router.replace(returnTo);
         return;
       }
 
       setMessage("Session not found. Redirecting to login...");
-      setTimeout(() => router.replace("/login"), 1200);
+      setTimeout(() => router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`), 1200);
     }
 
     finishLogin();
