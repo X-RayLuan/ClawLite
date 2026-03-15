@@ -40,6 +40,12 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const returnTo = getSafeReturnTo(params.get("returnTo"));
     const external = getSafeExternal(params.get("external"));
+
+    try {
+      window.localStorage.setItem("clawlite-post-login-returnTo", returnTo);
+    } catch {
+      // ignore storage failures
+    }
     const callbackParams = new URLSearchParams();
     callbackParams.set("returnTo", returnTo);
     if (external) callbackParams.set("external", external);

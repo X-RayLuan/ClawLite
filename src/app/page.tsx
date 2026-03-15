@@ -27,13 +27,27 @@ export default function HomePage() {
     const client = supabase;
     let mounted = true;
 
+    const consumePendingReturnTo = () => {
+      try {
+        const pending = window.localStorage.getItem("clawlite-post-login-returnTo");
+        if (!pending || !pending.startsWith("/")) return null;
+        window.localStorage.removeItem("clawlite-post-login-returnTo");
+        return pending;
+      } catch {
+        return null;
+      }
+    };
+
     async function settleSession() {
       for (let i = 0; i < 8; i += 1) {
         const { data } = await client.auth.getSession();
         if (!mounted) return;
 
         if (data.session?.user) {
-          router.replace("/downloads");
+          const pending = consumePendingReturnTo();
+          if (pending) {
+            router.replace(pending);
+          }
           return;
         }
 
@@ -45,7 +59,10 @@ export default function HomePage() {
 
     const { data: authListener } = client.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        router.replace("/downloads");
+        const pending = consumePendingReturnTo();
+        if (pending) {
+          router.replace(pending);
+        }
         return;
       }
 
