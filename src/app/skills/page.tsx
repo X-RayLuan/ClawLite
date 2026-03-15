@@ -94,7 +94,18 @@ export default function SkillsPage() {
                   <Card key={skill.slug} className="flex h-full flex-col border-black/10 bg-white/90 p-6 shadow-soft">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <Badge className="border-sea/20 bg-sea/10 text-sea">{skill.category}</Badge>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="border-sea/20 bg-sea/10 text-sea">{skill.category}</Badge>
+                          <Badge
+                            className={
+                              skill.category === "OpenClaw Ops"
+                                ? "border-coral/20 bg-coral/10 text-coral"
+                                : "border-black/10 bg-black/5 text-ink/65"
+                            }
+                          >
+                            {skill.category === "OpenClaw Ops" ? "Published by ClawLite" : "Recommended"}
+                          </Badge>
+                        </div>
                         <h3 className="mt-3 text-xl font-semibold text-ink">{skill.name}</h3>
                       </div>
                       <span className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-xs font-medium text-ink/60">
