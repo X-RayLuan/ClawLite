@@ -4,10 +4,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase";
 
+const ALLOWED_EXTERNALS = new Set([
+  "https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00",
+  "https://openrouter.ezsite.ai",
+]);
+
 function getSafeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/")) return "/downloads";
   if (value.startsWith("//")) return "/downloads";
   return value;
+}
+
+function getSafeExternal(value: string | null) {
+  if (!value) return null;
+  return ALLOWED_EXTERNALS.has(value) ? value : null;
 }
 
 export default function AuthCallbackPage() {
@@ -19,9 +29,13 @@ export default function AuthCallbackPage() {
     async function finishLogin() {
       const params = new URLSearchParams(window.location.search);
       const returnTo = getSafeReturnTo(params.get("returnTo"));
+      const external = getSafeExternal(params.get("external"));
+      const loginFallback = external
+        ? `/login?external=${encodeURIComponent(external)}&returnTo=${encodeURIComponent(returnTo)}`
+        : `/login?returnTo=${encodeURIComponent(returnTo)}`;
 
       if (!supabase) {
-        router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+        router.replace(loginFallback);
         return;
       }
 
@@ -38,19 +52,23 @@ export default function AuthCallbackPage() {
 
         if (error) {
           setMessage("Login failed. Please try again.");
-          setTimeout(() => router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`), 1200);
+          setTimeout(() => router.replace(loginFallback), 1200);
           return;
         }
       }
 
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
+        if (external) {
+          window.location.replace(external);
+          return;
+        }
         router.replace(returnTo);
         return;
       }
 
       setMessage("Session not found. Redirecting to login...");
-      setTimeout(() => router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`), 1200);
+      setTimeout(() => router.replace(loginFallback), 1200);
     }
 
     finishLogin();

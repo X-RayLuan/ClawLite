@@ -8,6 +8,7 @@ import { useLang } from "@/components/lang-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ExternalAuthLink } from "@/components/external-auth-link";
 
 export default function HomePage() {
   const { lang } = useLang();
@@ -288,7 +289,10 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="https://openrouter.ezsite.ai" target="_blank">Get Tokens via EZRouter</Link>
+                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation</ExternalAuthLink>
+              </Button>
+              <Button asChild variant="secondary">
+                <ExternalAuthLink href="https://openrouter.ezsite.ai">Get Tokens via EZRouter</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
                 <Link href="/login">Start Setup</Link>

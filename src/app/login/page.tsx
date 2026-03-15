@@ -5,10 +5,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 
+const ALLOWED_EXTERNALS = new Set([
+  "https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00",
+  "https://openrouter.ezsite.ai",
+]);
+
 function getSafeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/")) return "/downloads";
   if (value.startsWith("//")) return "/downloads";
   return value;
+}
+
+function getSafeExternal(value: string | null) {
+  if (!value) return null;
+  return ALLOWED_EXTERNALS.has(value) ? value : null;
 }
 
 export default function LoginPage() {
@@ -33,7 +43,11 @@ export default function LoginPage() {
 
     const params = new URLSearchParams(window.location.search);
     const returnTo = getSafeReturnTo(params.get("returnTo"));
-    const redirectTo = `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`;
+    const external = getSafeExternal(params.get("external"));
+    const callbackParams = new URLSearchParams();
+    callbackParams.set("returnTo", returnTo);
+    if (external) callbackParams.set("external", external);
+    const redirectTo = `${window.location.origin}/auth/callback?${callbackParams.toString()}`;
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },
