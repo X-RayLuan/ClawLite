@@ -36,11 +36,19 @@ export default function AuthCallbackPage() {
       }
 
       const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
       const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
 
-      if (accessToken && refreshToken) {
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setMessage("Login failed. Please try again.");
+          setTimeout(() => router.replace(loginFallback), 1200);
+          return;
+        }
+      } else if (accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
