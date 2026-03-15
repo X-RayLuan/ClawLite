@@ -52,13 +52,22 @@ export default function DownloadsPage() {
 
     settleSession();
 
-    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = client.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setEmail(session.user.email || "");
         setLoading(false);
         return;
       }
-      router.replace(loginHref);
+
+      // Supabase can emit an initial empty session while client storage is still hydrating.
+      // Avoid bouncing a freshly logged-in user back to /login on that transient event.
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        router.replace(loginHref);
+      }
     });
 
     return () => {
