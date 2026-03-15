@@ -6,7 +6,7 @@ Complete Windows installer package using Inno Setup for ClawLite (OpenClaw Helpe
 
 This installer automates:
 - Node.js detection and installation (v20.11.0+)
-- OpenClaw@2026.2.26 global npm installation
+- OpenClaw@3.13 global npm installation
 - ClawLite application setup
 - Default configuration (127.0.0.1:4545)
 - Desktop shortcut creation
@@ -71,7 +71,7 @@ installer/windows-fallback/output/clawsitesetup-2026.2.26.exe
 
 3. **Verify OpenClaw Installation**
    ```powershell
-   openclaw --version    # Should show 2026.2.26 or latest
+   openclaw --version    # Should show 3.13
    openclaw gateway status
    ```
 
@@ -112,7 +112,7 @@ If installer fails, users can install manually:
 # Run installer with default options
 
 # 2. Install OpenClaw
-npm install -g openclaw@2026.2.26
+npm install -g openclaw@2026.3.13
 
 # 3. Extract ClawLite
 # Unzip clawlite-portable.zip to desired location
@@ -136,7 +136,7 @@ mkdir $env:USERPROFILE\.clawlite
 ### OpenClaw Installation Fails
 - Verify npm is in PATH: `npm --version`
 - Check npm registry access: `npm ping`
-- Try manual installation: `npm install -g openclaw`
+- Try manual installation: `npm install -g openclaw@2026.3.13`
 - Check npm logs: `%APPDATA%\npm-cache\_logs`
 
 ### ClawLite Won't Start
@@ -192,7 +192,7 @@ Edit `clawsitesetup.iss`:
 
 Edit `scripts/install-openclaw.ps1`:
 ```powershell
-$OpenClawVersion = "2026.2.26"
+$OpenClawVersion = "3.13"
 ```
 
 ### Add Custom Scripts
