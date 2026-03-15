@@ -265,7 +265,7 @@ export default function HomePage() {
           <h2 className="mt-3 font-display text-3xl font-semibold text-ink">BYOK or ClawLite Tokens. Your choice.</h2>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-3">
           <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Flexible</p>
             <h3 className="mt-2 text-2xl font-semibold text-ink">BYOK</h3>
@@ -289,13 +289,27 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation — $500</ExternalAuthLink>
-              </Button>
-              <Button asChild variant="secondary">
                 <ExternalAuthLink href="https://openrouter.ezsite.ai">Get Tokens via EZRouter</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
                 <Link href="/login">Start Setup</Link>
+              </Button>
+            </div>
+          </article>
+
+          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Hands-on Help</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">Remote Implementation</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">$500</div>
+            <p className="mt-2 text-sm text-ink/65">We install, configure, and get your workflow running with you.</p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/75">
+              <li>• Guided setup with a real operator</li>
+              <li>• Faster path to a working deployment</li>
+              <li>• Best for teams that want implementation help, not homework</li>
+            </ul>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild>
+                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation</ExternalAuthLink>
               </Button>
             </div>
           </article>
