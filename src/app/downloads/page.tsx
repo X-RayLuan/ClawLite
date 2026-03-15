@@ -27,25 +27,38 @@ export default function DownloadsPage() {
       return;
     }
 
+    const client = supabase;
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
+    async function settleSession() {
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await client.auth.getSession();
+        if (!mounted) return;
 
-      const user = data.session?.user;
-      if (!user) {
+        const user = data.session?.user;
+        if (user) {
+          setEmail(user.email || "");
+          setLoading(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      if (mounted) {
         router.replace(loginHref);
+      }
+    }
+
+    settleSession();
+
+    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setEmail(session.user.email || "");
+        setLoading(false);
         return;
       }
-
-      setEmail(user.email || "");
-      setLoading(false);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        router.replace(loginHref);
-      }
+      router.replace(loginHref);
     });
 
     return () => {

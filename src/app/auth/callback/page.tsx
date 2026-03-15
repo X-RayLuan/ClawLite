@@ -61,13 +61,22 @@ export default function AuthCallbackPage() {
         }
       }
 
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
+      let settledUser = null;
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+          settledUser = data.session.user;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      if (settledUser) {
         if (external) {
           window.location.replace(external);
           return;
         }
-        router.replace(returnTo);
+        window.location.replace(returnTo);
         return;
       }
 
