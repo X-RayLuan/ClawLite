@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
+import { pricingConfig } from "@/lib/pricing";
 
 export default function HomePage() {
   const { lang } = useLang();
@@ -268,9 +269,9 @@ export default function HomePage() {
         <div className="grid gap-5 lg:grid-cols-3">
           <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Flexible</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">BYOK</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">$0 platform fee</div>
-            <p className="mt-2 text-sm text-ink/65">Your key. Your usage. Your bill.</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.byok.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.byok.platformFee}</div>
+            <p className="mt-2 text-sm text-ink/65">{pricingConfig.byok.description}</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
               <li>• Connect your own OpenAI/Anthropic/other keys</li>
               <li>• Full control over spend and provider choice</li>
@@ -280,16 +281,16 @@ export default function HomePage() {
 
           <article className="rounded-3xl border border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">Recommended</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">ClawLite Tokens</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">Usage-based</div>
-            <p className="mt-2 text-sm text-ink/65">Managed billing for fast-moving teams.</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.tokens.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.tokens.pricingLabel}</div>
+            <p className="mt-2 text-sm text-ink/65">{pricingConfig.tokens.description}</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• 50% discount from official API price</li>
+              <li>• {pricingConfig.tokens.discountText}</li>
               <li>• One-click setup, no provider key hunting</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <ExternalAuthLink href="https://openrouter.ezsite.ai">Get Tokens via EZRouter</ExternalAuthLink>
+                <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Get Tokens via EZRouter</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
                 <Link href="/login">Start Setup</Link>
@@ -299,9 +300,9 @@ export default function HomePage() {
 
           <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Hands-on Help</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">Remote Implementation</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">$500</div>
-            <p className="mt-2 text-sm text-ink/65">We install, configure, and get your workflow running with you.</p>
+            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.remoteImplementation.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.remoteImplementation.price}</div>
+            <p className="mt-2 text-sm text-ink/65">{pricingConfig.remoteImplementation.description}</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
               <li>• Guided setup with a real operator</li>
               <li>• Faster path to a working deployment</li>
@@ -309,7 +310,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation</ExternalAuthLink>
+                <ExternalAuthLink href={pricingConfig.remoteImplementation.stripeUrl}>{pricingConfig.remoteImplementation.ctaLabel}</ExternalAuthLink>
               </Button>
             </div>
           </article>

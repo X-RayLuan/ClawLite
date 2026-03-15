@@ -3,12 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { pricingConfig, isAllowedExternalAuthTarget } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
-
-const ALLOWED_EXTERNALS = new Set([
-  "https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00",
-  "https://openrouter.ezsite.ai",
-]);
 
 function getSafeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/")) return "/downloads";
@@ -18,7 +14,7 @@ function getSafeReturnTo(value: string | null) {
 
 function getSafeExternal(value: string | null) {
   if (!value) return null;
-  return ALLOWED_EXTERNALS.has(value) ? value : null;
+  return isAllowedExternalAuthTarget(value) ? value : null;
 }
 
 export default function LoginPage() {
@@ -66,7 +62,9 @@ export default function LoginPage() {
   return (
     <main className="mx-auto min-h-[70vh] max-w-2xl px-6 py-16">
       <h1 className="font-display text-3xl font-semibold text-ink">Login to ClawLite</h1>
-      <p className="mt-3 text-ink/70">Login once to unlock installer downloads, backup skills, and your EZROUTER coupon.</p>
+      <p className="mt-3 text-ink/70">
+        Login once to unlock installer downloads, backup skills, your EZROUTER coupon, and {pricingConfig.remoteImplementation.label.toLowerCase()} checkout.
+      </p>
 
       <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
         <label htmlFor="email" className="block text-sm font-medium text-ink">

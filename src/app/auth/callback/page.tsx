@@ -2,12 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isAllowedExternalAuthTarget } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
-
-const ALLOWED_EXTERNALS = new Set([
-  "https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00",
-  "https://openrouter.ezsite.ai",
-]);
 
 function getSafeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/")) return "/downloads";
@@ -17,7 +13,7 @@ function getSafeReturnTo(value: string | null) {
 
 function getSafeExternal(value: string | null) {
   if (!value) return null;
-  return ALLOWED_EXTERNALS.has(value) ? value : null;
+  return isAllowedExternalAuthTarget(value) ? value : null;
 }
 
 export default function AuthCallbackPage() {

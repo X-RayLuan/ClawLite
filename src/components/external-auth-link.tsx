@@ -2,15 +2,11 @@
 
 import Link from "next/link";
 import { MouseEvent, useMemo } from "react";
+import { isAllowedExternalAuthTarget } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
 
-const ALLOWED_EXTERNALS = new Set([
-  "https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00",
-  "https://openrouter.ezsite.ai",
-]);
-
 function getSafeExternalTarget(href: string) {
-  return ALLOWED_EXTERNALS.has(href) ? href : null;
+  return isAllowedExternalAuthTarget(href) ? href : null;
 }
 
 export function ExternalAuthLink({
