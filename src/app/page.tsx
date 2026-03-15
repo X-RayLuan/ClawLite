@@ -289,7 +289,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation</ExternalAuthLink>
+                <ExternalAuthLink href="https://buy.stripe.com/cNidR8fPO5HS3mW6lB8IU00">Book Remote Implementation — $500</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
                 <ExternalAuthLink href="https://openrouter.ezsite.ai">Get Tokens via EZRouter</ExternalAuthLink>
