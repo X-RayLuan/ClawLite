@@ -15,7 +15,7 @@ const groupedSkills = categoryOrder
 
 export const metadata = {
   title: "ClawLite Skills",
-  description: "Explore the ClawHub skills published by the ClawLite team."
+  description: "Browse ClawHub skills: OpenClaw Ops by ClawLite, plus recommended skills for adjacent workflows."
 };
 
 export default function SkillsPage() {
@@ -26,18 +26,18 @@ export default function SkillsPage() {
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div>
             <h1 className="font-display text-4xl font-semibold leading-[1.02] text-ink md:text-6xl">
-              Skills we publish to ClawHub — organized as products, not just prompts.
+              OpenClaw Ops we publish — plus recommended skills worth using.
             </h1>
             <p className="mt-4 max-w-3xl text-lg text-ink/70 md:text-xl">
-              These are the workflows we turn into reusable agent capabilities: OpenClaw operations,
-              recovery, SEO/GEO, frontend execution, research, and growth systems.
+              Only the OpenClaw Ops category is published by the ClawLite team. The other sections are recommended
+              ClawHub skills for adjacent workflows like SEO/GEO, frontend execution, research, memory, and growth.
             </p>
           </div>
           <Card className="border-coral/20 bg-white/90 p-6 shadow-soft">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">Why this tab exists</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• Show ClawLite as an operating layer, not just an installer.</li>
-              <li>• Turn our ClawHub work into browsable proof.</li>
+              <li>• Show the OpenClaw Ops skills ClawLite actually publishes.</li>
+              <li>• Recommend strong adjacent skills without pretending we authored them.</li>
               <li>• Give users ready-made building blocks for real workflows.</li>
             </ul>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -59,9 +59,9 @@ export default function SkillsPage() {
       <section className="mx-auto max-w-6xl px-6 pb-6">
         <div className="grid gap-4 rounded-3xl border border-black/5 bg-white/70 p-5 shadow-soft md:grid-cols-3 md:p-7">
           <div className="rounded-2xl bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">Published Skills</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">Catalog Skills</p>
             <p className="mt-2 text-3xl font-semibold text-ink">{skillCatalog.length}</p>
-            <p className="mt-1 text-sm text-ink/65">Live in the catalog and ready to explore.</p>
+            <p className="mt-1 text-sm text-ink/65">OpenClaw Ops by us; the rest are recommended to explore.</p>
           </div>
           <div className="rounded-2xl bg-white/90 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">Focus</p>
