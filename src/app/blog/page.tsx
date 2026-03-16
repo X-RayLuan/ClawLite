@@ -9,6 +9,7 @@ type PostListItem = {
 };
 
 const excerptBySlug: Record<string, string> = {
+  'ai-token-pricing-explained': 'A practical 2026 guide to estimating real AI assistant cost, comparing token billing with subscriptions, and deciding when BYOK or ClawLite makes financial sense.',
   'what-is-a-self-hosted-ai-assistant': 'A self-hosted AI assistant runs under your control instead of inside a closed SaaS box. Here’s what it is, what it costs, where it helps, and when ClawLite is the easier way to get started.',
   'clawlite-vs-chatgpt-plus': 'ClawLite and ChatGPT Plus solve different problems. ChatGPT Plus is simpler for general use; ClawLite is stronger for developers who want lower variable cost, BYOK, and local-first control.',
   'best-affordable-ai-assistant-for-developers': 'The best affordable AI assistant for developers is not the cheapest sticker price. It is the one with the best balance of workflow power, setup friction, and cost control. Here’s how ClawLite stacks up.',
@@ -31,6 +32,7 @@ const excerptBySlug: Record<string, string> = {
 };
 
 const orderedSlugs = [
+  'ai-token-pricing-explained',
   'what-is-a-self-hosted-ai-assistant',
   'clawlite-vs-chatgpt-plus',
   'best-affordable-ai-assistant-for-developers',
