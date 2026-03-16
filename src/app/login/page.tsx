@@ -1,13 +1,15 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getSafeExternal, getSafeReturnTo } from "@/lib/auth-flow";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -26,6 +28,57 @@ export default function LoginPage() {
   } else if (authError) {
     authErrorMessage = authErrorDescription || "Login could not be completed. Request a fresh login link to continue.";
   }
+
+  useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    const client = supabase;
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = getSafeReturnTo(params.get("returnTo"));
+    const external = getSafeExternal(params.get("external"));
+    let mounted = true;
+
+    async function settleSession() {
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await client.auth.getSession();
+        if (!mounted) return;
+
+        if (data.session?.user) {
+          if (external) {
+            window.location.replace(external);
+            return;
+          }
+
+          router.replace(returnTo);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    settleSession();
+
+    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        return;
+      }
+
+      if (external) {
+        window.location.replace(external);
+        return;
+      }
+
+      router.replace(returnTo);
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router, supabase]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
