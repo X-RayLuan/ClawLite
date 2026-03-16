@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
+import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -94,7 +95,7 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="shadow-glow" asChild>
-              <Link href="/downloads">{hero.start}</Link>
+              <Link href={DOWNLOAD_LOGIN_HREF}>{hero.start}</Link>
             </Button>
           </div>
 
@@ -316,7 +317,7 @@ export default function HomePage() {
 
         <div className="mt-8 text-center">
           <Button size="lg" className="shadow-glow" asChild>
-            <Link href="/downloads">Get Started Free</Link>
+            <Link href={DOWNLOAD_LOGIN_HREF}>Get Started Free</Link>
           </Button>
         </div>
       </section>
@@ -354,7 +355,7 @@ export default function HomePage() {
                 <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Get Tokens via EZRouter</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
-                <Link href="/downloads">Start Setup</Link>
+                <Link href={DOWNLOAD_LOGIN_HREF}>Start Setup</Link>
               </Button>
             </div>
           </article>

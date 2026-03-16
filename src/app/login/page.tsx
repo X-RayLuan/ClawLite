@@ -3,19 +3,9 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { pricingConfig, isAllowedExternalAuthTarget } from "@/lib/pricing";
+import { getSafeExternal, getSafeReturnTo } from "@/lib/auth-flow";
+import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
-
-function getSafeReturnTo(value: string | null) {
-  if (!value || !value.startsWith("/")) return "/downloads";
-  if (value.startsWith("//")) return "/downloads";
-  return value;
-}
-
-function getSafeExternal(value: string | null) {
-  if (!value) return null;
-  return isAllowedExternalAuthTarget(value) ? value : null;
-}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -24,6 +14,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   const supabase = useMemo(() => getSupabaseClient(), []);
+  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const authError = params.get("authError");
+  const authErrorDescription = params.get("authErrorDescription");
+
+  let authErrorMessage = "";
+  if (authError === "expired") {
+    authErrorMessage = authErrorDescription || "That magic link expired. Request a fresh login link to continue to the download page.";
+  } else if (authError === "invalid") {
+    authErrorMessage = authErrorDescription || "That magic link is invalid. Request a fresh login link to continue to the download page.";
+  } else if (authError) {
+    authErrorMessage = authErrorDescription || "Login could not be completed. Request a fresh login link to continue.";
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -73,6 +75,12 @@ export default function LoginPage() {
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
+        {authErrorMessage ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {authErrorMessage}
+          </div>
+        ) : null}
+
         <label htmlFor="email" className="block text-sm font-medium text-ink">
           Email
         </label>

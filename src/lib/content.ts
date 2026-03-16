@@ -187,7 +187,7 @@ export const content = {
     },
     docsPage: {
       description: "Open the official OpenClaw documentation in a new tab.",
-      back: "Back to setup"
+      back: "Back to installer download"
     },
     footer: {
       tagline: "Built for humans. Powered by OpenClaw.",
@@ -361,7 +361,7 @@ export const content = {
     },
     docsPage: {
       description: "打开 OpenClaw 官方文档（新标签页）。",
-      back: "返回安装向导"
+      back: "返回下载安装器"
     },
     footer: {
       tagline: "为真人打造的安装体验，由 OpenClaw 提供支持。",

@@ -7,7 +7,6 @@
 
 ## Core Pages
 - https://clawlite.ai/
-- https://clawlite.ai/setup
 - https://clawlite.ai/docs
 - https://clawlite.ai/troubleshoot
 - https://clawlite.ai/blog

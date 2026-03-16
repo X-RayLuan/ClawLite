@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLang } from "@/components/lang-provider";
 import { content } from "@/lib/content";
+import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { Button } from "@/components/ui/button";
 
 export default function DocsPage() {
@@ -31,7 +32,7 @@ export default function DocsPage() {
           />
         </div>
 
-        <Link href="/setup" className="text-sm text-ink/60 underline-offset-4 hover:underline">
+        <Link href={DOWNLOAD_LOGIN_HREF} className="text-sm text-ink/60 underline-offset-4 hover:underline">
           {docs.back}
         </Link>
       </section>

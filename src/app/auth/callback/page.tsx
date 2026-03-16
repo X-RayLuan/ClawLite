@@ -2,19 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAllowedExternalAuthTarget } from "@/lib/pricing";
+import { buildLoginHref, getSafeExternal, getSafeReturnTo } from "@/lib/auth-flow";
 import { getSupabaseClient } from "@/lib/supabase";
-
-function getSafeReturnTo(value: string | null) {
-  if (!value || !value.startsWith("/")) return "/downloads";
-  if (value.startsWith("//")) return "/downloads";
-  return value;
-}
-
-function getSafeExternal(value: string | null) {
-  if (!value) return null;
-  return isAllowedExternalAuthTarget(value) ? value : null;
-}
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -26,26 +15,39 @@ export default function AuthCallbackPage() {
       const params = new URLSearchParams(window.location.search);
       const returnTo = getSafeReturnTo(params.get("returnTo"));
       const external = getSafeExternal(params.get("external"));
-      const loginFallback = external
-        ? `/login?external=${encodeURIComponent(external)}&returnTo=${encodeURIComponent(returnTo)}`
-        : `/login?returnTo=${encodeURIComponent(returnTo)}`;
+      const loginFallback = (authError?: string | null, authErrorDescription?: string | null) =>
+        buildLoginHref({ returnTo, external, authError, authErrorDescription });
 
       if (!supabase) {
-        router.replace(loginFallback);
+        router.replace(loginFallback());
         return;
       }
 
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
+      const queryError = url.searchParams.get("error");
+      const queryErrorDescription = url.searchParams.get("error_description");
       const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const hashError = hash.get("error");
+      const hashErrorDescription = hash.get("error_description");
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
+      const authError = queryError || hashError;
+      const authErrorDescription = queryErrorDescription || hashErrorDescription;
+
+      if (authError) {
+        const fallbackError = /expired/i.test(authErrorDescription || authError) ? "expired" : "invalid";
+        setMessage("Magic link is no longer valid. Redirecting to login...");
+        setTimeout(() => router.replace(loginFallback(fallbackError, authErrorDescription)), 1200);
+        return;
+      }
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
-          setMessage("Login failed. Please try again.");
-          setTimeout(() => router.replace(loginFallback), 1200);
+          const fallbackError = /expired/i.test(error.message || "") ? "expired" : "invalid";
+          setMessage("Login failed. Redirecting to login...");
+          setTimeout(() => router.replace(loginFallback(fallbackError, error.message)), 1200);
           return;
         }
       } else if (accessToken && refreshToken) {
@@ -55,10 +57,15 @@ export default function AuthCallbackPage() {
         });
 
         if (error) {
-          setMessage("Login failed. Please try again.");
-          setTimeout(() => router.replace(loginFallback), 1200);
+          const fallbackError = /expired/i.test(error.message || "") ? "expired" : "invalid";
+          setMessage("Login failed. Redirecting to login...");
+          setTimeout(() => router.replace(loginFallback(fallbackError, error.message)), 1200);
           return;
         }
+      } else {
+        setMessage("Magic link is missing or expired. Redirecting to login...");
+        setTimeout(() => router.replace(loginFallback("expired")), 1200);
+        return;
       }
 
       let settledUser = null;
@@ -81,7 +88,7 @@ export default function AuthCallbackPage() {
       }
 
       setMessage("Session not found. Redirecting to login...");
-      setTimeout(() => router.replace(loginFallback), 1200);
+      setTimeout(() => router.replace(loginFallback("invalid")), 1200);
     }
 
     finishLogin();

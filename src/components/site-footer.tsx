@@ -17,9 +17,6 @@ export function SiteFooter() {
           <p className="mt-1">{footer.cta}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <Link href="/setup" className="text-ink hover:text-ink/70">
-            {nav.setup}
-          </Link>
           <Link href="/troubleshoot" className="text-ink hover:text-ink/70">
             {nav.troubleshoot}
           </Link>
