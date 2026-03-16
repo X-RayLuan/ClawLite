@@ -94,7 +94,7 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="shadow-glow" asChild>
-              <Link href="/login">{hero.start}</Link>
+              <Link href="/downloads">{hero.start}</Link>
             </Button>
           </div>
 
@@ -316,7 +316,7 @@ export default function HomePage() {
 
         <div className="mt-8 text-center">
           <Button size="lg" className="shadow-glow" asChild>
-            <Link href="/login">Get Started Free</Link>
+            <Link href="/downloads">Get Started Free</Link>
           </Button>
         </div>
       </section>
@@ -354,7 +354,7 @@ export default function HomePage() {
                 <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Get Tokens via EZRouter</ExternalAuthLink>
               </Button>
               <Button asChild variant="secondary">
-                <Link href="/login">Start Setup</Link>
+                <Link href="/downloads">Start Setup</Link>
               </Button>
             </div>
           </article>
