@@ -9,6 +9,7 @@ type PostListItem = {
 };
 
 const excerptBySlug: Record<string, string> = {
+  'best-cheap-models-for-openclaw-tool-use': 'A practical 2026 buyer guide to cheaper OpenClaw model routing, tool-use reliability, and why hybrid model stacks usually beat pure bargain hunting.',
   'ai-token-pricing-explained': 'A practical 2026 guide to estimating real AI assistant cost, comparing token billing with subscriptions, and deciding when BYOK or ClawLite makes financial sense.',
   'clawlite-vs-cursor': 'A practical comparison of ClawLite and Cursor across pricing model, workflow scope, local-first control, and which one fits developers who need more than editor-native coding.',
   'what-is-a-self-hosted-ai-assistant': 'A self-hosted AI assistant runs under your control instead of inside a closed SaaS box. Here’s what it is, what it costs, where it helps, and when ClawLite is the easier way to get started.',
@@ -33,6 +34,7 @@ const excerptBySlug: Record<string, string> = {
 };
 
 const orderedSlugs = [
+  'best-cheap-models-for-openclaw-tool-use',
   'clawlite-vs-cursor',
   'ai-token-pricing-explained',
   'what-is-a-self-hosted-ai-assistant',
