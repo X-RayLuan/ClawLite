@@ -47,8 +47,16 @@ function renderActivationEmail({
 export async function POST(req: NextRequest) {
   try {
     const incomingSecret = req.headers.get('x-jenny-secret')
-    const expectedSecret = process.env.JENNY_SEND_ENDPOINT_SECRET
-    if (expectedSecret && incomingSecret !== expectedSecret) {
+    const expectedSecret = process.env.JENNY_SEND_SECRET || process.env.JENNY_SEND_ENDPOINT_SECRET
+
+    if (!expectedSecret) {
+      return NextResponse.json(
+        { success: false, error: 'Missing JENNY_SEND_SECRET' },
+        { status: 500 }
+      )
+    }
+
+    if (incomingSecret !== expectedSecret) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -65,6 +73,13 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(recipients) || recipients.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Recipients required' },
+        { status: 400 }
+      )
+    }
+
+    if (recipients.length > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Batch size exceeds limit (100)' },
         { status: 400 }
       )
     }
