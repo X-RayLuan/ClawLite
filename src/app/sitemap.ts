@@ -33,7 +33,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${BASE_URL}/blog/clawlite-vs-chatgpt-plus`,
-      lastModified: new Date('2026-03-13T00:00:00Z'),
+      lastModified: new Date('2026-03-17T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
+    {
+      url: `${BASE_URL}/blog/what-is-a-self-hosted-ai-assistant`,
+      lastModified: new Date('2026-03-17T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
+    {
+      url: `${BASE_URL}/blog/best-affordable-ai-assistant-for-developers`,
+      lastModified: new Date('2026-03-17T00:00:00Z'),
+      changeFrequency: 'weekly',
+      priority: 0.8
+    },
+    {
+      url: `${BASE_URL}/blog/best-cheap-models-for-openclaw-tool-use`,
+      lastModified: new Date('2026-03-17T00:00:00Z'),
       changeFrequency: 'weekly',
       priority: 0.8
     },
