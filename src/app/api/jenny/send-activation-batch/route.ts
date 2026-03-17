@@ -18,6 +18,66 @@ type ActivationBatchRequest = {
   recipients: ActivationRecipient[]
 }
 
+const SEND_DELAY_MS = 250
+const MAX_RATE_LIMIT_RETRIES = 3
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function isRateLimitError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || '')
+  return /too many requests|rate limit|429/i.test(message)
+}
+
+async function sendWithRetry({
+  resend,
+  from,
+  email,
+  subject,
+  html,
+  campaignId,
+  userId,
+}: {
+  resend: Resend
+  from: string
+  email: string
+  subject: string
+  html: string
+  campaignId: string
+  userId: string
+}) {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt += 1) {
+    const response = await resend.emails.send({
+      from,
+      to: [email],
+      subject,
+      html,
+      headers: {
+        'X-Campaign-Id': campaignId,
+        'X-User-Id': userId,
+      },
+    })
+
+    if (!response.error && response.data?.id) {
+      return { messageId: response.data.id }
+    }
+
+    const error = new Error(response.error?.message || 'Resend rejected send')
+    lastError = error
+
+    if (!isRateLimitError(error) || attempt === MAX_RATE_LIMIT_RETRIES) {
+      break
+    }
+
+    await sleep(1000 * (attempt + 1))
+  }
+
+  throw lastError || new Error('Unknown send failure')
+}
+
 function renderActivationEmail({
   firstName,
   ctaUrl,
@@ -124,37 +184,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const response = await resend!.emails.send({
+        const { messageId } = await sendWithRetry({
+          resend: resend!,
           from: from!,
-          to: [email],
+          email,
           subject,
           html: renderActivationEmail({ firstName: recipient.firstName, ctaUrl }),
-          headers: {
-            'X-Campaign-Id': campaignId,
-            'X-User-Id': recipient.userId,
-          },
+          campaignId,
+          userId: recipient.userId,
         })
-
-        if (response.error) {
-          results.push({
-            userId: recipient.userId,
-            email,
-            accepted: false,
-            error: response.error.message || 'Resend rejected send',
-          })
-          continue
-        }
-
-        const messageId = response.data?.id
-        if (!messageId) {
-          results.push({
-            userId: recipient.userId,
-            email,
-            accepted: false,
-            error: 'Resend accepted request but returned no message id',
-          })
-          continue
-        }
 
         results.push({
           userId: recipient.userId,
@@ -169,6 +207,10 @@ export async function POST(req: NextRequest) {
           accepted: false,
           error: err?.message || 'Unknown send failure',
         })
+      }
+
+      if (!dryRun) {
+        await sleep(SEND_DELAY_MS)
       }
     }
 
