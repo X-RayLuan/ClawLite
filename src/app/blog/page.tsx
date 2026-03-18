@@ -34,6 +34,7 @@ const excerptBySlug: Record<string, string> = {
 };
 
 const orderedSlugs = [
+  'byok-ai-assistant-guide',
   'best-cheap-models-for-openclaw-tool-use',
   'clawlite-vs-cursor',
   'ai-token-pricing-explained',
@@ -41,7 +42,6 @@ const orderedSlugs = [
   'clawlite-vs-chatgpt-plus',
   'best-affordable-ai-assistant-for-developers',
   'best-affordable-ai-assistant-for-small-teams',
-  'byok-ai-assistant-guide',
   'clawlite-vs-chatgpt-plus-for-developers',
   'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
   'how-ai-browser-agents-automate-web-workflows-for-smb-teams',

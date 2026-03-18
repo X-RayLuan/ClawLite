@@ -21,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     {
       url: `${BASE_URL}/blog/byok-ai-assistant-guide`,
-      lastModified: new Date('2026-03-14T00:00:00Z'),
+      lastModified: new Date('2026-03-18T00:00:00Z'),
       changeFrequency: 'weekly',
       priority: 0.8
     },
