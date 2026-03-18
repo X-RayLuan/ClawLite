@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalAuthLink } from "@/components/external-auth-link";
 
 export const metadata = {
   title: "ClawLite Pricing",
@@ -53,7 +52,7 @@ export default function PricingPage() {
             </ul>
             <div className="mt-6">
               <Button asChild>
-                <ExternalAuthLink href="https://openrouter.ezsite.ai">Get Tokens via EZRouter</ExternalAuthLink>
+                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
               </Button>
             </div>
           </article>
