@@ -99,7 +99,17 @@ export default function HomePage() {
             </Button>
           </div>
 
-
+          <Card className="max-w-xl border-sea/20 bg-sea/5 p-4 shadow-soft">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">New to OpenClaw?</p>
+                <p className="mt-1 text-sm text-ink/75">Start with the guided setup page before you download.</p>
+              </div>
+              <Button asChild variant="secondary">
+                <Link href="/setup">See Setup Guide</Link>
+              </Button>
+            </div>
+          </Card>
         </div>
 
         <motion.div

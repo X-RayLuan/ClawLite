@@ -42,6 +42,7 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link href="/">{nav.home}</Link>
+          <Link href="/setup">{nav.setup ?? "Setup"}</Link>
           <Link href="/skills">{nav.skills ?? "Skills"}</Link>
           <Link href="/troubleshoot">{nav.troubleshoot}</Link>
           <Link href="/docs" className="text-ink/70 hover:text-ink">
