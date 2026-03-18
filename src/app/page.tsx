@@ -353,9 +353,6 @@ export default function HomePage() {
               <Button asChild>
                 <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
               </Button>
-              <Button asChild variant="secondary">
-                <Link href={DOWNLOAD_LOGIN_HREF}>Start Setup</Link>
-              </Button>
             </div>
           </article>
 
