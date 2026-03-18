@@ -2,7 +2,7 @@
 # ClawLite Windows Installer - OpenClaw Installation Script
 
 $ErrorActionPreference = "Stop"
-$OpenClawVersion = "2026.2.26"
+$OpenClawVersion = (Get-Content (Join-Path $PSScriptRoot "..\..\openclaw-version.txt") -Raw).Trim()
 
 Write-Host "Installing OpenClaw@$OpenClawVersion..." -ForegroundColor Cyan
 
@@ -31,16 +31,8 @@ try {
     
 } catch {
     Write-Host "Failed to install OpenClaw: $_" -ForegroundColor Red
-    Write-Host "Attempting alternative installation method..." -ForegroundColor Yellow
-    
-    # Fallback: try without version specifier
-    try {
-        npm install -g openclaw
-        Write-Host "OpenClaw installed (latest version)" -ForegroundColor Green
-    } catch {
-        Write-Host "Installation failed. Please install manually: npm install -g openclaw" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "Installation failed. Please install manually: npm install -g openclaw@$OpenClawVersion" -ForegroundColor Red
+    exit 1
 }
 
 Write-Host "OpenClaw installation complete." -ForegroundColor Green

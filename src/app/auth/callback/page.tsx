@@ -81,6 +81,15 @@ export default function AuthCallbackPage() {
       if (settledUser) {
         try {
           const rpcClient = supabase as any;
+          await rpcClient.rpc("sync_auth_user_to_profile", {
+            p_user_id: settledUser.id,
+          });
+        } catch (profileSyncError) {
+          console.error("user profile sync failed", profileSyncError);
+        }
+
+        try {
+          const rpcClient = supabase as any;
           await rpcClient.rpc("mark_waitlist_customer_converted", {
             p_email: settledUser.email,
             p_user_id: settledUser.id,
