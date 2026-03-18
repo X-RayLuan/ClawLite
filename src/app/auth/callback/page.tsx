@@ -79,6 +79,19 @@ export default function AuthCallbackPage() {
       }
 
       if (settledUser) {
+        try {
+          const rpcClient = supabase as any;
+          await rpcClient.rpc("mark_waitlist_customer_converted", {
+            p_email: settledUser.email,
+            p_user_id: settledUser.id,
+            p_confirmed_at: settledUser.email_confirmed_at ?? null,
+            p_last_sign_in_at: settledUser.last_sign_in_at ?? null,
+            p_source: "auth_callback",
+          });
+        } catch (conversionError) {
+          console.error("waitlist conversion sync failed", conversionError);
+        }
+
         if (external) {
           window.location.replace(external);
           return;
