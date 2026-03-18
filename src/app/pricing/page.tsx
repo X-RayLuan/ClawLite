@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExternalAuthLink } from "@/components/external-auth-link";
 
 export const metadata = {
   title: "ClawLite Pricing",

@@ -10,6 +10,7 @@ import { useLang } from "@/components/lang-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ExternalAuthLink } from "@/components/external-auth-link";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
