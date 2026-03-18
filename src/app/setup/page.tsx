@@ -1,489 +1,399 @@
-"use client";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import {
+  ArrowRight,
+  BadgeCheck,
+  Coins,
+  Download,
+  ExternalLink,
+  Github,
+  HelpCircle,
+  Package,
+  Server,
+  ShieldCheck,
+  Sparkles,
+  Wrench,
+} from 'lucide-react';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { content } from "@/lib/content";
-import { useLang } from "@/components/lang-provider";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { CommandBlock } from "@/components/command-block";
-import { cn } from "@/lib/utils";
+const quickFacts = [
+  'Best for people who want the easiest way to install OpenClaw and reach first value faster.',
+  'Typical setup path: download installer → login → choose token path → finish activation.',
+  'ClawLite reduces setup friction with one-click install, cheaper token options, and faster activation guidance.',
+];
 
-const osOptions = ["macos", "windows", "linux"] as const;
-type OSOption = (typeof osOptions)[number];
-type ApiMode = "clawlite" | "byok";
-type Channel = "telegram" | "web";
-type SetupPath = "wizard" | "installer";
+const setupSteps = [
+  {
+    title: 'Download the installer',
+    body: 'Start with the ClawLite installer instead of manual OpenClaw setup if you want the fastest path to a working environment.',
+  },
+  {
+    title: 'Log in to unlock your setup path',
+    body: 'Login unlocks downloads, coupon access, and guided setup so your install flow is tied to the right account state.',
+  },
+  {
+    title: 'Choose your token path',
+    body: 'Pick BYOK if you already have API keys, or use the ClawLite token coupon path if you want a cheaper and simpler start.',
+  },
+  {
+    title: 'Finish activation and first run',
+    body: 'Complete the remaining setup steps, confirm your configuration, and reach your first successful run faster.',
+  },
+];
 
-function detectOS(): OSOption {
-  if (typeof navigator === "undefined") return "macos";
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("win")) return "windows";
-  if (ua.includes("linux")) return "linux";
-  return "macos";
-}
+const prerequisites = [
+  'A supported macOS or Windows machine',
+  'An email login for your ClawLite account',
+  'A token path decision: BYOK or ClawLite Tokens',
+  'Roughly 5–15 minutes for the guided setup path',
+];
+
+const pathChoices = [
+  {
+    title: 'Bring Your Own API Key (BYOK)',
+    description:
+      'Best if you already know which provider you want and prefer to manage your own usage directly.',
+  },
+  {
+    title: 'ClawLite Tokens',
+    description:
+      'Best if you want a cheaper starting path, less setup confusion, and a faster route from signup to activation.',
+  },
+];
+
+const blockers = [
+  {
+    title: 'Login confusion',
+    body: 'Users often expect download and activation to be the same step. In practice, login is what unlocks the correct installer, coupon, and post-download path.',
+  },
+  {
+    title: 'Token path uncertainty',
+    body: 'A lot of setup friction comes from not knowing whether to use BYOK or the ClawLite coupon path. This page should make that choice obvious.',
+  },
+  {
+    title: 'Installer expectations',
+    body: 'Users need a plain-language explanation of what the installer does, what it does not do, and what success should look like after setup.',
+  },
+  {
+    title: 'Activation drop-off',
+    body: 'Most friction happens after signup but before first value. The setup page should focus on reducing that gap, not just on download clicks.',
+  },
+];
+
+const faqs = [
+  {
+    question: 'What is the easiest way to install ClawLite?',
+    answer:
+      'For most users, the easiest path is to use the ClawLite installer, log in, choose your token path, and complete the guided activation flow.',
+  },
+  {
+    question: 'Is ClawLite the same as OpenClaw?',
+    answer:
+      'No. ClawLite is the easier install and activation path around OpenClaw, designed to reduce setup friction and help users reach first value faster.',
+  },
+  {
+    question: 'Do I need my own API key?',
+    answer:
+      'Not always. You can choose BYOK if you already have your own API key, or use the ClawLite token path if you want a simpler and often cheaper starting option.',
+  },
+  {
+    question: 'How long does setup usually take?',
+    answer:
+      'The guided installer path is intended to get most users through setup much faster than a manual OpenClaw installation, typically in a short session instead of a long troubleshooting cycle.',
+  },
+  {
+    question: 'What operating systems are supported?',
+    answer:
+      'ClawLite currently focuses on the installer path for macOS and Windows. If you want more control, manual install options are also available.',
+  },
+  {
+    question: 'What if I do not want to do setup myself?',
+    answer:
+      'If you want a faster done-with-you path, use Remote Implementation instead of forcing a DIY setup that may stall before activation.',
+  },
+];
+
+const manualOptions = [
+  {
+    title: 'Install with NPM',
+    href: 'https://www.npmjs.com/search?q=openclaw',
+    icon: Package,
+  },
+  {
+    title: 'Install with Docker',
+    href: 'https://hub.docker.com/search?q=openclaw',
+    icon: Server,
+  },
+  {
+    title: 'Install from source',
+    href: 'https://github.com/X-RayLuan/OpenClaw',
+    icon: Github,
+  },
+];
 
 export default function SetupPage() {
-  const { lang } = useLang();
-  const t = content[lang].setup;
-
-  const [current, setCurrent] = useState(0);
-  const [os, setOs] = useState<OSOption>("macos");
-  const [apiMode, setApiMode] = useState<ApiMode>("clawlite");
-  const [provider, setProvider] = useState("openai");
-  const [apiKey, setApiKey] = useState("");
-  const [channel, setChannel] = useState<Channel>("telegram");
-  const [setupPath, setSetupPath] = useState<SetupPath>("wizard");
-  const [installerEmail, setInstallerEmail] = useState("");
-  const [sendingInstallerLink, setSendingInstallerLink] = useState(false);
-  const [installerMsg, setInstallerMsg] = useState<string | null>(null);
-  const [tutorialEmail, setTutorialEmail] = useState("");
-  const [downloadingTutorial, setDownloadingTutorial] = useState(false);
-  const [tutorialMsg, setTutorialMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    setOs(detectOS());
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get('path');
-    const hash = window.location.hash;
-    if (q === 'installer' || hash === '#installer') {
-      setSetupPath('installer');
-    } else {
-      setSetupPath('wizard');
-    }
-  }, []);
-
-  const osCommand = "Auto-detected in page";
-
-  const steps = t.steps;
-  const copyLabel = t.buttons.copy;
-  const copiedLabel = t.buttons.copied;
-
-  const nextStep = () => setCurrent((prev) => Math.min(prev + 1, steps.length - 1));
-  const prevStep = () => setCurrent((prev) => Math.max(prev - 1, 0));
-
-  const sendInstallerLink = async () => {
-    const email = installerEmail.trim();
-    if (!email) {
-      setInstallerMsg("Please enter your email first.");
-      return;
-    }
-
-    setSendingInstallerLink(true);
-    setInstallerMsg(null);
-    try {
-      // 1) Persist lead first
-      const collectResponse = await fetch('/api/collect-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          source: `installer-download-${os}`
-        })
-      });
-
-      const collectData = await collectResponse.json().catch(() => ({}));
-      const collectOk = collectResponse.ok && !!collectData?.success;
-
-      // 2) Send installer link email (non-blocking even if collect failed)
-      const sendResponse = await fetch('/api/send-installer-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, os })
-      });
-
-      const sendData = await sendResponse.json();
-      if (!sendResponse.ok || !sendData?.success) {
-        throw new Error(sendData?.error || 'Failed to send installer link');
-      }
-
-      if (sendData?.downloadUrl) {
-        window.open(sendData.downloadUrl, '_blank');
-        if (sendData?.sent) {
-          setInstallerMsg(collectOk ? 'Installer link sent. Please check your inbox.' : 'Installer link sent. Email capture failed this time.');
-        } else {
-          setInstallerMsg('Email failed, direct download opened.');
-        }
-      } else {
-        setInstallerMsg(collectOk ? 'Installer link sent. Please check your inbox.' : 'Installer link sent. Email capture failed this time.');
-      }
-    } catch (error: any) {
-      setInstallerMsg(error?.message || 'Failed to process your request');
-    } finally {
-      setSendingInstallerLink(false);
-    }
-  };
-
-  const collectAndDownloadTutorial = async () => {
-    const email = tutorialEmail.trim();
-    if (!email) {
-      setTutorialMsg('Please enter your email first.');
-      return;
-    }
-
-    setDownloadingTutorial(true);
-    setTutorialMsg(null);
-    try {
-      const collectResponse = await fetch('/api/collect-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          source: 'wizard-pdf-download'
-        })
-      });
-
-      const collectData = await collectResponse.json().catch(() => ({}));
-      if (!collectResponse.ok || !collectData?.success) {
-        throw new Error(collectData?.error || 'Failed to save email');
-      }
-
-      setTutorialMsg('Downloading tutorial PDF...');
-      window.open('/downloads/openclaw-tutorial-beginner-to-intermediate-en.pdf', '_blank');
-    } catch (error: any) {
-      setTutorialMsg(error?.message || 'Failed to process your request');
-    } finally {
-      setDownloadingTutorial(false);
-    }
-  };
-
   return (
-    <main className="gradient-bg min-h-screen">
-      <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-ink">{t.title}</h1>
-            <p className="text-ink/70">{t.subtitle}</p>
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_32%,#f8fafc_100%)] text-gray-900">
+      <section className="container mx-auto px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-600">Setup guide</p>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 md:text-6xl">
+            The easiest way to set up ClawLite and OpenClaw faster
+          </h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-600 md:text-xl">
+            ClawLite setup is the fastest guided path for people who want easier OpenClaw installation,
+            cheaper token options, faster activation, and less setup friction before the first successful run.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button size="lg" className="w-full px-8 py-6 text-lg sm:w-auto" asChild>
+              <Link href="/downloads">
+                <Download className="mr-2 h-5 w-5" />
+                Download Installer
+              </Link>
+            </Button>
+            <Button size="lg" variant="secondary" className="w-full px-8 py-6 text-lg sm:w-auto" asChild>
+              <Link href="/remote-implementation">
+                <Wrench className="mr-2 h-5 w-5" />
+                Need Setup Help?
+              </Link>
+            </Button>
           </div>
-          <Badge>{steps[current].title}</Badge>
-        </div>
 
-        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle>{t.sidebar.title}</CardTitle>
-              <CardDescription>
-                {steps.length} {t.sidebar.countLabel}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                {steps.map((step, index) => (
-                  <li key={step.id}>
-                    <button
-                      type="button"
-                      onClick={() => setCurrent(index)}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition",
-                        index === current
-                          ? "border-ink bg-ink text-white shadow-glow"
-                          : "border-black/5 bg-white hover:border-black/20"
-                      )}
-                    >
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-semibold">
-                        {index + 1}
-                      </span>
-                      <span>
-                        <span className="block font-semibold">{step.title}</span>
-                        <span className={cn("text-xs", index === current ? "text-white/80" : "text-ink/60")}>
-                          {step.description}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={steps[current].id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.3 }}
-              >
-                <CardHeader>
-                  <CardTitle>{steps[current].title}</CardTitle>
-                  <CardDescription>{steps[current].description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {current === 0 && (
-                    <div className="space-y-6">
-                      <div className="rounded-2xl border border-black/5 bg-mist px-4 py-3 text-sm">
-                        {t.os.autoDetected}: <strong>{t.os[os]}</strong>
-                      </div>
-
-                      <div className="rounded-2xl border border-black/10 bg-white p-5 text-sm text-ink/75">
-                        <p className="font-semibold text-ink">Step 1 — Environment Preparation (Beginner)</p>
-                        <ul className="mt-2 space-y-1">
-                          <li>• OS: macOS / Linux / Windows (WSL required)</li>
-                          <li>• Node.js: v18 or higher</li>
-                          <li>• API key: Claude or GPT</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium text-ink/70">{t.os.prompt}</p>
-                        <div className="mt-3 flex flex-wrap gap-3">
-                          {osOptions.map((option) => (
-                            <Button
-                              key={option}
-                              type="button"
-                              variant={os === option ? "primary" : "secondary"}
-                              onClick={() => setOs(option)}
-                            >
-                              {t.os[option]}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-
-                    </div>
-                  )}
-
-                  {current === 1 && (
-                    <div className="space-y-6" id="installer">
-                      {setupPath === 'installer' ? (
-                        <>
-
-                          <div className="space-y-3">
-                            <label className="text-sm font-medium text-ink/80">Email</label>
-                            <input
-                              type="email"
-                              placeholder="you@company.com"
-                              value={installerEmail}
-                              onChange={(event) => setInstallerEmail(event.target.value)}
-                              className="w-full bg-transparent border-0 border-b border-black/15 px-0 py-2 text-sm text-ink outline-none focus:border-ink"
-                            />
-                            <Button type="button" onClick={sendInstallerLink} disabled={sendingInstallerLink}>
-                              {sendingInstallerLink ? 'Sending...' : 'Download Installer'}
-                            </Button>
-                            {installerMsg && (
-                              <p className="text-sm text-ink/70">{installerMsg}</p>
-                            )}
-                          </div>
-
-                          <p className="text-sm text-ink/60">
-                            If you do not receive the email within 1-2 minutes, check spam/junk folder.
-                          </p>
-
-                          {os === 'macos' && (
-                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                              <p className="font-semibold">If macOS blocks ClawLite</p>
-                              <ol className="mt-2 list-decimal space-y-1 pl-5">
-                                <li>Open Finder and locate ClawLite.app (or drag it to Applications first).</li>
-                                <li>Right-click ClawLite.app → Open.</li>
-                                <li>In the dialog, click Open again.</li>
-                              </ol>
-                              <p className="mt-2">If still blocked: System Settings → Privacy &amp; Security → Open Anyway.</p>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-
-                          <CommandBlock
-                            label="Method 1 (Beginner recommended): NPM"
-                            command="npm install -g openclaw\nopenclaw --version"
-                            copyLabel={copyLabel}
-                            copiedLabel={copiedLabel}
-                          />
-
-                          <CommandBlock
-                            label="Method 2: Docker"
-                            command="docker pull openclaw/openclaw:latest\ndocker run -d --name openclaw \\\n-v ~/.openclaw:/root/.openclaw \\\nopenclaw/openclaw:latest"
-                            copyLabel={copyLabel}
-                            copiedLabel={copiedLabel}
-                          />
-
-                          <CommandBlock
-                            label="Method 3: Source (Developer)"
-                            command="git clone https://github.com/openclaw/openclaw.git\ncd openclaw\nnpm install\nnpm run start"
-                            copyLabel={copyLabel}
-                            copiedLabel={copiedLabel}
-                          />
-
-                          <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
-                            ✅ Completion criteria: <strong>openclaw --version</strong> or <strong>openclaw --help</strong> works normally.
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {current === 2 && (
-                    <div className="space-y-6" id="wizard">
-                      <p className="text-sm font-medium text-ink/70">Step 3 — Initial Configuration (Wizard-first, beginner mode)</p>
-
-                      <CommandBlock
-                        label="Start onboarding wizard"
-                        command="openclaw onboard"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
-
-                      <div className="rounded-2xl border border-black/10 bg-white p-5 text-sm text-ink/75">
-                        <p className="font-semibold text-ink">The wizard will guide you through:</p>
-                        <ul className="mt-2 space-y-1">
-                          <li>1) Choose provider (Claude / GPT / local model)</li>
-                          <li>2) Enter API key</li>
-                          <li>3) Select messaging platform (Telegram / Discord / WhatsApp / Web)</li>
-                          <li>4) Configure permissions (sandbox recommended)</li>
-                        </ul>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <button
-                          type="button"
-                          onClick={() => setApiMode("clawlite")}
-                          className={cn(
-                            "rounded-2xl border px-4 py-4 text-left transition",
-                            apiMode === "clawlite"
-                              ? "border-ink bg-ink text-white shadow-glow"
-                              : "border-black/10 bg-white"
-                          )}
-                        >
-                          <p className="text-sm font-semibold">Use ClawLite tokens</p>
-                          <p className={cn("mt-2 text-sm", apiMode === "clawlite" ? "text-white/80" : "text-ink/70")}>
-                            Faster start, managed billing, no manual provider setup.
-                          </p>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setApiMode("byok")}
-                          className={cn(
-                            "rounded-2xl border px-4 py-4 text-left transition",
-                            apiMode === "byok"
-                              ? "border-ink bg-ink text-white shadow-glow"
-                              : "border-black/10 bg-white"
-                          )}
-                        >
-                          <p className="text-sm font-semibold">BYOK</p>
-                          <p className={cn("mt-2 text-sm", apiMode === "byok" ? "text-white/80" : "text-ink/70")}>
-                            Use your own provider and API key.
-                          </p>
-                        </button>
-                      </div>
-
-                      {apiMode === "byok" && (
-                        <div className="space-y-4">
-                          <Input
-                            placeholder={t.api.providerLabel}
-                            value={provider}
-                            onChange={(event) => setProvider(event.target.value)}
-                          />
-                          <Input
-                            placeholder={t.api.keyLabel}
-                            value={apiKey}
-                            onChange={(event) => setApiKey(event.target.value)}
-                          />
-                        </div>
-                      )}
-
-                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
-                        ✅ Completion criteria: API key configured + at least one channel selected + permission settings completed (sandbox recommended).
-                      </div>
-                    </div>
-                  )}
-
-                  {current === 3 && (
-                    <div className="space-y-6">
-                      <p className="text-sm font-medium text-ink/70">Step 4 — Connect channel and complete first hello conversation</p>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <button
-                          type="button"
-                          onClick={() => setChannel("telegram")}
-                          className={cn(
-                            "rounded-2xl border px-4 py-4 text-left transition",
-                            channel === "telegram"
-                              ? "border-ink bg-ink text-white shadow-glow"
-                              : "border-black/10 bg-white"
-                          )}
-                        >
-                          <p className="text-sm font-semibold">{t.channel.telegram}</p>
-                          <ul className={cn("mt-2 space-y-1 text-xs", channel === "telegram" ? "text-white/80" : "text-ink/70")}>
-                            {t.channel.telegramSteps.map((step) => (
-                              <li key={step}>• {step}</li>
-                            ))}
-                          </ul>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setChannel("web")}
-                          className={cn(
-                            "rounded-2xl border px-4 py-4 text-left transition",
-                            channel === "web"
-                              ? "border-ink bg-ink text-white shadow-glow"
-                              : "border-black/10 bg-white"
-                          )}
-                        >
-                          <p className="text-sm font-semibold">{t.channel.webchat}</p>
-                          <ul className={cn("mt-2 space-y-1 text-xs", channel === "web" ? "text-white/80" : "text-ink/70")}>
-                            {t.channel.webchatSteps.map((step) => (
-                              <li key={step}>• {step}</li>
-                            ))}
-                          </ul>
-                        </button>
-                      </div>
-
-                      <CommandBlock
-                        label="Verification command"
-                        command="Send: hello"
-                        copyLabel={copyLabel}
-                        copiedLabel={copiedLabel}
-                      />
-                      <div className="rounded-2xl border border-sea/20 bg-sea/5 px-4 py-3 text-sm text-ink/75">
-                        Setup is only complete when you receive a real assistant reply to <strong>hello</strong>.
-                      </div>
-
-                      <div className="rounded-2xl border border-black/10 bg-white p-5">
-                        <p className="text-sm font-semibold text-ink">Need full tutorial?</p>
-                        <p className="mt-2 text-sm text-ink/70">
-                          Enter your email to download the beginner-to-intermediate OpenClaw tutorial PDF.
-                        </p>
-                        <div className="mt-4 space-y-3">
-                          <input
-                            type="email"
-                            placeholder="you@company.com"
-                            value={tutorialEmail}
-                            onChange={(event) => setTutorialEmail(event.target.value)}
-                            className="w-full bg-transparent border-0 border-b border-black/15 px-0 py-2 text-sm text-ink outline-none focus:border-ink"
-                          />
-                          <Button type="button" variant="secondary" onClick={collectAndDownloadTutorial} disabled={downloadingTutorial}>
-                            {downloadingTutorial ? 'Processing...' : 'Download Tutorial PDF'}
-                          </Button>
-                          {tutorialMsg && <p className="text-sm text-ink/70">{tutorialMsg}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="flex items-center justify-between border-t border-black/5 px-6 py-4">
-              <Button type="button" variant="secondary" onClick={prevStep} disabled={current === 0}>
-                {t.buttons.back}
-              </Button>
-              <div className="text-xs text-ink/60">
-                {current + 1} / {steps.length}
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 text-left md:grid-cols-3">
+            {quickFacts.map((fact) => (
+              <div key={fact} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <p className="text-sm leading-6 text-gray-700">{fact}</p>
               </div>
-              <Button type="button" onClick={nextStep} disabled={current === steps.length - 1}>
-                {current === steps.length - 1 ? t.buttons.done : t.buttons.next}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 pb-8">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Quick answer</p>
+              <h2 className="mt-1 text-2xl font-semibold text-gray-900 md:text-3xl">What setup includes</h2>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+              <h3 className="text-lg font-semibold text-gray-900">What ClawLite setup is</h3>
+              <p className="mt-3 text-base leading-7 text-gray-600">
+                ClawLite setup is the guided path that helps users go from interest to a working OpenClaw-based
+                environment faster, with a clearer install path, a token choice, and a shorter route to first value.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+              <h3 className="text-lg font-semibold text-gray-900">Who this page is for</h3>
+              <p className="mt-3 text-base leading-7 text-gray-600">
+                This page is best for people who want the easiest install path, want to understand BYOK versus coupon
+                setup, and want fewer blockers between signup and activation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <h2 className="text-2xl font-semibold text-gray-900 md:text-3xl">What you need before setup</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {prerequisites.map((item) => (
+              <div key={item} className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                <BadgeCheck className="mt-0.5 h-5 w-5 text-blue-600" />
+                <p className="text-base text-gray-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 pb-8">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <HelpCircle className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Step by step</p>
+              <h2 className="mt-1 text-2xl font-semibold text-gray-900 md:text-3xl">How ClawLite setup works</h2>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {setupSteps.map((step, index) => (
+              <div key={step.title} className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Step {index + 1}</p>
+                <h3 className="mt-3 text-xl font-semibold text-gray-900">{step.title}</h3>
+                <p className="mt-2 text-base leading-7 text-gray-600">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <Coins className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">Choose your path</p>
+              <h2 className="mt-1 text-2xl font-semibold text-gray-900 md:text-3xl">BYOK or ClawLite Tokens?</h2>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {pathChoices.map((choice) => (
+              <div key={choice.title} className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                <h3 className="text-lg font-semibold text-gray-900">{choice.title}</h3>
+                <p className="mt-3 text-base leading-7 text-gray-600">{choice.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-6 text-sm text-gray-500 md:text-base">
+            If you want pricing details or coupon logic, continue to the pricing and downloads path after login.
+          </p>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <h2 className="text-2xl font-semibold text-gray-900 md:text-3xl">Common setup blockers</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {blockers.map((blocker) => (
+              <div key={blocker.title} className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                <h3 className="text-lg font-semibold text-gray-900">{blocker.title}</h3>
+                <p className="mt-3 text-base leading-7 text-gray-600">{blocker.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="manual-install" className="container mx-auto px-4 py-12 md:py-16">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">Advanced path</p>
+            <h2 className="mt-2 text-2xl font-semibold text-gray-900 md:text-3xl">Manual install options</h2>
+            <p className="mt-3 text-base text-gray-600 md:text-lg">
+              If you want more control and more setup responsibility, you can still install manually. The installer is the
+              best option for most users, but manual paths remain available for advanced use cases.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {manualOptions.map((option) => {
+              const Icon = option.icon;
+              return (
+                <a
+                  key={option.title}
+                  href={option.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group rounded-2xl border border-gray-200 bg-gray-50 p-6 transition hover:border-gray-300 hover:bg-white"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-gray-700 shadow-sm">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-gray-900">{option.title}</h3>
+                  <div className="mt-3 inline-flex items-center text-sm font-medium text-blue-600">
+                    Open option
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-10 md:py-14">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-blue-100 bg-blue-50/70 p-6 shadow-sm md:p-10">
+          <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">Need help?</p>
+              <h2 className="mt-2 text-2xl font-semibold text-gray-900 md:text-3xl">Use Remote Implementation if you want less setup work</h2>
+              <p className="mt-3 text-base leading-7 text-gray-700">
+                If you do not want to manage setup yourself, Remote Implementation is the better path. It is designed for
+                people who want faster activation without turning installation into a side project.
+              </p>
+            </div>
+            <div className="flex md:justify-end">
+              <Button size="lg" className="w-full md:w-auto" asChild>
+                <Link href="/remote-implementation">
+                  See Remote Implementation
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </div>
-          </Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-12 md:py-16">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-700">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">FAQ</p>
+              <h2 className="mt-1 text-2xl font-semibold text-gray-900 md:text-3xl">Setup FAQ</h2>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4">
+            {faqs.map((faq) => (
+              <div key={faq.question} className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                <h3 className="text-lg font-semibold text-gray-900">{faq.question}</h3>
+                <p className="mt-3 text-base leading-7 text-gray-600">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-sm leading-7 text-gray-500">
+            Last updated: March 2026. This page is intended to explain the ClawLite setup path clearly enough for users,
+            search engines, and AI answer systems to understand how installation, activation, token choice, and setup
+            help fit together.
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 pb-16 md:pb-20">
+        <div className="mx-auto max-w-4xl rounded-[2rem] bg-gray-900 px-6 py-12 text-center text-white shadow-xl md:px-10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white">
+            <Wrench className="h-7 w-7" />
+          </div>
+          <h2 className="mt-6 text-3xl font-semibold md:text-4xl">Ready to start setup?</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-white/80 md:text-lg">
+            Choose the faster setup path, reduce activation friction, and get to your first real ClawLite result sooner.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button size="lg" className="w-full bg-white px-8 py-6 text-lg text-gray-900 hover:bg-gray-100 sm:w-auto" asChild>
+              <Link href="/downloads">
+                <Download className="mr-2 h-5 w-5" />
+                Download Installer
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="secondary"
+              className="w-full border border-white/30 bg-transparent px-8 py-6 text-lg text-white hover:bg-white/10 hover:text-white sm:w-auto"
+              asChild
+            >
+              <Link href="/remote-implementation">Get Setup Help</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </main>
