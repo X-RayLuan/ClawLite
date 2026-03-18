@@ -119,8 +119,8 @@ export default function DownloadsPage() {
 
         <section className="rounded-2xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">3</p>
-          <h2 className="mt-2 text-lg font-semibold text-ink">Promo Code & Instructions</h2>
-          <p className="mt-2 text-sm text-ink/70">Use this 50% welcome code on EZROUTER.</p>
+          <h2 className="mt-2 text-lg font-semibold text-ink">50% Discount Token Coupon</h2>
+          <p className="mt-2 text-sm text-ink/70">Login complete. Use this 50% welcome code on EZROUTER.</p>
           <div className="mt-4 rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm text-ink">{couponCode}</div>
           <Button className="mt-3" variant="secondary" onClick={copyCoupon}>
             {copied ? "Copied" : "Copy Promo Code"}

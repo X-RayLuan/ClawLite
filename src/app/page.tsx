@@ -10,7 +10,6 @@ import { useLang } from "@/components/lang-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ExternalAuthLink } from "@/components/external-auth-link";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -352,7 +351,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Get Tokens via EZRouter</ExternalAuthLink>
+                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
               </Button>
               <Button asChild variant="secondary">
                 <Link href={DOWNLOAD_LOGIN_HREF}>Start Setup</Link>

@@ -124,7 +124,7 @@ export default function LoginPage() {
     <main className="mx-auto min-h-[70vh] max-w-2xl px-6 py-16">
       <h1 className="font-display text-3xl font-semibold text-ink">Login to ClawLite</h1>
       <p className="mt-3 text-ink/70">
-        Login once to unlock installer downloads, backup skills, your EZROUTER coupon, and {pricingConfig.remoteImplementation.label.toLowerCase()} checkout.
+        Login once to unlock installer downloads, your 50% EZROUTER token coupon, backup skills, and {pricingConfig.remoteImplementation.label.toLowerCase()} checkout.
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
