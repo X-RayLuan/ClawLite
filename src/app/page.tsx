@@ -14,6 +14,7 @@ import { ExternalAuthLink } from "@/components/external-auth-link";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
+import Script from "next/script";
 
 export default function HomePage() {
   const { lang } = useLang();
@@ -227,6 +228,15 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      <Script id="chatpilot-config" strategy="beforeInteractive">
+        {`window.chatpilotConfig = {
+          chatbotId: "4bfc5c07ab9043b3a0d69b12b2e86b07",
+          domain: "https://www.newoaks.ai",
+          chatModeOnly: true
+        }`}
+      </Script>
+      <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" />
 
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="mb-8 text-center">
