@@ -9,6 +9,7 @@ type PostListItem = {
 };
 
 const excerptBySlug: Record<string, string> = {
+  'the-real-ai-premium-is-not-power-it-is-reliability': 'Reliability, not flash, is the real premium in AI operations: how boring reliability beats fragile demos in day-to-day workflows.',
   'best-cheap-models-for-openclaw-tool-use': 'A practical 2026 buyer guide to cheaper OpenClaw model routing, tool-use reliability, and why hybrid model stacks usually beat pure bargain hunting.',
   'ai-token-pricing-explained': 'A practical 2026 guide to estimating real AI assistant cost, comparing token billing with subscriptions, and deciding when BYOK or ClawLite makes financial sense.',
   'clawlite-vs-cursor': 'A practical comparison of ClawLite and Cursor across pricing model, workflow scope, local-first control, and which one fits developers who need more than editor-native coding.',
@@ -35,6 +36,7 @@ const excerptBySlug: Record<string, string> = {
 
 const orderedSlugs = [
   'byok-ai-assistant-guide',
+  'the-real-ai-premium-is-not-power-it-is-reliability',
   'best-cheap-models-for-openclaw-tool-use',
   'clawlite-vs-cursor',
   'ai-token-pricing-explained',
