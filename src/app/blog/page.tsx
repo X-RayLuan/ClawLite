@@ -9,6 +9,8 @@ type PostListItem = {
 };
 
 const excerptBySlug: Record<string, string> = {
+  'openclaw-setup-friction': 'Stop losing users on setup friction. This practical guide shows how one-click installation can improve first-run success with less debug overhead.',
+  'managing-ai-cost-anxiety-with-clawlite': 'Learn how to lower AI adoption friction from cost uncertainty with predictable spend planning and ClawLite’s BYOK + managed token model.',
   'the-real-ai-premium-is-not-power-it-is-reliability': 'Reliability, not flash, is the real premium in AI operations: how boring reliability beats fragile demos in day-to-day workflows.',
   'best-cheap-models-for-openclaw-tool-use': 'A practical 2026 buyer guide to cheaper OpenClaw model routing, tool-use reliability, and why hybrid model stacks usually beat pure bargain hunting.',
   'ai-token-pricing-explained': 'A practical 2026 guide to estimating real AI assistant cost, comparing token billing with subscriptions, and deciding when BYOK or ClawLite makes financial sense.',
@@ -35,6 +37,8 @@ const excerptBySlug: Record<string, string> = {
 };
 
 const orderedSlugs = [
+  'openclaw-setup-friction',
+  'managing-ai-cost-anxiety-with-clawlite',
   'byok-ai-assistant-guide',
   'the-real-ai-premium-is-not-power-it-is-reliability',
   'best-cheap-models-for-openclaw-tool-use',
