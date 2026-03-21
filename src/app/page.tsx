@@ -137,19 +137,20 @@ export default function HomePage() {
         <div className="mb-4 text-center">
           <Badge className="border-sea/20 bg-sea/10 text-sea">Setup Video</Badge>
           <h2 className="mt-3 font-display text-2xl font-semibold text-ink md:text-3xl">
-            Watch: Google Drive Setup in 5 Minutes
+            Watch: ClawLite Setup in 5 Minutes
           </h2>
         </div>
         <div className="overflow-hidden rounded-2xl border border-black/10 bg-white/90 shadow-soft">
-          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-            <iframe
-              src="https://drive.google.com/file/d/1vWgU-B4GD0MWt5q-WDoF00POtJs066I0/preview"
-              className="absolute inset-0 h-full w-full"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="ClawLite Google Drive Setup Video"
-            />
-          </div>
+          <video
+            className="w-full"
+            controls
+            preload="metadata"
+            playsInline
+            poster=""
+          >
+            <source src="/clawlite-setup.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </section>
 
