@@ -16,7 +16,7 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "ClawLite Web Wizard",
+  title: "OpenClaw Setup Wizard",
   description: "Install OpenClaw in minutes with a friendly, guided wizard.",
   icons: {
     icon: "/icon.svg"
