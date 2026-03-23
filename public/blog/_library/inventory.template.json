@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "updatedAt": "YYYY-MM-DDTHH:mm:ss+08:00",
+  "libraryRoot": "ClawLite/public/blog/_library",
+  "targetReusableAssetCount": 40,
+  "categories": [
+    {
+      "id": "01-install",
+      "name": "Install",
+      "targetCount": 6,
+      "assets": []
+    },
+    {
+      "id": "02-first-run",
+      "name": "First Run",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "03-pricing",
+      "name": "Pricing",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "04-reliability",
+      "name": "Reliability",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "05-comparison",
+      "name": "Comparison",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "06-checklists",
+      "name": "Checklists",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "07-proof",
+      "name": "Proof",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "08-workflows",
+      "name": "Workflows",
+      "targetCount": 4,
+      "assets": []
+    },
+    {
+      "id": "09-brand-utility",
+      "name": "Brand Utility",
+      "targetCount": 2,
+      "assets": []
+    }
+  ],
+  "assetShape": {
+    "file": "install-entry-mac-windows-v1.jpg",
+    "message": "ClawLite is the easiest path into OpenClaw setup",
+    "bestUseCases": [
+      "install guides",
+      "beginner setup"
+    ],
+    "articleTypes": [
+      "tutorial",
+      "comparison"
+    ],
+    "source": "real screenshot | comparison graphic | checklist card",
+    "status": "approved | provisional | archived"
+  }
+}
