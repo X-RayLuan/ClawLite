@@ -1,0 +1,47 @@
+Create a clean blog image for ClawLite.
+
+Goal:
+- Show exactly one message: [INSERT MESSAGE]
+
+Audience:
+- Developers, operators, founders, and small teams evaluating AI assistant setup, cost, and reliability
+
+Brand angle:
+- one-click install
+- cheaper tokens
+- lower setup friction
+- boring reliability
+
+Visual style:
+- practical
+- trustworthy
+- clean
+- product-led
+- light background
+- subtle border or shadow
+- minimal noise
+
+Must include:
+- [real screenshot / annotated screenshot / comparison card / workflow diagram / checklist card]
+- clear focal point
+- readable layout on mobile
+
+Must avoid:
+- generic AI robot art
+- cyberpunk effects
+- random video-frame appearance
+- washed-out white transitions
+- long text blocks
+- tiny unreadable UI
+- clutter
+
+Format:
+- 16:9
+
+Text inside image:
+- max 8 to 12 words
+
+Output requirement:
+- look like an editorial asset for a product blog, not a raw screen capture
+- if using a screenshot, crop tightly to the useful area
+- if comparing products, make the contrast obvious in 2 seconds
