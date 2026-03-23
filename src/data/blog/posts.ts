@@ -45,7 +45,7 @@ export const blogStaticParams = () => {
     { slug: 'best-affordable-ai-assistant-for-developers' },
     { slug: 'ai-token-pricing-explained' },
     { slug: 'clawlite-vs-cursor' },
-    { slug: 'best-byok-ai-assistant' }
+    { slug: 'best-byok-ai-assistant' },
     { slug: 'openclaw-install-guide-fastest-way' },
     { slug: 'how-to-install-openclaw-in-10-minutes' },
     { slug: 'openclaw-setup-guide-for-beginners' },
@@ -4716,7 +4716,9 @@ Recommended sources:
 **Suggested capture:** OpenClaw docs / GitHub and ClawLite homepage download entry  
 **Suggested caption:** *Choose the installation path that matches your skill level and time-to-value goal.*
 
-**Screenshot placeholder:** Download page showing OpenClaw and ClawLite entry paths.
+![ClawLite install entry and setup path](/blog/openclaw-install-guide-fastest-way/download-options.jpg)
+
+*Choose the installation path that matches your skill level and time-to-value goal.*
 
 ## 3) Run the installer or setup process
 Follow the installation instructions for your chosen route.
@@ -4750,7 +4752,9 @@ Start with a small test prompt or action. For example:
 **Suggested capture:** first successful assistant response, workflow confirmation, or terminal success state  
 **Suggested caption:** *A successful install is not just finished setup. It is a verified first result.*
 
-**Screenshot placeholder:** First successful run screen or confirmation output.
+![First successful OpenClaw run and proof section](/blog/openclaw-install-guide-fastest-way/first-run.jpg)
+
+*A successful install is not just finished setup. It is a verified first result.*
 
 ## Common OpenClaw install mistakes
 
@@ -4929,7 +4933,9 @@ If you are using ClawLite, the point is to reduce the number of setup decisions 
 **Suggested capture:** installer launch screen or first-run wizard  
 **Suggested caption:** *The fastest install path is the one with the fewest decisions before first success.*
 
-**Screenshot placeholder:** Installer launch screen with key steps highlighted.
+![ClawLite installer launch and setup path](/blog/how-to-install-openclaw-in-10-minutes/installer-launch.jpg)
+
+*The fastest install path is the one with the fewest decisions before first success.*
 
 ## Minute 6-8: connect your model or API setup
 
@@ -4973,7 +4979,9 @@ What you are checking:
 **Suggested capture:** a completed summary, prompt response, or workflow success output  
 **Suggested caption:** *Do not stop at install complete. Stop when the first useful task actually works.*
 
-**Screenshot placeholder:** First successful task result.
+![First useful task after OpenClaw install](/blog/how-to-install-openclaw-in-10-minutes/first-task.jpg)
+
+*Do not stop at install complete. Stop when the first useful task actually works.*
 
 ## What to do if 10 minutes becomes 20
 
@@ -5103,13 +5111,9 @@ So this guide is written for first-time users who want a clean, low-drama path f
 A lot of beginner confusion comes from using the word **setup** to mean everything at once.
 
 In practice, OpenClaw setup has three stages:
-
-1. **Installation**
-   - getting the app or package onto your machine
-2. **Configuration**
-   - choosing a provider, connecting an API key or model path, and confirming the basic route
-3. **Activation**
-   - running one useful test so you know the assistant is alive and not just installed
+1. **Installation** — getting the app or package onto your machine
+2. **Configuration** — choosing a provider, connecting an API key or model path, and confirming the basic route
+3. **Activation** — running one useful test so you know the assistant is alive and not just installed
 
 If you skip the third step, you do not really know whether your setup worked.
 
@@ -5192,6 +5196,10 @@ For many first-time users, that route is ClawLite.
 **Placement:** after Step 1  
 **Suggested capture:** OpenClaw docs/GitHub path on one side and ClawLite download/install page on the other  
 **Suggested caption:** *Beginners should choose the setup route that minimizes activation friction, not the route with the most knobs on day one.*
+
+![Beginner setup path and install route](/blog/openclaw-setup-guide-for-beginners/hero.jpg)
+
+*Beginners should choose the setup route that minimizes activation friction, not the route with the most knobs on day one.*
 
 ## Step 2: Install from a trusted source
 
