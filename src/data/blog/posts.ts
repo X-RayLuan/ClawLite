@@ -4788,22 +4788,10 @@ The key point is that most searchers asking for **openclaw install** are not ask
 
 Once your OpenClaw install works, move in this order:
 
-1. **Finish beginner setup**
-   - confirm configuration
-   - test one repeatable workflow
-   - keep changes minimal
-
-2. **Read the setup guide**
-   Your next logical step is a full **OpenClaw setup guide for beginners**.
-
-3. **Try a focused use case**
-   Good first-use candidates include:
-   - Telegram workflows
-   - simple automations
-   - research and summary tasks
-
-4. **Understand pricing before scaling usage**
-   If you plan to use OpenClaw regularly, read a pricing breakdown next. Cost per successful workflow matters more than the headline token price alone.
+1. **Finish beginner setup** — confirm configuration, test one repeatable workflow, and keep changes minimal.
+2. **Read the setup guide** — your next logical step is a full **OpenClaw setup guide for beginners**.
+3. **Try a focused use case** — good first-use candidates include Telegram workflows, simple automations, and research or summary tasks.
+4. **Understand pricing before scaling usage** — if you plan to use OpenClaw regularly, read a pricing breakdown next. Cost per successful workflow matters more than the headline token price alone.
 
 ## Final recommendation
 
