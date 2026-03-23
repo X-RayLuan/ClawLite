@@ -16,61 +16,61 @@ Priority rule:
 ## P0 — immediate reusable assets
 
 ### Install
-- [ ] `install-entry-mac-windows-v1.jpg`
+- [x] `install-entry-mac-windows-v1.jpg`
   - message: ClawLite is the easiest path into OpenClaw setup
   - category: `01-install`
   - best use: install guides, beginner setup, installer comparison
 
-- [ ] `installer-launch-flow-v1.jpg`
+- [x] `installer-launch-flow-v1.jpg`
   - message: one-click install / launch path
   - category: `01-install`
   - best use: tutorial posts, easiest install posts
 
-- [ ] `setup-route-choice-v1.jpg`
+- [x] `setup-route-choice-v1.jpg`
   - message: direct OpenClaw vs ClawLite route choice
   - category: `05-comparison`
   - best use: installer comparison, beginner route articles
 
 ### First run
-- [ ] `first-run-success-v1.jpg`
+- [x] `first-run-success-v1.jpg`
   - message: first successful OpenClaw result after setup
   - category: `02-first-run`
   - best use: tutorials, reliability, beginner walkthroughs
 
-- [ ] `first-useful-task-v1.jpg`
+- [x] `first-useful-task-v1.jpg`
   - message: setup is complete only when a useful workflow works
   - category: `02-first-run`
   - best use: tutorials, onboarding, first-value articles
 
 ### Pricing
-- [ ] `pricing-byok-entry-v1.jpg`
+- [x] `pricing-byok-entry-v1.jpg`
   - message: BYOK free path is clear and beginner-friendly
   - category: `03-pricing`
   - best use: pricing explainers, BYOK posts, setup cost content
 
-- [ ] `pricing-byok-vs-hosted-v1.jpg`
+- [x] `pricing-byok-vs-hosted-v1.jpg`
   - message: compare BYOK vs hosted lower-cost route
   - category: `03-pricing`
   - best use: pricing pages, token cost articles, comparison posts
 
 ### Reliability
-- [ ] `reliability-first-value-v1.jpg`
+- [x] `reliability-first-value-v1.jpg`
   - message: trustworthy first value beats flashy complexity
   - category: `04-reliability`
   - best use: reliability articles, onboarding, positioning posts
 
-- [ ] `setup-confidence-check-v1.jpg`
+- [x] `setup-confidence-check-v1.jpg`
   - message: validated setup / confidence after first run
   - category: `04-reliability`
   - best use: beginner guides, reliability angles, proof posts
 
 ### Checklist / workflow
-- [ ] `checklist-beginner-setup-v1.jpg`
+- [x] `checklist-beginner-setup-v1.jpg`
   - message: what to confirm before and after install
   - category: `06-checklists`
   - best use: beginner walkthroughs, setup guides
 
-- [ ] `workflow-install-to-first-result-v1.jpg`
+- [x] `workflow-install-to-first-result-v1.jpg`
   - message: install → connect provider → first useful result
   - category: `08-workflows`
   - best use: hero image or workflow support visual
