@@ -86,21 +86,21 @@ Priority rule:
 - [ ] `comparison-cost-clarity-v1.jpg`
 
 ### Proof
-- [ ] `proof-openclaw-docs-and-github-v1.jpg`
-- [ ] `proof-clawlite-product-facts-v1.jpg`
-- [ ] `proof-repeatable-workflow-v1.jpg`
+- [x] `proof-openclaw-docs-and-github-v1.jpg`
+- [x] `proof-clawlite-product-facts-v1.jpg`
+- [x] `proof-repeatable-workflow-v1.jpg`
 - [ ] `proof-beginner-success-path-v1.jpg`
 
 ### Checklist / framework
 - [ ] `checklist-preflight-v1.jpg`
-- [ ] `checklist-first-run-validation-v1.jpg`
-- [ ] `checklist-choose-your-setup-route-v1.jpg`
-- [ ] `framework-cost-per-successful-workflow-v1.jpg`
+- [x] `checklist-first-run-validation-v1.jpg`
+- [x] `checklist-choose-your-setup-route-v1.jpg`
+- [x] `framework-cost-per-successful-workflow-v1.jpg`
 
 ### Workflow
 - [ ] `workflow-beginner-onboarding-4step-v1.jpg`
-- [ ] `workflow-byok-to-first-task-v1.jpg`
-- [ ] `workflow-install-to-repeatable-use-v1.jpg`
+- [x] `workflow-byok-to-first-task-v1.jpg`
+- [x] `workflow-install-to-repeatable-use-v1.jpg`
 
 ---
 
