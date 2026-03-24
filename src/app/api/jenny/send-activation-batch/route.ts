@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import fs from 'fs'
+import path from 'path'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -15,14 +17,115 @@ type ActivationBatchRequest = {
   subject: string
   ctaUrl: string
   dryRun?: boolean
+  mode?: 'probe' | 'batch'
   recipients: ActivationRecipient[]
+}
+
+type ProbeState = {
+  date: string
+  runtime: string
+  lastProbeAt?: string | null
+  lastProbePassedAt?: string | null
+  lastProbeFailedAt?: string | null
+  lastProbeRecipientCount?: number
+  circuitBreakerState: 'open' | 'closed'
+  blocker?: string | null
 }
 
 const SEND_DELAY_MS = 250
 const MAX_RATE_LIMIT_RETRIES = 3
+const OFFICIAL_JENNY_RUNTIME = 'local-node-direct-resend'
+const OFFICIAL_JENNY_SEND_PATH = 'clawlite-api -> resend-node-sdk'
+const PROBE_MAX_RECIPIENTS = 3
+const PROBE_FRESHNESS_MS = 30 * 60 * 1000
+const SHANGHAI_TIME_ZONE = 'Asia/Shanghai'
+const DATA_DIR = path.resolve(process.cwd(), '..', 'mission-control', 'data')
+const EMAIL_DELIVERY_DIR = path.join(DATA_DIR, 'email-delivery')
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function ensureDeliveryDir() {
+  fs.mkdirSync(EMAIL_DELIVERY_DIR, { recursive: true })
+}
+
+function getShanghaiDate(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: SHANGHAI_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  return formatter.format(date)
+}
+
+function getProbeStatePath(date = getShanghaiDate()) {
+  return path.join(EMAIL_DELIVERY_DIR, `jenny-probe-state-${date}.json`)
+}
+
+function readProbeState(date = getShanghaiDate()): ProbeState {
+  const fallback: ProbeState = {
+    date,
+    runtime: OFFICIAL_JENNY_RUNTIME,
+    circuitBreakerState: 'closed',
+    blocker: null,
+  }
+
+  try {
+    return {
+      ...fallback,
+      ...JSON.parse(fs.readFileSync(getProbeStatePath(date), 'utf8')),
+      date,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+function writeProbeState(state: ProbeState) {
+  ensureDeliveryDir()
+  fs.writeFileSync(getProbeStatePath(state.date), JSON.stringify(state, null, 2))
+}
+
+function hasFreshPassedProbe(state: ProbeState) {
+  if (!state.lastProbePassedAt || state.circuitBreakerState === 'open') return false
+  const ts = new Date(state.lastProbePassedAt).getTime()
+  if (Number.isNaN(ts)) return false
+  return Date.now() - ts <= PROBE_FRESHNESS_MS
+}
+
+function isCircuitBreakerError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || '')
+  return /cloudflare\s*1010|http\s*403|403\s*forbidden|browser_signature_banned|path_blocked/i.test(message)
+}
+
+function sameDayLaneLocked(date = getShanghaiDate()) {
+  try {
+    ensureDeliveryDir()
+    const files = fs.readdirSync(EMAIL_DELIVERY_DIR)
+    return files
+      .filter((file) => file.startsWith(`jenny-acceptance-${date}-`) && file.endsWith('.json'))
+      .some((file) => {
+        try {
+          const json = JSON.parse(fs.readFileSync(path.join(EMAIL_DELIVERY_DIR, file), 'utf8'))
+          const verdict = String(json.verdict || '').trim()
+          const accepted = Number(json.acceptedCount || 0)
+          const writebackUpdated = Number(json.writebackUpdatedCount || 0)
+          const runtime = String(json?.evidence?.runtime || '').trim()
+          return (
+            verdict === 'DELIVERED' &&
+            accepted > 0 &&
+            writebackUpdated >= accepted &&
+            runtime === OFFICIAL_JENNY_RUNTIME
+          )
+        } catch {
+          return false
+        }
+      })
+  } catch {
+    return false
+  }
 }
 
 function isRateLimitError(error: unknown) {
@@ -121,7 +224,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as ActivationBatchRequest
-    const { campaignId, subject, ctaUrl, dryRun = false, recipients = [] } = body
+    const { campaignId, subject, ctaUrl, dryRun = false, mode = 'batch', recipients = [] } = body
 
     if (!campaignId || !subject || !ctaUrl) {
       return NextResponse.json(
@@ -144,6 +247,51 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (mode === 'probe' && recipients.length > PROBE_MAX_RECIPIENTS) {
+      return NextResponse.json(
+        { success: false, error: `Probe size exceeds limit (${PROBE_MAX_RECIPIENTS})` },
+        { status: 400 }
+      )
+    }
+
+    const today = getShanghaiDate()
+    const probeState = readProbeState(today)
+    const laneLocked = sameDayLaneLocked(today)
+
+    if (!dryRun && laneLocked && mode !== 'probe') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Jenny lane is locked for today because a same-day delivered batch already exists',
+          laneLocked: true,
+        },
+        { status: 409 }
+      )
+    }
+
+    if (!dryRun && probeState.circuitBreakerState === 'open' && mode !== 'probe') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: probeState.blocker || 'Jenny circuit breaker is open for today',
+          circuitBreakerState: probeState.circuitBreakerState,
+        },
+        { status: 409 }
+      )
+    }
+
+    if (!dryRun && mode !== 'probe' && !hasFreshPassedProbe(probeState)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Fresh Jenny batch requires a passed probe within the last 30 minutes',
+          probeRequired: true,
+          probeState,
+        },
+        { status: 409 }
+      )
+    }
+
     const from = process.env.RESEND_FROM
     if (!dryRun && (!process.env.RESEND_API_KEY || !from)) {
       return NextResponse.json(
@@ -160,6 +308,7 @@ export async function POST(req: NextRequest) {
       messageId?: string
       error?: string
     }> = []
+    let breakerReason: string | null = null
 
     for (const recipient of recipients) {
       const email = recipient.email?.trim()
@@ -201,12 +350,18 @@ export async function POST(req: NextRequest) {
           messageId,
         })
       } catch (err: any) {
+        const errorMessage = err?.message || 'Unknown send failure'
         results.push({
           userId: recipient.userId,
           email,
           accepted: false,
-          error: err?.message || 'Unknown send failure',
+          error: errorMessage,
         })
+
+        if (!breakerReason && isCircuitBreakerError(errorMessage)) {
+          breakerReason = errorMessage
+          break
+        }
       }
 
       if (!dryRun) {
@@ -217,12 +372,46 @@ export async function POST(req: NextRequest) {
     const accepted = results.filter((item) => item.accepted).length
     const failed = results.length - accepted
 
+    if (!dryRun) {
+      const nextProbeState: ProbeState = {
+        ...probeState,
+        date: today,
+        runtime: OFFICIAL_JENNY_RUNTIME,
+      }
+
+      if (mode === 'probe') {
+        nextProbeState.lastProbeAt = new Date().toISOString()
+        nextProbeState.lastProbeRecipientCount = recipients.length
+        if (accepted > 0 && !breakerReason) {
+          nextProbeState.lastProbePassedAt = new Date().toISOString()
+          nextProbeState.circuitBreakerState = 'closed'
+          nextProbeState.blocker = null
+        } else {
+          nextProbeState.lastProbeFailedAt = new Date().toISOString()
+          nextProbeState.blocker = breakerReason || 'Probe failed without accepted sends'
+        }
+      }
+
+      if (breakerReason) {
+        nextProbeState.circuitBreakerState = 'open'
+        nextProbeState.blocker = breakerReason
+      }
+
+      writeProbeState(nextProbeState)
+    }
+
     return NextResponse.json({
       success: true,
       campaignId,
       attempted: results.length,
       accepted,
       failed,
+      mode,
+      laneLocked,
+      runtime: OFFICIAL_JENNY_RUNTIME,
+      sendPath: OFFICIAL_JENNY_SEND_PATH,
+      circuitBreakerTripped: Boolean(breakerReason),
+      breakerReason,
       results,
     })
   } catch (err: any) {
