@@ -9,6 +9,10 @@ type PostListItem = {
 };
 
 const excerptBySlug: Record<string, string> = {
+  'best-self-hosted-ai-assistant-2026-boring-reliability': 'The best self-hosted AI assistant in 2026 is not the flashiest demo. It is the one that stays reliable, understandable, and cost-sane when real work begins.',
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'Most teams do not quit AI because the model is weak. They quit because the workflow turns fragile after the first impressive demo.',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'A practical installation comparison: ClawLite gets most teams to first value faster, while direct OpenClaw setup suits users who want more self-managed control.',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'Cheap token prices can still produce expensive operations. Here is why workflow reliability usually matters more than the lowest nominal token rate.',
   'openclaw-setup-friction': 'Stop losing users on setup friction. This practical guide shows how one-click installation can improve first-run success with less debug overhead.',
   'managing-ai-cost-anxiety-with-clawlite': 'Learn how to lower AI adoption friction from cost uncertainty with predictable spend planning and ClawLite’s BYOK + managed token model.',
   'the-real-ai-premium-is-not-power-it-is-reliability': 'Reliability, not flash, is the real premium in AI operations: how boring reliability beats fragile demos in day-to-day workflows.',
@@ -33,10 +37,51 @@ const excerptBySlug: Record<string, string> = {
   'what-is-clawlite': 'ClawLite is a commercial OpenClaw distribution with one-click installation and managed token pricing.',
   'openclaw-for-beginners': 'A beginner-friendly guide to installing OpenClaw, choosing your first safe workflow, and using ClawLite to reduce setup friction, mistakes, and time to first success.',
   'what-is-an-ai-browser-agent': 'A practical guide for operations teams: what AI browser agents are, where they fit, and how to deploy safely with human checkpoints.',
-  'clawlite-free-trial': 'Try ClawLite free with 10,000 tokens. No credit card required, sign up in under 2 minutes.'
+  'clawlite-free-trial': 'Try ClawLite free with 10,000 tokens. No credit card required, sign up in under 2 minutes.',
+  'openclaw-install-guide-fastest-way': 'The fastest OpenClaw install path is the one that gets you from download to first useful run with the fewest moving parts and least setup friction.',
+  'how-to-install-openclaw-in-10-minutes': 'A practical 10-minute OpenClaw install walkthrough for beginners who want the shortest path from download to first successful task.',
+  'openclaw-setup-guide-for-beginners': 'A beginner-friendly OpenClaw setup guide covering installation, configuration, and the first useful workflow without unnecessary setup pain.',
+  'best-openclaw-installer': 'Compare the main OpenClaw setup methods and choose the installer path that best fits beginners, developers, and self-hosted users.',
+  'openclaw-tutorial-complete-beginner-walkthrough': 'A complete OpenClaw tutorial for beginners covering install, setup, first workflow, and the fastest path to real first value.',
+  'openclaw-pricing-explained': 'Understand OpenClaw pricing, BYOK, cheaper-token positioning, and how to think about real cost per successful workflow.',
+
+  'how-to-install-openclaw-easily-with-less-risk': 'The easiest OpenClaw install path in 2026 is the one that reduces setup mistakes, validates the first run, and gets you to trustworthy first value faster.',
+  'openclaw-pricing-vs-chatgpt-plus-2026': 'Compare OpenClaw-style pricing with ChatGPT Plus by looking at cost per successful workflow, not just sticker price.',
+  'openclaw-vs-cursor-for-ai-workflows': 'Cursor is great inside the editor, but OpenClaw-style assistants make more sense when workflows spill into docs, browser actions, and operator tasks.',
+  'best-beginner-openclaw-setup-without-terminal': 'A beginner-focused guide to choosing an OpenClaw setup path that reduces terminal-heavy friction and speeds up first useful success.',
+  'self-hosted-ai-assistant-for-small-teams-2026': 'A buyer guide for small teams comparing self-hosted AI assistants by control, setup burden, privacy, and day-one trust.',
+  'byok-vs-managed-tokens-for-openclaw': 'Understand when BYOK gives better control, when managed tokens lower friction, and how to choose the calmer first billing path.',
+  'openclaw-install-checklist-for-first-run-trust': 'Use this checklist to verify an OpenClaw install before you trust it with real work, cost, and automation scope.',
+  'cheapest-way-to-run-openclaw-daily': 'The cheapest OpenClaw path is not just the lowest token rate; it is the one that reduces retries, confusion, and daily workflow waste.',
+  'openclaw-vs-chatgpt-for-privacy-and-control': 'A practical comparison for buyers who care more about privacy, control, and workflow ownership than generic feature lists.',
+  'local-ai-assistant-for-content-creators': 'Why creators are looking past generic chat apps toward local AI assistants with more control, lower anxiety, and repeatable workflows.',
+  'clawlite-vs-openclaw-for-nontechnical-teams': 'For nontechnical teams, the right question is not power but which path gets to useful value without the setup tax.',
+  'openclaw-alternatives-for-budget-conscious-builders-2026': 'A shortlist of OpenClaw alternatives for builders who need lower cost, less setup regret, and better first-run confidence.',
 };
 
 const orderedSlugs = [
+  'best-self-hosted-ai-assistant-2026-boring-reliability',
+  'how-to-install-openclaw-easily-with-less-risk',
+  'openclaw-pricing-vs-chatgpt-plus-2026',
+  'openclaw-vs-cursor-for-ai-workflows',
+  'best-beginner-openclaw-setup-without-terminal',
+  'self-hosted-ai-assistant-for-small-teams-2026',
+  'byok-vs-managed-tokens-for-openclaw',
+  'openclaw-install-checklist-for-first-run-trust',
+  'cheapest-way-to-run-openclaw-daily',
+  'openclaw-vs-chatgpt-for-privacy-and-control',
+  'local-ai-assistant-for-content-creators',
+  'clawlite-vs-openclaw-for-nontechnical-teams',
+  'openclaw-alternatives-for-budget-conscious-builders-2026',
+  'openclaw-install-guide-fastest-way',
+  'how-to-install-openclaw-in-10-minutes',
+  'openclaw-setup-guide-for-beginners',
+  'best-openclaw-installer',
+  'openclaw-tutorial-complete-beginner-walkthrough',
+  'openclaw-pricing-explained',
+  '2026-03-21-why-ai-teams-quit-after-the-demo',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows',
   'openclaw-setup-friction',
   'managing-ai-cost-anxiety-with-clawlite',
   'byok-ai-assistant-guide',
@@ -65,7 +110,8 @@ const orderedSlugs = [
 ] as const;
 
 const posts = orderedSlugs.reduce<PostListItem[]>((acc, slug) => {
-  const post = blogPosts[slug];
+  const canonicalSlug = slug.replace(/^2026-03-21-/, '');
+  const post = blogPosts[canonicalSlug] ?? blogPosts[slug];
   if (!post) return acc;
 
   acc.push({
