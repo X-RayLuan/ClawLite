@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildLoginHref, getSafeExternal, getSafeReturnTo } from "@/lib/auth-flow";
+import { getPartnerCouponConfig, getPartnerFromCookieString, PARTNER_REFERRAL_COOKIE } from "@/lib/partner-referral";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function AuthCallbackPage() {
@@ -99,6 +100,22 @@ export default function AuthCallbackPage() {
           });
         } catch (conversionError) {
           console.error("waitlist conversion sync failed", conversionError);
+        }
+
+        try {
+          const partnerSlug = getPartnerFromCookieString(document.cookie);
+          const partner = getPartnerCouponConfig(partnerSlug);
+          if (partner) {
+            const rpcClient = supabase as any;
+            await rpcClient.rpc("apply_partner_referral", {
+              p_user_id: settledUser.id,
+              p_partner_slug: partner.slug,
+              p_partner_coupon_code: partner.couponCode,
+            });
+            document.cookie = `${PARTNER_REFERRAL_COOKIE}=; path=/; max-age=0; samesite=lax`;
+          }
+        } catch (partnerReferralError) {
+          console.error("partner referral sync failed", partnerReferralError);
         }
 
         if (external) {

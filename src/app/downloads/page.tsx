@@ -38,10 +38,14 @@ export default function DownloadsPage() {
       return;
     }
 
-    const cookieMatch = document.cookie
-      .split("; ")
-      .find((entry) => entry.startsWith(`${PARTNER_REFERRAL_COOKIE}=`));
-    const cookiePartner = normalizePartnerSlug(cookieMatch?.split("=").slice(1).join("="));
+    const cookiePartner = normalizePartnerSlug(
+      document.cookie
+        .split("; ")
+        .find((entry) => entry.startsWith(`${PARTNER_REFERRAL_COOKIE}=`))
+        ?.split("=")
+        .slice(1)
+        .join("=")
+    );
     if (cookiePartner && getPartnerCouponConfig(cookiePartner)) {
       setPartnerSlug(cookiePartner);
       return;
@@ -67,6 +71,18 @@ export default function DownloadsPage() {
         const user = data.session?.user;
         if (user) {
           setEmail(user.email || "");
+          try {
+            const { data: profile } = await (client as any)
+              .from("user_profiles")
+              .select("partner_slug")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (mounted && profile?.partner_slug && getPartnerCouponConfig(profile.partner_slug)) {
+              setPartnerSlug(normalizePartnerSlug(profile.partner_slug));
+            }
+          } catch {
+            // ignore profile lookup failures; cookie/query fallback still works
+          }
           setLoading(false);
           return;
         }

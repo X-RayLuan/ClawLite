@@ -30,6 +30,15 @@ export function getPartnerCouponConfig(partnerSlug: string | null | undefined) {
   return slug ? PARTNER_COUPON_MAP[slug] || null : null;
 }
 
+export function getPartnerFromCookieString(cookieString: string | null | undefined) {
+  if (!cookieString) return null;
+  const cookieMatch = cookieString
+    .split("; ")
+    .find((entry) => entry.startsWith(`${PARTNER_REFERRAL_COOKIE}=`));
+  const cookiePartner = normalizePartnerSlug(cookieMatch?.split("=").slice(1).join("="));
+  return getPartnerCouponConfig(cookiePartner) ? cookiePartner : null;
+}
+
 export function getCouponExperience(partnerSlug: string | null | undefined) {
   const partner = getPartnerCouponConfig(partnerSlug);
   if (partner) {
