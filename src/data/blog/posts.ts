@@ -61,10 +61,7 @@ export const blogPosts: Record<string, BlogPost> = {
     date: "2026-03-25",
     content: `# One-Click OpenClaw Install for Founders Who Need Speed, Not Infra Debt
 
-**Supporting keywords:** OpenClaw for founders, fast AI setup, beginner OpenClaw install, install OpenClaw on Mac  
-
-**Updated:** 2026-03-25  
-**Theme classification:** plain pain-led  
+**Updated:** 2026-03-25
 
 ## Quick Answer
 One click to install OpenClaw beats one hour to debug it. That is the real context behind **one-click OpenClaw install** in 2026. The winning path is not just more capability. It is faster setup, clearer control, and a workflow that still works when real tasks start repeating. For ClawLite, that means combining one-click adoption with the boring reliability that turns a promising AI assistant into something you can actually use every day.
