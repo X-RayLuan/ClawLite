@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 import {
@@ -17,7 +17,6 @@ const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/lates
 export default function DownloadsPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const loginHref = `/login?returnTo=${encodeURIComponent(pathname || "/downloads")}`;
 
@@ -31,7 +30,9 @@ export default function DownloadsPage() {
   const couponCode = couponExperience.couponCode;
 
   useEffect(() => {
-    const queryPartner = normalizePartnerSlug(searchParams?.get("partner"));
+    const queryPartner = normalizePartnerSlug(
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("partner") : null
+    );
     if (queryPartner && getPartnerCouponConfig(queryPartner)) {
       document.cookie = `${PARTNER_REFERRAL_COOKIE}=${queryPartner}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
       setPartnerSlug(queryPartner);
@@ -52,7 +53,7 @@ export default function DownloadsPage() {
     }
 
     setPartnerSlug(null);
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
