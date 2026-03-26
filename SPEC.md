@@ -1,140 +1,138 @@
 # ClawLite Web Wizard — MVP Spec
 
-_OpenClaw 一键安装引导工具_
+_One-click OpenClaw installation guide_
 
-## 概述
+## Overview
 
-一个纯前端 Web 应用，托管在 clawlite.ai（或 clawlite.tech），引导用户从零完成 OpenClaw 的安装和配置。目标：让非技术用户也能在 5 分钟内跑起来。
+A frontend-first web application hosted at clawlite.ai, guiding users from zero to a working OpenClaw installation and configuration. Goal: enable non-technical users to get up and running in 5 minutes.
 
-## 目标用户
+## Target Users
 
-- 非技术用户（创业者、运营、内容创作者）
-- 对 AI agent 有需求但不愿折腾命令行的人
-- 已有技术背景但想快速 setup 的开发者
+- Non-technical users (founders, operators, content creators)
+- People who want AI agents but prefer to avoid command-line setup
+- Developers with technical backgrounds who want a fast setup path
 
-## 核心流程（Step-by-Step Wizard）
+## Core Flow (Step-by-Step Wizard)
 
-### Step 1: 环境检测
-- 检测操作系统（macOS / Windows / Linux）
-- 显示对应的安装指引
-- 提供一键复制的命令
+### Step 1: Detect OS
+- Detect operating system (macOS / Windows / Linux)
+- Display corresponding installation instructions
+- Provide one-click-copy commands
 
-### Step 2: 安装 Node.js
-- 检测是否已安装 Node.js（引导用户在终端运行 `node -v` 并粘贴结果）
-- 未安装 → 提供下载链接 + 安装指引（按 OS 区分）
-- macOS: `brew install node` 或官网 .pkg
-- Windows: 官网 .msi installer
+### Step 2: Install Node.js
+- Check whether Node.js is installed (guide user to run `node -v` in terminal and paste the result)
+- Not installed → provide download link + install instructions (per OS)
+- macOS: `brew install node` or official .pkg
+- Windows: official .msi installer
 - Linux: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -`
 
-### Step 3: 安装 OpenClaw
-- 一键复制命令：`npm install -g openclaw`
-- 引导用户粘贴运行结果确认安装成功
-- 常见错误提示（权限问题、网络问题）
+### Step 3: Install OpenClaw
+- One-click-copy command: `npm install -g openclaw`
+- Guide user to paste output to confirm successful installation
+- Common error messages (permissions, network issues)
 
-### Step 4: 配置 API Key
-- **选项 A（默认高亮）：** 使用 ClawLite Token — 一键注册/登录（邮箱），自动配置
-- **选项 B：** 自带 API Key（BYOK）— 引导输入 OpenAI / Anthropic / 其他 provider 的 key
-- 生成配置命令，一键复制
+### Step 4: Configure API Key
+- **Option A (default, highlighted):** Use ClawLite Tokens — one-click register/login (email), auto-configure
+- **Option B:** Bring Your Own Key (BYOK) — guide user to enter OpenAI / Anthropic / other provider key
+- Generate config command, one-click copy
 
-### Step 5: 选择连接渠道
-- Telegram（推荐）— 引导创建 bot via BotFather
-- Discord — 引导创建 bot + 邀请到 server
-- Web Chat — 最简单，无需额外配置
-- WhatsApp — 扫码连接
+### Step 5: Select Channel
+- Telegram (recommended) — guide user to create bot via BotFather
+- Discord — guide user to create bot + invite to server
+- Web Chat — simplest, no extra configuration needed
+- WhatsApp — scan QR to connect
 
-### Step 6: 启动
-- 一键复制启动命令：`openclaw gateway start`
-- 验证连接成功
-- 🎉 完成页面 — 引导用户发送第一条消息
+### Step 6: Launch
+- One-click-copy launch command: `openclaw gateway start`
+- Verify connection success
+- Done page — guide user to send their first message
 
-## 技术方案
+## Technical Architecture
 
-### 架构
-- **纯前端 SPA**（无后端依赖）
-- 框架：Next.js（方便 Vercel 部署 + SSR/SEO）
-- UI：Tailwind CSS + shadcn/ui
-- 动画：Framer Motion（步骤切换动效）
+### Stack
+- **Frontend-first SPA** (no backend dependency for core flow)
+- Framework: Next.js (Vercel deployment + SSR/SEO)
+- UI: Tailwind CSS + shadcn/ui
+- Animation: Framer Motion (step transition effects)
 
-### 部署
-- Vercel（免费 tier 足够）
-- 域名：clawlite.ai 或 clawlite.tech
+### Deployment
+- Vercel (free tier sufficient)
+- Domain: clawlite.ai
 
-### 关键设计原则
-- **零后端**：所有逻辑在浏览器端（邮箱采集除外）
-- **离线友好**：命令生成不依赖网络请求
-- **复制即用**：每一步都有一键复制的终端命令
-- **错误友好**：常见错误有明确的排查指引
-- **移动端可读**：响应式设计，手机上也能看（虽然安装要在电脑上）
+### Key Design Principles
+- **Zero backend for core flow**: all logic runs in browser (except email collection)
+- **Offline-friendly**: command generation does not depend on network requests
+- **Copy-and-run**: every step has a one-click-copy terminal command
+- **Error-friendly**: common errors have clear troubleshooting guidance
+- **Mobile-readable**: responsive design (setup still requires a computer)
 
-## 页面结构
+## Page Structure
 
 ```
-/                → Landing page + 开始按钮
-/setup           → Wizard 主流程（Step 1-6）
-/troubleshoot    → 常见问题排查
-/docs            → 链接到 OpenClaw 官方文档
+/                → Landing page + start button
+/setup           → Wizard main flow (Steps 1-6)
+/troubleshoot    → Common issue troubleshooting
+/docs            → Link to official OpenClaw documentation
 ```
 
-## MVP 范围（Phase 1）
+## MVP Scope (Phase 1)
 
-### 包含
-- [x] 6 步引导流程
-- [x] macOS + Windows + Linux 支持
-- [x] ClawLite Token 默认推荐
-- [x] Telegram + Web Chat 渠道引导
-- [x] 响应式设计
-- [x] 中英文双语
+### Included
+- [x] 6-step guided flow
+- [x] macOS + Windows + Linux support
+- [x] ClawLite Tokens as default recommendation
+- [x] Telegram + Web Chat channel guidance
+- [x] Responsive design
 
-### 不包含（后续迭代）
-- [ ] Discord / WhatsApp 渠道引导（Phase 2）
-- [ ] 自动检测环境（需要本地 CLI 配合）
-- [ ] 用户账号系统
-- [ ] 安装进度追踪
-- [ ] Desktop app（Phase 3）
+### Not included (future iterations)
+- [ ] Discord / WhatsApp channel guidance (Phase 2)
+- [ ] Automatic environment detection (requires local CLI)
+- [ ] User account system
+- [ ] Installation progress tracking
+- [ ] Desktop app (Phase 3)
 
-## 邮箱采集策略
+## Email Collection Strategy
 
-### 原则：先给价值，再要信息
+### Principle: deliver value first, then ask for information
 
-- **不要**在 wizard 开头要邮箱 — 用户还没得到任何价值
-- **不要**用弹窗拦截流程
+- **Do not** ask for email at the start of the wizard — user hasn't received any value yet
+- **Do not** use popup modals that block the flow
 
-### 采集点
+### Collection Points
 
-1. **Step 4 - ClawLite Token 注册**（自然采集）
-   - 选择 ClawLite Token 时需要邮箱注册/登录
-   - 这是主要采集渠道，零摩擦
-   - 同时获得付费用户 + 邮箱
+1. **Step 4 - ClawLite Token Registration** (natural collection)
+   - Email required for ClawLite Token register/login
+   - Primary collection channel, zero friction
+   - Captures both paying user + email
 
-2. **Step 6 - 完成页面**（可选采集）
-   - 安装成功后显示："留下邮箱，接收使用技巧和产品更新"
-   - 可选，不强制，不挡路
-   - 针对 BYOK 用户的补充采集
+2. **Step 6 - Completion Page** (optional collection)
+   - After successful install: "Leave your email for usage tips and product updates"
+   - Optional, not forced, does not block the flow
+   - Supplementary collection for BYOK users
 
-### 数据处理
-- 邮箱仅用于产品通知和使用技巧推送
-- 需要后端 API 接收邮箱（Vercel Serverless Function + 存储）
-- 遵守 GDPR / 隐私政策基本要求
+### Data Handling
+- Email used only for product notifications and usage tips
+- Requires backend API to receive email (Vercel Serverless Function + storage)
+- Complies with GDPR / basic privacy policy requirements
 
-## 品牌 & 设计
+## Branding & Design
 
-- 风格：简洁、现代、友好，不要 corporate 感
-- 主色调：跟 OpenClaw 品牌一致，可以有自己的辅助色
-- 吉祥物：可以复用 ClawLite 的懒龙虾 🦞，或者设计一个轻量版
-- 语气：像朋友教你装软件，不是官方文档
+- Style: clean, modern, friendly — not corporate
+- Primary colors: consistent with OpenClaw brand, with ClawLite accent colors
+- Tone: like a friend teaching you to install software, not official documentation
 
-## 成功指标
+## Success Metrics
 
-- 安装完成率 > 60%（从打开页面到成功启动）
-- 平均完成时间 < 10 分钟
-- ClawLite Token 选择率 > 40%
+- Install completion rate > 60% (from page open to successful launch)
+- Average completion time < 10 minutes
+- ClawLite Token selection rate > 40%
 
-## 开源
+## Open Source
 
 - License: MIT
-- Repo: github.com/openclaw/clawlite（或独立 org）
-- 欢迎社区贡献翻译、渠道引导模板
+- Repo: github.com/X-RayLuan/ClawLite
+- Community contributions welcome
 
 ---
 
-_Spec by Muddy Fox 🐾 | 2026-03-01_
+_Spec by Muddy Fox | 2026-03-01_
