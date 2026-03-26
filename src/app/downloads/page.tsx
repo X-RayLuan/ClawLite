@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
+import {
+  getCouponExperience,
+  getPartnerCouponConfig,
+  normalizePartnerSlug,
+  PARTNER_REFERRAL_COOKIE,
+} from "@/lib/partner-referral";
 
 const MAC_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite.dmg";
 const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe";
@@ -11,15 +17,38 @@ const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/lates
 export default function DownloadsPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const loginHref = `/login?returnTo=${encodeURIComponent(pathname || "/downloads")}`;
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
+  const [partnerSlug, setPartnerSlug] = useState<string | null>(null);
 
   const backupUrl = process.env.NEXT_PUBLIC_BACKUP_SKILLS_URL || "https://github.com/X-RayLuan/soul-backup-skill";
-  const couponCode = process.env.NEXT_PUBLIC_EZROUTER_COUPON_CODE || "WELCOMEEZROUTER2X";
+  const couponExperience = useMemo(() => getCouponExperience(partnerSlug), [partnerSlug]);
+  const couponCode = couponExperience.couponCode;
+
+  useEffect(() => {
+    const queryPartner = normalizePartnerSlug(searchParams?.get("partner"));
+    if (queryPartner && getPartnerCouponConfig(queryPartner)) {
+      document.cookie = `${PARTNER_REFERRAL_COOKIE}=${queryPartner}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+      setPartnerSlug(queryPartner);
+      return;
+    }
+
+    const cookieMatch = document.cookie
+      .split("; ")
+      .find((entry) => entry.startsWith(`${PARTNER_REFERRAL_COOKIE}=`));
+    const cookiePartner = normalizePartnerSlug(cookieMatch?.split("=").slice(1).join("="));
+    if (cookiePartner && getPartnerCouponConfig(cookiePartner)) {
+      setPartnerSlug(cookiePartner);
+      return;
+    }
+
+    setPartnerSlug(null);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!supabase) {
@@ -119,8 +148,13 @@ export default function DownloadsPage() {
 
         <section className="rounded-2xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">3</p>
-          <h2 className="mt-2 text-lg font-semibold text-ink">50% Discount Token Coupon</h2>
-          <p className="mt-2 text-sm text-ink/70">Login complete. Use this 50% welcome code on EZROUTER.</p>
+          <h2 className="mt-2 text-lg font-semibold text-ink">{couponExperience.headline}</h2>
+          <p className="mt-2 text-sm text-ink/70">{couponExperience.body}</p>
+          {couponExperience.partner ? (
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-coral/80">
+              Referred by {couponExperience.partner.displayName}
+            </p>
+          ) : null}
           <div className="mt-4 rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm text-ink">{couponCode}</div>
           <Button className="mt-3" variant="secondary" onClick={copyCoupon}>
             {copied ? "Copied" : "Copy Promo Code"}
@@ -131,7 +165,7 @@ export default function DownloadsPage() {
             <p>2. Click “Get Tokens via EZRouter”</p>
             <p>3. Register/login at openrouter.ezsite.ai</p>
             <p>4. Select Add Credit</p>
-            <p>5. Enter promo code WELCOMEEZROUTER2X</p>
+            <p>5. {couponExperience.redeemStepText}</p>
             <p>6. Checkout</p>
           </div>
         </section>
