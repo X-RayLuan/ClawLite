@@ -5,6 +5,7 @@ export const content = {
     nav: {
       home: "Home",
       setup: "Setup",
+      marketingAgentTeam: "Marketing Agent Team",
       troubleshoot: "Troubleshoot",
       docs: "Docs",
       blog: "Blog",
