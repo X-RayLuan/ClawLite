@@ -18,7 +18,7 @@ export default function DownloadsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = useMemo(() => getSupabaseClient(), []);
-  const loginHref = `/login?returnTo=${encodeURIComponent(pathname || "/downloads")}`;
+  const [loginHref, setLoginHref] = useState(`/login?returnTo=${encodeURIComponent(pathname || "/downloads")}`);
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -30,6 +30,11 @@ export default function DownloadsPage() {
   const couponCode = couponExperience.couponCode;
 
   useEffect(() => {
+    const currentReturnTo = typeof window !== "undefined"
+      ? `${pathname || "/downloads"}${window.location.search || ""}`
+      : (pathname || "/downloads");
+    setLoginHref(`/login?returnTo=${encodeURIComponent(currentReturnTo)}`);
+
     const queryPartner = normalizePartnerSlug(
       typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("partner") : null
     );
@@ -53,7 +58,7 @@ export default function DownloadsPage() {
     }
 
     setPartnerSlug(null);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!supabase) {

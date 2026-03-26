@@ -16,6 +16,8 @@ export default function AuthCallbackPage() {
       const params = new URLSearchParams(window.location.search);
       const returnTo = getSafeReturnTo(params.get("returnTo"));
       const external = getSafeExternal(params.get("external"));
+      const returnToUrl = new URL(returnTo, window.location.origin);
+      const returnToPartnerSlug = returnToUrl.searchParams.get("partner");
       const loginFallback = (authError?: string | null, authErrorDescription?: string | null) =>
         buildLoginHref({ returnTo, external, authError, authErrorDescription });
 
@@ -103,7 +105,7 @@ export default function AuthCallbackPage() {
         }
 
         try {
-          const partnerSlug = getPartnerFromCookieString(document.cookie);
+          const partnerSlug = getPartnerFromCookieString(document.cookie) || returnToPartnerSlug;
           const partner = getPartnerCouponConfig(partnerSlug);
           if (partner) {
             const rpcClient = supabase as any;
