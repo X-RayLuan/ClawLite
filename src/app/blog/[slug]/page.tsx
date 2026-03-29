@@ -81,6 +81,33 @@ function normalizeContent(content: string) {
   let inJsonFence = false;
   let skippingSources = false;
 
+  const metadataPrefixes = [
+    '**Meta description:**',
+    '**Primary keyword:**',
+    '**Secondary keywords:**',
+    '**Search intent:**',
+    '**Updated:**',
+    '**Theme classification:**',
+    '**Audience:**',
+    '**Draft date:**',
+    '**Supporting keywords:**',
+    '**Topic type:**',
+    '**Insertion decision:**',
+    '**Proof/source links:**',
+    'Meta description:',
+    'Primary keyword:',
+    'Secondary keywords:',
+    'Search intent:',
+    'Updated:',
+    'Theme classification:',
+    'Audience:',
+    'Draft date:',
+    'Supporting keywords:',
+    'Topic type:',
+    'Insertion decision:',
+    'Proof/source links:'
+  ];
+
   for (const line of lines) {
     const trimmed = line.trim();
 
@@ -104,13 +131,9 @@ function normalizeContent(content: string) {
     if (skippingSources) continue;
 
     if (trimmed.startsWith('# ')) continue;
-    if (trimmed.startsWith('**Meta description:**')) continue;
-    if (trimmed.startsWith('**Primary keyword:**')) continue;
-    if (trimmed.startsWith('**Secondary keywords:**')) continue;
-    if (trimmed.startsWith('**Search intent:**')) continue;
-    if (trimmed.startsWith('**Updated:**')) continue;
-    if (trimmed.startsWith('**Theme classification:**')) continue;
     if (trimmed === '## FAQ Schema') continue;
+    if (trimmed === '## Quick Answer') continue;
+    if (metadataPrefixes.some((prefix) => trimmed.startsWith(prefix))) continue;
 
     cleaned.push(line);
   }
