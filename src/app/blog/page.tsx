@@ -1,12 +1,84 @@
 import Link from 'next/link';
 import { blogPosts } from '@/data/blog/posts';
 
+const slugAliases: Record<string, string> = {
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'why-ai-teams-quit-after-the-demo',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-installation-guide',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
+  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-ai-assistant-guide'
+};
+
 type PostListItem = {
   slug: string;
   title: string;
   excerpt: string;
   date: string;
 };
+
+function extractCleanExcerpt(content: string) {
+  const metadataPrefixes = [
+    '**Meta description:**',
+    '**Primary keyword:**',
+    '**Secondary keywords:**',
+    '**Search intent:**',
+    '**Updated:**',
+    '**Theme classification:**',
+    '**Audience:**',
+    '**Draft date:**',
+    '**Supporting keywords:**',
+    '**Topic type:**',
+    '**Insertion decision:**',
+    '**Proof/source links:**',
+    'Meta description:',
+    'Primary keyword:',
+    'Secondary keywords:',
+    'Search intent:',
+    'Updated:',
+    'Theme classification:',
+    'Audience:',
+    'Draft date:',
+    'Supporting keywords:',
+    'Topic type:',
+    'Insertion decision:',
+    'Proof/source links:'
+  ];
+
+  const lines = content.split('\n');
+  let inSources = false;
+  let inJsonFence = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (line === '```json') {
+      inJsonFence = true;
+      continue;
+    }
+    if (inJsonFence && line === '```') {
+      inJsonFence = false;
+      continue;
+    }
+    if (inJsonFence) continue;
+
+    if (line === '## Sources') {
+      inSources = true;
+      continue;
+    }
+    if (inSources) {
+      if (line.startsWith('## ')) inSources = false;
+      else continue;
+    }
+
+    if (line.startsWith('# ')) continue;
+    if (line === '## Quick Answer' || line === '## FAQ Schema') continue;
+    if (metadataPrefixes.some((prefix) => line.startsWith(prefix))) continue;
+
+    return line.replace(/^>\s*\*\*Quick answer:\*\*\s*/i, '').replace(/^\*\*Quick answer:\*\*\s*/i, '');
+  }
+
+  return '';
+}
 
 const excerptBySlug: Record<string, string> = {
   'best-self-hosted-ai-assistant-2026-boring-reliability': 'The best self-hosted AI assistant in 2026 is not the flashiest demo. It is the one that stays reliable, understandable, and cost-sane when real work begins.',
@@ -59,70 +131,41 @@ const excerptBySlug: Record<string, string> = {
   'openclaw-alternatives-for-budget-conscious-builders-2026': 'A shortlist of OpenClaw alternatives for builders who need lower cost, less setup regret, and better first-run confidence.',
 };
 
-const orderedSlugs = [
-  'best-self-hosted-ai-assistant-2026-boring-reliability',
-  'how-to-install-openclaw-easily-with-less-risk',
-  'openclaw-pricing-vs-chatgpt-plus-2026',
-  'openclaw-vs-cursor-for-ai-workflows',
-  'best-beginner-openclaw-setup-without-terminal',
-  'self-hosted-ai-assistant-for-small-teams-2026',
-  'byok-vs-managed-tokens-for-openclaw',
-  'openclaw-install-checklist-for-first-run-trust',
-  'cheapest-way-to-run-openclaw-daily',
-  'openclaw-vs-chatgpt-for-privacy-and-control',
-  'local-ai-assistant-for-content-creators',
-  'clawlite-vs-openclaw-for-nontechnical-teams',
-  'openclaw-alternatives-for-budget-conscious-builders-2026',
-  'openclaw-install-guide-fastest-way',
-  'how-to-install-openclaw-in-10-minutes',
-  'openclaw-setup-guide-for-beginners',
-  'best-openclaw-installer',
-  'openclaw-tutorial-complete-beginner-walkthrough',
-  'openclaw-pricing-explained',
+const legacyPinnedSlugs = [
   '2026-03-21-why-ai-teams-quit-after-the-demo',
   '2026-03-21-openclaw-vs-clawlite-installation-guide',
-  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows',
-  'openclaw-setup-friction',
-  'managing-ai-cost-anxiety-with-clawlite',
-  'byok-ai-assistant-guide',
-  'the-real-ai-premium-is-not-power-it-is-reliability',
-  'best-cheap-models-for-openclaw-tool-use',
-  'clawlite-vs-cursor',
-  'ai-token-pricing-explained',
-  'what-is-a-self-hosted-ai-assistant',
-  'clawlite-vs-chatgpt-plus',
-  'best-affordable-ai-assistant-for-developers',
-  'best-affordable-ai-assistant-for-small-teams',
-  'clawlite-vs-chatgpt-plus-for-developers',
-  'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
-  'how-ai-browser-agents-automate-web-workflows-for-smb-teams',
-  'best-ai-browser-automation-tools',
-  'ai-browser-agent-vs-rpa',
-  'openclaw-alternative',
-  'how-to-install-openclaw',
-  'clawlite-vs-openclaw',
-  'best-ai-agent-platform',
-  'openclaw-token-cost',
-  'what-is-clawlite',
-  'openclaw-for-beginners',
-  'what-is-an-ai-browser-agent',
-  'clawlite-free-trial'
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows'
 ] as const;
 
-const posts = orderedSlugs.reduce<PostListItem[]>((acc, slug) => {
-  const canonicalSlug = slug.replace(/^2026-03-21-/, '');
-  const post = blogPosts[canonicalSlug] ?? blogPosts[slug];
-  if (!post) return acc;
+const allSlugs = Array.from(
+  new Set<string>([
+    ...Object.keys(blogPosts),
+    ...legacyPinnedSlugs,
+  ])
+);
 
-  acc.push({
-    slug,
-    title: post.title,
-    excerpt: excerptBySlug[slug] ?? post.content.split('\n').find((line) => line.trim() && !line.startsWith('#'))?.trim() ?? '',
-    date: post.date
+const posts = allSlugs
+  .map<PostListItem | null>((slug) => {
+    const canonicalSlug = slugAliases[slug] ?? slug;
+    const post = blogPosts[canonicalSlug] ?? blogPosts[slug];
+    if (!post) return null;
+
+    return {
+      slug,
+      title: post.title,
+      excerpt:
+        excerptBySlug[slug] ??
+        excerptBySlug[canonicalSlug] ??
+        extractCleanExcerpt(post.content),
+      date: post.date,
+    };
+  })
+  .filter((post): post is PostListItem => post !== null)
+  .sort((a, b) => {
+    const dateDelta = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDelta !== 0) return dateDelta;
+    return a.title.localeCompare(b.title);
   });
-
-  return acc;
-}, []);
 
 export default function BlogPage() {
   return (
