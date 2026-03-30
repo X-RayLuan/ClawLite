@@ -17,70 +17,122 @@ type PostListItem = {
 
 function extractCleanExcerpt(content: string) {
   const metadataPrefixes = [
-    '**Meta description:**',
-    '**Primary keyword:**',
-    '**Secondary keywords:**',
-    '**Search intent:**',
-    '**Updated:**',
-    '**Theme classification:**',
-    '**Audience:**',
-    '**Draft date:**',
-    '**Supporting keywords:**',
-    '**Topic type:**',
-    '**Insertion decision:**',
-    '**Proof/source links:**',
-    'Meta description:',
-    'Primary keyword:',
-    'Secondary keywords:',
-    'Search intent:',
-    'Updated:',
-    'Theme classification:',
-    'Audience:',
-    'Draft date:',
-    'Supporting keywords:',
-    'Topic type:',
-    'Insertion decision:',
-    'Proof/source links:'
+    /\*\*Meta description:\*\*/i,
+    /\*\*Primary keyword:\*\*/i,
+    /\*\*Secondary keywords?:\*\*/i,
+    /\*\*Search intent:\*\*/i,
+    /\*\*Updated:\*\*/i,
+    /\*\*Theme classification:\*\*/i,
+    /\*\*Audience:\*\*/i,
+    /\*\*Draft date:\*\*/i,
+    /\*\*Supporting keywords:\*\*/i,
+    /\*\*Topic type:\*\*/i,
+    /\*\*Insertion decision:\*\*/i,
+    /\*\*Proof\/source links:\*\*/i,
+    /Meta description:/i,
+    /Primary keyword:/i,
+    /Secondary keywords?:/i,
+    /Search intent:/i,
+    /Updated:/i,
+    /Audience:/i,
+    /Draft date:/i,
+    /Supporting keywords:/i,
+    /Topic type:/i,
+    /Insertion decision:/i,
+    /Proof\/source links:/i,
+    /\|\s*Primary keyword\s*\|/i,
+    /\|\s*Secondary keywords?:\s*\|/i,
+    /\|\s*Search intent\s*\|/i,
+    /##\s*Search intent/i,
+    /##\s*Meta description/i,
+    /##\s*Primary keyword/i,
+    /##\s*Secondary keywords?/i,
+    /##\s*Updated/i,
+    /##\s*Theme classification/i,
+    /##\s*Audience/i,
+    /##\s*Draft date/i,
+    /##\s*Supporting keywords/i,
+    /##\s*Topic type/i,
+    /##\s*Insertion decision/i,
+    /##\s*Proof\/source links/i,
   ];
 
+  const normalizeLine = (line: string) => line.replace(/^`+/, '').trim();
+
   const lines = content.split('\n');
-  let inSources = false;
-  let inJsonFence = false;
+  const quickAnswerRegex = /^##\s*quick\s*answer/i;
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
+  const cleanLine = (line: string) =>
+    line
+      .replace(/^>\s*\*\*Quick answer:\*\*\s*/i, '')
+      .replace(/^\*\*Quick answer:\*\*\s*/i, '')
+      .replace(/^>\s*/, '')
+      .trim();
 
-    if (line === '```json') {
-      inJsonFence = true;
-      continue;
+  const isMetadataLine = (line: string) => {
+    const normalized = normalizeLine(line);
+    if (metadataPrefixes.some((pattern) => pattern.test(normalized))) return true;
+    if (/^\*\s*\|/.test(normalized)) return true;
+    if (/^\|\s*$/.test(normalized)) return false;
+    return false;
+  };
+
+  const findFirstContentLine = (startIndex = 0) => {
+    let inSources = false;
+    let inJsonFence = false;
+
+    for (let index = startIndex; index < lines.length; index += 1) {
+      const rawLine = lines[index];
+      const line = normalizeLine(rawLine);
+      if (!line) continue;
+
+      if (line === '```json') {
+        inJsonFence = true;
+        continue;
+      }
+      if (inJsonFence && line === '```') {
+        inJsonFence = false;
+        continue;
+      }
+      if (inJsonFence) continue;
+
+      if (line === '## Sources' || /^##\s*Table of contents/i.test(line)) {
+        inSources = true;
+        continue;
+      }
+      if (inSources) {
+        if (/^##\s+/.test(line)) inSources = false;
+        else continue;
+      }
+
+      if (line.startsWith('```')) continue;
+      if (line.startsWith('# ')) continue;
+      if (/^##\s*FAQ\b/i.test(line)) continue;
+      if (/^##\s*Quick Answer/i.test(line) || /^##\s*Quick answer/i.test(line)) continue;
+      if (/^##\s+/.test(line)) continue;
+      if (line.startsWith('- [') || /^-\s*\[/.test(line)) continue;
+      if (/^\*\s*\[[^\]]+\]\(/.test(line)) continue;
+      if (isMetadataLine(line)) continue;
+
+      return cleanLine(line);
     }
-    if (inJsonFence && line === '```') {
-      inJsonFence = false;
-      continue;
-    }
-    if (inJsonFence) continue;
 
-    if (line === '## Sources') {
-      inSources = true;
-      continue;
-    }
-    if (inSources) {
-      if (line.startsWith('## ')) inSources = false;
-      else continue;
-    }
+    return '';
+  };
 
-    if (line.startsWith('# ')) continue;
-    if (line === '## Quick Answer' || line === '## FAQ Schema') continue;
-    if (metadataPrefixes.some((prefix) => line.startsWith(prefix))) continue;
-
-    return line.replace(/^>\s*\*\*Quick answer:\*\*\s*/i, '').replace(/^\*\*Quick answer:\*\*\s*/i, '');
+  const quickAnswerIndex = lines.findIndex((line) => quickAnswerRegex.test(normalizeLine(line)));
+  if (quickAnswerIndex >= 0) {
+    return findFirstContentLine(quickAnswerIndex + 1);
   }
 
-  return '';
+  return findFirstContentLine(0);
 }
 
 const excerptBySlug: Record<string, string> = {
+    'cost-per-successful-workflow-ai-assistant-buyers-guide': 'If your team buys AI assistants for recurring work, compare cost per successful workflow, not token price alone.',
+    'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control': 'Small teams should choose a self-hosted AI assistant based on reliability, setup burden, operator control, and cost per successful workflow.',
+    'byok-vs-managed-tokens-which-cost-model-fits-better': 'BYOK is often best for users who want pricing control, while managed tokens can be better when simplicity and lower operations overhead matter more.',
+    'first-useful-workflow-not-install-success': 'The right activation metric for an AI assistant is first useful workflow success, not install success.',
   'best-self-hosted-ai-assistant-2026-boring-reliability': 'The best self-hosted AI assistant in 2026 is not the flashiest demo. It is the one that stays reliable, understandable, and cost-sane when real work begins.',
   '2026-03-21-why-ai-teams-quit-after-the-demo': 'Most teams do not quit AI because the model is weak. They quit because the workflow turns fragile after the first impressive demo.',
   '2026-03-21-openclaw-vs-clawlite-installation-guide': 'A practical installation comparison: ClawLite gets most teams to first value faster, while direct OpenClaw setup suits users who want more self-managed control.',
