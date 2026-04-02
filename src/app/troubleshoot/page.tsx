@@ -1,12 +1,12 @@
 "use client";
 
-import { content } from "@/lib/content";
+import { getContentForLang } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
 import { Card } from "@/components/ui/card";
 
 export default function TroubleshootPage() {
   const { lang } = useLang();
-  const t = content[lang].troubleshoot;
+  const t = getContentForLang(lang).troubleshoot;
 
   return (
     <main className="gradient-bg min-h-screen">

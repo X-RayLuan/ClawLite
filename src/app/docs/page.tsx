@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useLang } from "@/components/lang-provider";
-import { content } from "@/lib/content";
+import { getContentForLang } from "@/lib/content";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { Button } from "@/components/ui/button";
 
 export default function DocsPage() {
   const { lang } = useLang();
-  const nav = content[lang].nav;
-  const docs = content[lang].docsPage;
+  const pageContent = getContentForLang(lang);
+  const nav = pageContent.nav;
+  const docs = pageContent.docsPage;
 
   return (
     <main className="gradient-bg min-h-screen">

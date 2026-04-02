@@ -3,14 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { content } from "@/lib/content";
+import { getContentForLang } from "@/lib/content";
 import { LangToggle } from "@/components/lang-toggle";
 import { useLang } from "@/components/lang-provider";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function SiteHeader() {
   const { lang } = useLang();
-  const nav = content[lang].nav;
+  const nav = getContentForLang(lang).nav;
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [loggedIn, setLoggedIn] = useState(false);
 
@@ -50,7 +50,7 @@ export function SiteHeader() {
             {nav.docs}
           </Link>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {loggedIn ? (
             <button type="button" onClick={handleLogout} className="text-sm text-ink/80 hover:text-ink">
               Logout
