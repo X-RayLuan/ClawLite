@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { content } from "@/lib/content";
+import { getContentForLang } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
 
 export function SiteFooter() {
   const { lang } = useLang();
-  const footer = content[lang].footer;
-  const nav = content[lang].nav;
+  const pageContent = getContentForLang(lang);
+  const footer = pageContent.footer;
+  const nav = pageContent.nav;
 
   return (
     <footer className="border-t border-black/5 bg-white/70">

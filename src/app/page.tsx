@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { content } from "@/lib/content";
+import { getContentForLang } from "@/lib/content";
 import { useLang } from "@/components/lang-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,9 @@ export default function HomePage() {
   const { lang } = useLang();
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
-  const hero = content[lang].hero;
-  const setupSteps = content[lang].setup.steps.slice(0, 4);
+  const pageContent = getContentForLang(lang);
+  const hero = pageContent.hero;
+  const setupSteps = pageContent.setup.steps.slice(0, 4);
 
   useEffect(() => {
     if (!supabase) return;
