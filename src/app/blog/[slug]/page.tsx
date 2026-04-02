@@ -38,6 +38,9 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
 }
 
 const slugAliases: Record<string, string> = {
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'why-ai-teams-quit-after-the-demo',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-installation-guide',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
   'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-ai-assistant-guide'
 };
 
@@ -78,6 +81,33 @@ function normalizeContent(content: string) {
   let inJsonFence = false;
   let skippingSources = false;
 
+  const metadataPrefixes = [
+    '**Meta description:**',
+    '**Primary keyword:**',
+    '**Secondary keywords:**',
+    '**Search intent:**',
+    '**Updated:**',
+    '**Theme classification:**',
+    '**Audience:**',
+    '**Draft date:**',
+    '**Supporting keywords:**',
+    '**Topic type:**',
+    '**Insertion decision:**',
+    '**Proof/source links:**',
+    'Meta description:',
+    'Primary keyword:',
+    'Secondary keywords:',
+    'Search intent:',
+    'Updated:',
+    'Theme classification:',
+    'Audience:',
+    'Draft date:',
+    'Supporting keywords:',
+    'Topic type:',
+    'Insertion decision:',
+    'Proof/source links:'
+  ];
+
   for (const line of lines) {
     const trimmed = line.trim();
 
@@ -101,8 +131,9 @@ function normalizeContent(content: string) {
     if (skippingSources) continue;
 
     if (trimmed.startsWith('# ')) continue;
-    if (trimmed.startsWith('**Meta description:**')) continue;
     if (trimmed === '## FAQ Schema') continue;
+    if (trimmed === '## Quick Answer') continue;
+    if (metadataPrefixes.some((prefix) => trimmed.startsWith(prefix))) continue;
 
     cleaned.push(line);
   }
@@ -115,6 +146,7 @@ function renderContent(content: string) {
   const elements: React.ReactNode[] = [];
   let paragraphBuffer: string[] = [];
   let bulletListBuffer: string[] = [];
+  const imagePattern = /^!\[([^\]]*)\]\(([^)]+)\)$/;
   type OrderedListItem = {
     text: string;
     extra: string[];
@@ -276,6 +308,24 @@ function renderContent(content: string) {
         <blockquote key={`bq-${index}`} className="border-l-4 border-blue-500 pl-4 italic text-gray-700 my-6">
           {renderInlineMarkdown(trimmed.slice(2))}
         </blockquote>
+      );
+      return;
+    }
+
+    const imageMatch = trimmed.match(imagePattern);
+    if (imageMatch) {
+      flushAll(String(index));
+      const [, alt, src] = imageMatch;
+      elements.push(
+        <figure key={`img-${index}`} className="my-8">
+          <img
+            src={src}
+            alt={alt}
+            className="w-full rounded-xl border border-gray-200 shadow-sm"
+            loading="lazy"
+          />
+          {alt ? <figcaption className="mt-3 text-sm text-gray-500">{alt}</figcaption> : null}
+        </figure>
       );
       return;
     }

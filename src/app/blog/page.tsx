@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { blogPosts } from '@/data/blog/posts';
 
+const slugAliases: Record<string, string> = {
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'why-ai-teams-quit-after-the-demo',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-installation-guide',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
+  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-ai-assistant-guide'
+};
+
 type PostListItem = {
   slug: string;
   title: string;
@@ -8,7 +15,124 @@ type PostListItem = {
   date: string;
 };
 
+function extractCleanExcerpt(content: string) {
+  const metadataPrefixes = [
+    /\*\*Meta description:\*\*/i,
+    /\*\*Primary keyword:\*\*/i,
+    /\*\*Secondary keywords?:\*\*/i,
+    /\*\*Search intent:\*\*/i,
+    /\*\*Updated:\*\*/i,
+    /\*\*Theme classification:\*\*/i,
+    /\*\*Audience:\*\*/i,
+    /\*\*Draft date:\*\*/i,
+    /\*\*Supporting keywords:\*\*/i,
+    /\*\*Topic type:\*\*/i,
+    /\*\*Insertion decision:\*\*/i,
+    /\*\*Proof\/source links:\*\*/i,
+    /Meta description:/i,
+    /Primary keyword:/i,
+    /Secondary keywords?:/i,
+    /Search intent:/i,
+    /Updated:/i,
+    /Audience:/i,
+    /Draft date:/i,
+    /Supporting keywords:/i,
+    /Topic type:/i,
+    /Insertion decision:/i,
+    /Proof\/source links:/i,
+    /\|\s*Primary keyword\s*\|/i,
+    /\|\s*Secondary keywords?:\s*\|/i,
+    /\|\s*Search intent\s*\|/i,
+    /##\s*Search intent/i,
+    /##\s*Meta description/i,
+    /##\s*Primary keyword/i,
+    /##\s*Secondary keywords?/i,
+    /##\s*Updated/i,
+    /##\s*Theme classification/i,
+    /##\s*Audience/i,
+    /##\s*Draft date/i,
+    /##\s*Supporting keywords/i,
+    /##\s*Topic type/i,
+    /##\s*Insertion decision/i,
+    /##\s*Proof\/source links/i,
+  ];
+
+  const normalizeLine = (line: string) => line.replace(/^`+/, '').trim();
+
+  const lines = content.split('\n');
+  const quickAnswerRegex = /^##\s*quick\s*answer/i;
+
+  const cleanLine = (line: string) =>
+    line
+      .replace(/^>\s*\*\*Quick answer:\*\*\s*/i, '')
+      .replace(/^\*\*Quick answer:\*\*\s*/i, '')
+      .replace(/^>\s*/, '')
+      .trim();
+
+  const isMetadataLine = (line: string) => {
+    const normalized = normalizeLine(line);
+    if (metadataPrefixes.some((pattern) => pattern.test(normalized))) return true;
+    if (/^\*\s*\|/.test(normalized)) return true;
+    if (/^\|\s*$/.test(normalized)) return false;
+    return false;
+  };
+
+  const findFirstContentLine = (startIndex = 0) => {
+    let inSources = false;
+    let inJsonFence = false;
+
+    for (let index = startIndex; index < lines.length; index += 1) {
+      const rawLine = lines[index];
+      const line = normalizeLine(rawLine);
+      if (!line) continue;
+
+      if (line === '```json') {
+        inJsonFence = true;
+        continue;
+      }
+      if (inJsonFence && line === '```') {
+        inJsonFence = false;
+        continue;
+      }
+      if (inJsonFence) continue;
+
+      if (line === '## Sources' || /^##\s*Table of contents/i.test(line)) {
+        inSources = true;
+        continue;
+      }
+      if (inSources) {
+        if (/^##\s+/.test(line)) inSources = false;
+        else continue;
+      }
+
+      if (line.startsWith('```')) continue;
+      if (line.startsWith('# ')) continue;
+      if (/^##\s*FAQ\b/i.test(line)) continue;
+      if (/^##\s*Quick Answer/i.test(line) || /^##\s*Quick answer/i.test(line)) continue;
+      if (/^##\s+/.test(line)) continue;
+      if (line.startsWith('- [') || /^-\s*\[/.test(line)) continue;
+      if (/^\*\s*\[[^\]]+\]\(/.test(line)) continue;
+      if (isMetadataLine(line)) continue;
+
+      return cleanLine(line);
+    }
+
+    return '';
+  };
+
+  const quickAnswerIndex = lines.findIndex((line) => quickAnswerRegex.test(normalizeLine(line)));
+  if (quickAnswerIndex >= 0) {
+    return findFirstContentLine(quickAnswerIndex + 1);
+  }
+
+  return findFirstContentLine(0);
+}
+
 const excerptBySlug: Record<string, string> = {
+    'cost-per-successful-workflow-ai-assistant-buyers-guide': 'If your team buys AI assistants for recurring work, compare cost per successful workflow, not token price alone.',
+    'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control': 'Small teams should choose a self-hosted AI assistant based on reliability, setup burden, operator control, and cost per successful workflow.',
+    'byok-vs-managed-tokens-which-cost-model-fits-better': 'BYOK is often best for users who want pricing control, while managed tokens can be better when simplicity and lower operations overhead matter more.',
+    'first-useful-workflow-not-install-success': 'The right activation metric for an AI assistant is first useful workflow success, not install success.',
   'best-self-hosted-ai-assistant-2026-boring-reliability': 'The best self-hosted AI assistant in 2026 is not the flashiest demo. It is the one that stays reliable, understandable, and cost-sane when real work begins.',
   '2026-03-21-why-ai-teams-quit-after-the-demo': 'Most teams do not quit AI because the model is weak. They quit because the workflow turns fragile after the first impressive demo.',
   '2026-03-21-openclaw-vs-clawlite-installation-guide': 'A practical installation comparison: ClawLite gets most teams to first value faster, while direct OpenClaw setup suits users who want more self-managed control.',
@@ -59,70 +183,41 @@ const excerptBySlug: Record<string, string> = {
   'openclaw-alternatives-for-budget-conscious-builders-2026': 'A shortlist of OpenClaw alternatives for builders who need lower cost, less setup regret, and better first-run confidence.',
 };
 
-const orderedSlugs = [
-  'best-self-hosted-ai-assistant-2026-boring-reliability',
-  'how-to-install-openclaw-easily-with-less-risk',
-  'openclaw-pricing-vs-chatgpt-plus-2026',
-  'openclaw-vs-cursor-for-ai-workflows',
-  'best-beginner-openclaw-setup-without-terminal',
-  'self-hosted-ai-assistant-for-small-teams-2026',
-  'byok-vs-managed-tokens-for-openclaw',
-  'openclaw-install-checklist-for-first-run-trust',
-  'cheapest-way-to-run-openclaw-daily',
-  'openclaw-vs-chatgpt-for-privacy-and-control',
-  'local-ai-assistant-for-content-creators',
-  'clawlite-vs-openclaw-for-nontechnical-teams',
-  'openclaw-alternatives-for-budget-conscious-builders-2026',
-  'openclaw-install-guide-fastest-way',
-  'how-to-install-openclaw-in-10-minutes',
-  'openclaw-setup-guide-for-beginners',
-  'best-openclaw-installer',
-  'openclaw-tutorial-complete-beginner-walkthrough',
-  'openclaw-pricing-explained',
+const legacyPinnedSlugs = [
   '2026-03-21-why-ai-teams-quit-after-the-demo',
   '2026-03-21-openclaw-vs-clawlite-installation-guide',
-  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows',
-  'openclaw-setup-friction',
-  'managing-ai-cost-anxiety-with-clawlite',
-  'byok-ai-assistant-guide',
-  'the-real-ai-premium-is-not-power-it-is-reliability',
-  'best-cheap-models-for-openclaw-tool-use',
-  'clawlite-vs-cursor',
-  'ai-token-pricing-explained',
-  'what-is-a-self-hosted-ai-assistant',
-  'clawlite-vs-chatgpt-plus',
-  'best-affordable-ai-assistant-for-developers',
-  'best-affordable-ai-assistant-for-small-teams',
-  'clawlite-vs-chatgpt-plus-for-developers',
-  'ai-browser-agents-vs-traditional-rpa-for-modern-operations',
-  'how-ai-browser-agents-automate-web-workflows-for-smb-teams',
-  'best-ai-browser-automation-tools',
-  'ai-browser-agent-vs-rpa',
-  'openclaw-alternative',
-  'how-to-install-openclaw',
-  'clawlite-vs-openclaw',
-  'best-ai-agent-platform',
-  'openclaw-token-cost',
-  'what-is-clawlite',
-  'openclaw-for-beginners',
-  'what-is-an-ai-browser-agent',
-  'clawlite-free-trial'
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows'
 ] as const;
 
-const posts = orderedSlugs.reduce<PostListItem[]>((acc, slug) => {
-  const canonicalSlug = slug.replace(/^2026-03-21-/, '');
-  const post = blogPosts[canonicalSlug] ?? blogPosts[slug];
-  if (!post) return acc;
+const allSlugs = Array.from(
+  new Set<string>([
+    ...Object.keys(blogPosts),
+    ...legacyPinnedSlugs,
+  ])
+);
 
-  acc.push({
-    slug,
-    title: post.title,
-    excerpt: excerptBySlug[slug] ?? post.content.split('\n').find((line) => line.trim() && !line.startsWith('#'))?.trim() ?? '',
-    date: post.date
+const posts = allSlugs
+  .map<PostListItem | null>((slug) => {
+    const canonicalSlug = slugAliases[slug] ?? slug;
+    const post = blogPosts[canonicalSlug] ?? blogPosts[slug];
+    if (!post) return null;
+
+    return {
+      slug,
+      title: post.title,
+      excerpt:
+        excerptBySlug[slug] ??
+        excerptBySlug[canonicalSlug] ??
+        extractCleanExcerpt(post.content),
+      date: post.date,
+    };
+  })
+  .filter((post): post is PostListItem => post !== null)
+  .sort((a, b) => {
+    const dateDelta = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDelta !== 0) return dateDelta;
+    return a.title.localeCompare(b.title);
   });
-
-  return acc;
-}, []);
 
 export default function BlogPage() {
   return (
