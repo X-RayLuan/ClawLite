@@ -1,338 +1,317 @@
+"use client";
+
 import Link from "next/link";
-import Script from "next/script";
-import type { Metadata } from "next";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
 import { pricingConfig } from "@/lib/pricing";
-import { ClawRouterPreviewButton } from "@/components/clawrouter-preview-button";
+import { getSupabaseClient } from "@/lib/supabase";
 
-export const metadata: Metadata = {
-  title: "ClawRouter API Access | Managed keys for ClawLite and OpenClaw",
-  description:
-    "A public-facing ClawRouter sales page for managed API access: clearer offer structure, honest live-vs-preview states, reseller path, BYOK fallback, and a runnable local checkout preview.",
-};
+const stats = [
+  { value: "30–50%", label: "lower cost positioning" },
+  { value: "3", label: "core AI workload lanes" },
+  { value: "24/7", label: "account-ready access path" },
+  { value: "1", label: "router for all model calls" },
+];
 
-const statusCards = [
+const featureRows = [
   {
-    badge: "Live now",
-    title: "Public sales page + local checkout preview",
-    body: "You can review the full funnel locally today, including CTA flow, checkout state messaging, and what happens after a purchase starts.",
-    tone: "sea",
+    eyebrow: "AI Video Routing",
+    title: "Route generation-heavy video workloads without building a provider maze.",
+    body:
+      "Use one router surface for video generation access instead of wiring separate model vendors and payment flows one by one. ClawRouter is designed to simplify what your agent, team, and billing path need to know.",
+    bullets: ["Single buying path", "Cleaner model switching", "Faster activation"],
+    tone: "blue",
   },
   {
-    badge: "Live now",
-    title: "Reseller top-up route",
-    body: "Users who want an immediate external top-up path can continue to the EZRouter reseller flow after login.",
-    tone: "coral",
+    eyebrow: "AI Image Routing",
+    title: "Keep image generation flexible while preserving one account-level control point.",
+    body:
+      "From product visuals to workflow automations, ClawRouter is positioned as the clean layer between your app and the underlying model mix — so users see one experience instead of provider sprawl.",
+    bullets: ["One key flow", "Provider abstraction", "Usage-aware routing"],
+    tone: "ink",
   },
   {
-    badge: "Coming next",
-    title: "Final settlement + entitlement automation",
-    body: "Automatic payment capture, production entitlement writeback, and post-purchase key activation are not represented as fully live on this page yet.",
+    eyebrow: "LLM & Agent Calls",
+    title: "Give OpenClaw one managed path for chat, coding, and agent traffic.",
+    body:
+      "This is the practical core: ClawRouter should feel like the obvious managed alternative to manual BYOK setup when a user wants a faster route from install to working AI.",
+    bullets: ["Managed access path", "Better activation story", "BYOK still available"],
     tone: "ink",
   },
 ];
 
-const offerCards = [
+const advantages = [
   {
-    eyebrow: "Recommended",
-    title: "Managed API access",
-    price: "Usage-based",
-    summary: "Buy managed ClawRouter access instead of wiring raw provider keys yourself.",
-    bullets: [
-      "Guided account-bound purchase flow",
-      "Designed for faster installer activation",
-      "Positioned as 30-50% cheaper than official API pricing",
-      "Clear local preview today, real backend hookup next",
-    ],
-    cta: "Preview checkout locally",
-    kind: "preview" as const,
+    title: "One commercial surface",
+    body: "Users should understand the offer in one glance: buy managed access, stay on BYOK, or upgrade to hands-on help.",
   },
   {
-    eyebrow: "Live fallback",
-    title: "BYOK",
-    price: pricingConfig.byok.platformFee,
-    summary: "Keep full provider control with your own OpenAI, Anthropic, or other compatible keys.",
-    bullets: [
-      "No platform fee",
-      "Best for power users with existing keys",
-      "Works as the honest fallback while ClawRouter backend automation finishes",
-    ],
-    cta: "Use your own key",
-    href: "/pricing",
+    title: "Cleaner onboarding copy",
+    body: "The page sells the speed-to-working outcome, not mysterious infra. That makes the activation flow easier to trust.",
   },
   {
-    eyebrow: "Live service",
-    title: pricingConfig.remoteImplementation.label,
-    price: pricingConfig.remoteImplementation.price,
-    summary: pricingConfig.remoteImplementation.description,
-    bullets: [
-      "Hands-on install and configuration help",
-      "Useful for teams buying outcomes instead of setup work",
-      "Live Stripe checkout already available",
-    ],
-    cta: pricingConfig.remoteImplementation.ctaLabel,
-    href: pricingConfig.remoteImplementation.stripeUrl,
-    external: true,
+    title: "Cheaper than official API positioning",
+    body: "ClawRouter inherits the OpenClaw promise: lower friction without forcing users to wire raw provider accounts on day one.",
+  },
+  {
+    title: "Built to fit OpenClaw",
+    body: "This is not a generic API mall. It is a routing and purchase surface designed to fit the OpenClaw activation journey.",
+  },
+  {
+    title: "Fast page-to-key path",
+    body: "The commercial experience should move from landing page to action quickly, without making users decode your pricing logic first.",
+  },
+  {
+    title: "Developer-friendly by default",
+    body: "Clear offer framing, obvious CTAs, and less account sprawl are what make this page useful — not hype adjectives.",
   },
 ];
 
-const flowSteps = [
+const modelCards = [
   {
-    step: "01",
-    title: "Choose your buying path",
-    body: "Start with the managed ClawRouter offer, use BYOK if you already have stable provider keys, or jump to operator help if you want implementation done with you.",
+    category: "Video",
+    title: "Generation-ready model access",
+    body: "Present ClawRouter as the clean access layer for high-cost, multi-model generation workloads where users care about speed, switching, and spend control.",
   },
   {
-    step: "02",
-    title: "Preview or continue to checkout",
-    body: "The local preview shows how ClawRouter purchase state, session IDs, and next steps are presented before the real billing backend is fully wired.",
+    category: "Image",
+    title: "Creative production routing",
+    body: "Use one buying and access surface for image workflows instead of forcing users to juggle separate provider keys from day one.",
   },
   {
-    step: "03",
-    title: "Connect inside the installer",
-    body: "The intended production path is account-bound activation inside ClawLite or OpenClaw, with BYOK still available when manual control is the better fit.",
+    category: "Chat",
+    title: "LLM traffic for agents and apps",
+    body: "The most important promise is simple: faster path from install to useful AI calls, with less setup drag than raw BYOK.",
   },
-];
-
-const trustPoints = [
-  "One-click OpenClaw positioning stays intact: the sales page is about speed to working setup, not selling mystery credits.",
-  "BYOK remains a first-class option, so the offer never traps a user into a single path.",
-  "The UI explicitly marks previewed and mocked steps instead of claiming that settlement and entitlement are fully complete.",
 ];
 
 const faqs = [
   {
-    q: "What is live on this page right now?",
-    a: "The public sales surface, CTA structure, pricing presentation, FAQ, and local checkout preview are live. The reseller top-up route is also linked. Final payment settlement and real entitlement automation are still being wired.",
+    q: "What is ClawRouter?",
+    a: "ClawRouter is the managed routing and access layer for OpenClaw. It is positioned as the easier path for users who want model access without manually wiring every provider themselves.",
   },
   {
-    q: "Is this claiming that ClawRouter purchase is fully automated already?",
-    a: "No. The page is intentionally explicit about the difference between live UI, local preview states, external reseller flow, and the still-in-progress backend hookup.",
+    q: "Is BYOK still supported?",
+    a: "Yes. BYOK stays visible as the honest fallback for users who already have stable provider accounts or want maximum manual control.",
   },
   {
-    q: "What should a user do if they need access today?",
-    a: "Use the reseller top-up route or stay on BYOK. The managed ClawRouter purchase flow is presented as the recommended path and can be reviewed locally, but it should not be over-claimed as final settlement truth yet.",
+    q: "What kinds of workloads does this page cover?",
+    a: "The page is framed around three core workload lanes: video, image, and LLM/chat. The point is one routing surface, not a mess of disconnected buying paths.",
   },
   {
-    q: "Why keep BYOK on the page if ClawRouter is the main offer?",
-    a: "Because the honest product surface should show the real fallback. Users with stable provider keys should be able to keep manual control instead of being pushed into a half-finished backend.",
+    q: "What happens after login?",
+    a: "Login should land users in the ClawRouter dashboard so they can add credits, manage API keys, inspect models, and review usage in one place.",
   },
 ];
 
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((faq) => ({
-    "@type": "Question",
-    name: faq.q,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: faq.a,
-    },
-  })),
-};
-
-export default function ClawRouterPage() {
+function SalesPage() {
   return (
-    <main className="gradient-bg min-h-screen">
-      <Script
-        id="clawrouter-faq-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-
-      <section className="mx-auto grid max-w-6xl gap-10 px-6 pb-14 pt-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-        <div className="space-y-6">
-          <Badge className="border-coral/20 bg-coral/10 text-coral">Managed API Access for ClawLite</Badge>
-          <h1 className="font-display text-4xl font-semibold leading-[1.02] text-ink md:text-6xl">
-            Buy ClawRouter access with an honest path from sales page to activation.
-          </h1>
-          <p className="max-w-2xl text-lg text-ink/72 md:text-xl">
-            ClawRouter is the managed API key path for ClawLite and OpenClaw: faster setup, cleaner account-bound onboarding,
-            and a simpler alternative to manual provider-key wiring. The purchase surface is now reviewable end to end locally,
-            while final settlement and entitlement automation are still clearly marked as in progress.
-          </p>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <ClawRouterPreviewButton />
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/login?returnTo=%2Fclawrouter">Login for account-bound flow</Link>
-            </Button>
-            <Button size="lg" variant="ghost" asChild>
-              <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Open reseller top-up</ExternalAuthLink>
-            </Button>
+    <main className="min-h-screen bg-[rgba(248,244,237,0.92)] text-stone-950">
+      <section className="relative overflow-hidden border-b border-stone-300/60 bg-[radial-gradient(circle_at_top,rgba(120,113,108,0.10),transparent_34%),linear-gradient(180deg,rgba(248,244,237,0.92)_0%,rgba(246,240,231,0.75)_72%,rgba(250,248,243,0.82)_100%)]">
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 lg:px-8 lg:pb-20 lg:pt-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <Badge className="border-stone-300/70 bg-white/50 text-stone-700">ClawRouter</Badge>
+            <h1 className="mt-6 text-balance font-display text-4xl font-semibold leading-[1.04] tracking-[-0.04em] text-stone-950 sm:text-5xl lg:text-6xl">
+              Access the best AI models in one router.
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-stone-600 sm:text-lg">
+              ClawRouter is the managed access layer for OpenClaw — one commercial and developer-facing surface for video,
+              image, and chat model traffic, with a cleaner path from setup to working AI.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button size="lg" asChild className="min-w-[220px] bg-stone-900 hover:bg-stone-800">
+                <Link href="/login?returnTo=%2Fclawrouter">Get ClawRouter Access</Link>
+              </Button>
+              <Button size="lg" variant="secondary" asChild className="min-w-[180px] border-stone-300 bg-white/70 text-stone-900 hover:bg-white">
+                <ExternalAuthLink href="https://docs.kie.ai">API Documentation</ExternalAuthLink>
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 text-sm text-ink/60">
-            <span className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5">Usage-based managed access</span>
-            <span className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5">30-50% cheaper positioning</span>
-            <span className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5">BYOK remains available</span>
-            <span className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5">Preview mode clearly labeled</span>
-          </div>
-        </div>
-
-        <Card className="section-card overflow-hidden p-0">
-          <div className="border-b border-black/5 bg-black/[0.03] px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">Launch status</p>
-          </div>
-          <div className="space-y-4 p-6">
-            {statusCards.map((item) => (
-              <div key={item.title} className="rounded-[24px] border border-black/10 bg-white p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-lg font-semibold text-ink">{item.title}</p>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${
-                      item.tone === "sea"
-                        ? "bg-sea/10 text-sea"
-                        : item.tone === "coral"
-                          ? "bg-coral/10 text-coral"
-                          : "bg-black/5 text-ink/70"
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-ink/70">{item.body}</p>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-6 border-t border-stone-300/60 pt-8 sm:grid-cols-4">
+            {stats.map((item) => (
+              <div key={item.label} className="text-center">
+                <div className="text-2xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-3xl">{item.value}</div>
+                <div className="mt-2 text-sm text-stone-500">{item.label}</div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-14">
-        <div className="mb-6 max-w-3xl">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">Offer Structure</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
-            Pick the path that matches how much setup work you want to own.
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="text-center">
+          <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-4xl">
+            AI APIs for any OpenClaw project
           </h2>
-          <p className="mt-3 text-base leading-7 text-ink/70">
-            The public surface treats ClawRouter as the recommended managed route, keeps BYOK available as the honest fallback,
-            and preserves a hands-on service option for buyers who want outcomes instead of homework.
-          </p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          {offerCards.map((offer) => (
-            <Card
-              key={offer.title}
-              className={`section-card p-6 ${offer.kind === "preview" ? "border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 shadow-glow" : ""}`}
-            >
-              <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${offer.kind === "preview" ? "text-coral" : "text-sea"}`}>
-                {offer.eyebrow}
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold text-ink">{offer.title}</h3>
-              <div className="mt-2 text-3xl font-semibold text-ink">{offer.price}</div>
-              <p className="mt-3 text-sm leading-6 text-ink/70">{offer.summary}</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-ink/75">
-                {offer.bullets.map((bullet) => (
-                  <li key={bullet}>• {bullet}</li>
-                ))}
-              </ul>
-              <div className="mt-6">
-                {offer.kind === "preview" ? (
-                  <ClawRouterPreviewButton fullWidth />
-                ) : offer.external ? (
-                  <Button asChild className="w-full">
-                    <ExternalAuthLink href={offer.href!}>{offer.cta}</ExternalAuthLink>
-                  </Button>
-                ) : (
-                  <Button asChild variant="secondary" className="w-full">
-                    <Link href={offer.href!}>{offer.cta}</Link>
-                  </Button>
-                )}
+        <div className="mt-12 space-y-12">
+          {featureRows.map((item, index) => (
+            <div key={item.title} className={`grid items-center gap-8 lg:grid-cols-2 ${index % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""}`}>
+              <div className={`overflow-hidden rounded-[28px] border ${item.tone === "blue" ? "border-stone-300/60 bg-gradient-to-br from-slate-950 via-slate-900 to-stone-900" : "border-stone-300/60 bg-stone-950"} p-6 text-white shadow-[0_20px_80px_-40px_rgba(15,23,42,0.5)]`}>
+                <div className="rounded-[20px] border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.16em] text-white/55">
+                    <span>{item.eyebrow}</span>
+                    <span>ClawRouter</span>
+                  </div>
+                  <div className="mt-6 space-y-3">
+                    <div className="h-3 w-24 rounded-full bg-stone-400/90" />
+                    <div className="h-3 w-40 rounded-full bg-white/20" />
+                    <div className="h-3 w-32 rounded-full bg-white/15" />
+                  </div>
+                  <div className="mt-8 grid gap-3">
+                    {item.bullets.map((bullet) => (
+                      <div key={bullet} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
+                        {bullet}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </Card>
+
+              <div>
+                <p className="text-sm font-medium text-stone-700">{item.eyebrow}</p>
+                <h3 className="mt-3 text-balance font-display text-2xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-3xl">
+                  {item.title}
+                </h3>
+                <p className="mt-4 text-base leading-7 text-stone-600">{item.body}</p>
+                <div className="mt-6">
+                  <Button asChild className="bg-stone-900 hover:bg-stone-800">
+                    <Link href="/login?returnTo=%2Fclawrouter">Get ClawRouter Access</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-14">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <Card className="section-card p-6 md:p-8">
-            <Badge className="border-black/10 bg-black/5 text-ink/70">Live vs Preview</Badge>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-ink">What the surface can truthfully say today</h2>
-            <ul className="mt-5 space-y-3 text-sm leading-6 text-ink/75">
-              <li>• The page structure, offer framing, and CTA flow are production-style and reviewable now.</li>
-              <li>• The local checkout preview creates a stub session and shows the exact state handling the real backend will feed later.</li>
-              <li>• External reseller top-up is a live path for users who need a buy-now route today.</li>
-              <li>• Real payment settlement, entitlement issuance, and final activation writeback are still placeholder-backed.</li>
-            </ul>
-          </Card>
+      <section className="border-y border-stone-300/60 bg-[rgba(255,250,244,0.45)]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-3xl">
+            <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-4xl">
+              Why choose ClawRouter for API access
+            </h2>
+            <p className="mt-4 text-base leading-7 text-stone-600">
+              We are not trying to be a generic API mall. The point is to give OpenClaw users one cleaner route from setup
+              to real AI usage, while keeping BYOK honest and visible.
+            </p>
+          </div>
 
-          <Card className="section-card p-6 md:p-8">
-            <Badge className="border-coral/20 bg-coral/10 text-coral">Why this offer works</Badge>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-ink">Sell the speed-to-working-setup outcome, not mystery infrastructure.</h2>
-            <div className="mt-5 space-y-3 text-sm leading-6 text-ink/75">
-              {trustPoints.map((point) => (
-                <p key={point}>• {point}</p>
-              ))}
-            </div>
-          </Card>
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {advantages.map((item) => (
+              <Card key={item.title} className="rounded-[24px] border border-stone-300/60 bg-white p-6 shadow-none">
+                <h3 className="text-lg font-semibold text-stone-950">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-stone-600">{item.body}</p>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-14">
-        <div className="mb-6 max-w-3xl">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">CTA Flow</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
-            A cleaner path from landing page to purchase, preview, or reseller top-up.
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="flex items-end justify-between gap-6">
+          <div className="max-w-3xl">
+            <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-4xl">
+              Popular AI model lanes you can route today
+            </h2>
+            <p className="mt-4 text-base leading-7 text-stone-600">
+              Think in workload lanes, not provider chaos. ClawRouter is how OpenClaw should talk about access: one page,
+              one router, multiple AI outcomes.
+            </p>
+          </div>
+          <Button asChild variant="secondary" className="hidden border-stone-300 bg-white/70 text-stone-900 hover:bg-white sm:inline-flex">
+            <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Explore all</ExternalAuthLink>
+          </Button>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {modelCards.map((item) => (
+            <Link key={item.title} href="/login?returnTo=%2Fclawrouter" className="group rounded-[24px] border border-stone-300/60 bg-white p-6 transition-colors hover:border-stone-400 hover:bg-white/60">
+              <p className="text-sm font-medium text-stone-700">{item.category}</p>
+              <h3 className="mt-3 text-lg font-semibold text-stone-950">{item.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-stone-600">{item.body}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="max-w-3xl">
+          <h2 className="font-display text-3xl font-semibold tracking-[-0.03em] text-stone-950 sm:text-4xl">
+            Frequently asked questions about ClawRouter
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {flowSteps.map((item) => (
-            <Card key={item.step} className="section-card p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">{item.step}</p>
-              <h3 className="mt-3 text-xl font-semibold text-ink">{item.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-ink/70">{item.body}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="mb-6 max-w-3xl">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">FAQ</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">Common questions buyers will actually ask</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
           {faqs.map((item) => (
-            <Card key={item.q} className="section-card p-6">
-              <h3 className="text-lg font-semibold text-ink">{item.q}</h3>
-              <p className="mt-3 text-sm leading-6 text-ink/70">{item.a}</p>
+            <Card key={item.q} className="rounded-[24px] border border-stone-300/60 bg-white p-6 shadow-none">
+              <h3 className="text-lg font-semibold text-stone-950">{item.q}</h3>
+              <p className="mt-3 text-sm leading-6 text-stone-600">{item.a}</p>
             </Card>
           ))}
         </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <Card className="overflow-hidden rounded-[32px] border-coral/20 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-8 shadow-glow">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <Badge className="border-coral/20 bg-coral/10 text-coral">Next step</Badge>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
-                Start with the managed path, then decide whether you need preview, reseller, or BYOK.
-              </h2>
-              <p className="mt-3 text-base leading-7 text-ink/70">
-                The page now supports an honest vertical slice: preview the ClawRouter checkout flow locally, send buyers to the
-                current reseller route when they need an immediate external purchase path, or keep them on BYOK while the real
-                entitlement backend catches up.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:max-w-xl lg:justify-end">
-              <ClawRouterPreviewButton />
-              <Button asChild size="lg" variant="secondary">
-                <ExternalAuthLink href={pricingConfig.tokens.ezRouterUrl}>Open reseller top-up</ExternalAuthLink>
-              </Button>
-              <Button asChild size="lg" variant="ghost">
-                <Link href="/pricing">Compare with BYOK</Link>
-              </Button>
-            </div>
-          </div>
-        </Card>
       </section>
     </main>
   );
+}
+
+export default function ClawRouterPage() {
+  const router = useRouter();
+  const supabase = useMemo(() => getSupabaseClient(), []);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!supabase) {
+      setChecking(false);
+      return;
+    }
+
+    let mounted = true;
+
+    async function settleSession() {
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        if (data.session?.user) {
+          router.replace("/clawrouter/dashboard");
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
+      if (mounted) {
+        setChecking(false);
+      }
+    }
+
+    settleSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        router.replace("/clawrouter/dashboard");
+        return;
+      }
+
+      setChecking(false);
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router, supabase]);
+
+  if (checking) {
+    return <main className="mx-auto min-h-[60vh] max-w-5xl px-6 py-16 text-stone-600">Checking access…</main>;
+  }
+
+  return <SalesPage />;
 }
