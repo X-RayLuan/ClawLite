@@ -272,11 +272,12 @@ export default function ClawRouterPage() {
       return;
     }
 
+    const client = supabase;
     let mounted = true;
 
     async function settleSession() {
       for (let i = 0; i < 8; i += 1) {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await client.auth.getSession();
         if (!mounted) return;
 
         if (data.session?.user) {
@@ -294,7 +295,7 @@ export default function ClawRouterPage() {
 
     settleSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         router.replace("/clawrouter/dashboard");
         return;
