@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 
 export const runtime = "nodejs";
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
-
 export async function POST(request: NextRequest) {
   try {
-    if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ ok: false, error: "missing_stripe_secret_key" }, { status: 500 });
     }
 
@@ -31,30 +27,25 @@ export async function POST(request: NextRequest) {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    const stripeSession = await stripe.checkout.sessions.create({
-      mode: "payment",
-      billing_address_collection: "auto",
-      allow_promotion_codes: true,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `ClawRouter Credits – $${amount}`,
-              description: promoCode ? `Promo code entered: ${promoCode}` : "Top up your ClawRouter account balance.",
-            },
-            unit_amount: unitAmount,
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        kind: "clawrouter_topup",
-        amount_usd: String(amount),
-        promo_code: promoCode,
+    const stripeSession = await createStripeCheckoutSessionViaFetch({
+      secretKey: process.env.STRIPE_SECRET_KEY,
+      fields: {
+        mode: "payment",
+        billing_address_collection: "auto",
+        allow_promotion_codes: true,
+        "line_items[0][price_data][currency]": "usd",
+        "line_items[0][price_data][product_data][name]": `ClawRouter Credits – $${amount}`,
+        "line_items[0][price_data][product_data][description]": promoCode
+          ? `Promo code entered: ${promoCode}`
+          : "Top up your ClawRouter account balance.",
+        "line_items[0][price_data][unit_amount]": unitAmount,
+        "line_items[0][quantity]": 1,
+        "metadata[kind]": "clawrouter_topup",
+        "metadata[amount_usd]": String(amount),
+        "metadata[promo_code]": promoCode,
+        success_url: `${siteUrl}/clawrouter/dashboard?topup=success&amount=${encodeURIComponent(String(amount))}`,
+        cancel_url: `${siteUrl}/clawrouter/dashboard/add-credits?topup=cancelled`,
       },
-      success_url: `${siteUrl}/clawrouter/dashboard?topup=success&amount=${encodeURIComponent(String(amount))}`,
-      cancel_url: `${siteUrl}/clawrouter/dashboard/add-credits?topup=cancelled`,
     });
 
     return NextResponse.json({

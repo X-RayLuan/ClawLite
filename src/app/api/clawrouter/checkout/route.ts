@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { createCheckoutSessionRecord, markCheckoutSessionPending } from "@/lib/clawrouter-checkout";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 
 export const runtime = "nodejs";
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
-
 export async function POST(request: NextRequest) {
   try {
-    if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { ok: false, error: "missing_stripe_secret_key" },
         { status: 500 },
@@ -46,22 +42,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const stripeSession = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          price: process.env.STRIPE_CLAWROUTER_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&stripe_session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&cancelled=1`,
-      customer_email: typeof body.email === "string" ? body.email : undefined,
-      metadata: {
-        checkout_session_id: session.id,
-        account_id: session.accountId,
-        installer_setup_token: session.installerSetupToken || "",
-        product: "clawrouter",
+    const stripeSession = await createStripeCheckoutSessionViaFetch({
+      secretKey: process.env.STRIPE_SECRET_KEY,
+      fields: {
+        mode: "payment",
+        "line_items[0][price]": process.env.STRIPE_CLAWROUTER_PRICE_ID,
+        "line_items[0][quantity]": 1,
+        success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&stripe_session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&cancelled=1`,
+        customer_email: typeof body.email === "string" ? body.email : undefined,
+        "metadata[checkout_session_id]": session.id,
+        "metadata[account_id]": session.accountId,
+        "metadata[installer_setup_token]": session.installerSetupToken || "",
+        "metadata[product]": "clawrouter",
       },
     });
 
@@ -74,7 +67,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         stripe: {
           checkout_session_id: stripeSession.id,
-          mode: stripeSession.mode,
+          mode: stripeSession.raw?.mode || "payment",
         },
       },
     });
