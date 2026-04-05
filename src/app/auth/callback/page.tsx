@@ -26,6 +26,7 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      const client = supabase;
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
       const queryError = url.searchParams.get("error");
@@ -46,7 +47,7 @@ export default function AuthCallbackPage() {
       }
 
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { error } = await client.auth.exchangeCodeForSession(code);
         if (error) {
           const fallbackError = /expired/i.test(error.message || "") ? "expired" : "invalid";
           setMessage("Login failed. Redirecting to login...");
@@ -54,7 +55,7 @@ export default function AuthCallbackPage() {
           return;
         }
       } else if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
+        const { error } = await client.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
@@ -73,7 +74,7 @@ export default function AuthCallbackPage() {
 
       let settledUser = null;
       for (let i = 0; i < 8; i += 1) {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await client.auth.getSession();
         if (data.session?.user) {
           settledUser = data.session.user;
           break;
@@ -83,7 +84,7 @@ export default function AuthCallbackPage() {
 
       if (settledUser) {
         try {
-          const rpcClient = supabase as any;
+          const rpcClient = client as any;
           await rpcClient.rpc("sync_auth_user_to_profile", {
             p_user_id: settledUser.id,
           });
@@ -92,7 +93,7 @@ export default function AuthCallbackPage() {
         }
 
         try {
-          const rpcClient = supabase as any;
+          const rpcClient = client as any;
           await rpcClient.rpc("mark_waitlist_customer_converted", {
             p_email: settledUser.email,
             p_user_id: settledUser.id,
@@ -108,7 +109,7 @@ export default function AuthCallbackPage() {
           const partnerSlug = getPartnerFromCookieString(document.cookie) || returnToPartnerSlug;
           const partner = getPartnerCouponConfig(partnerSlug);
           if (partner) {
-            const rpcClient = supabase as any;
+            const rpcClient = client as any;
             await rpcClient.rpc("apply_partner_referral", {
               p_user_id: settledUser.id,
               p_partner_slug: partner.slug,
