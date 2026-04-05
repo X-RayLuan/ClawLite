@@ -137,7 +137,7 @@ export default function ClawRouterDashboardPage() {
           <div className="mt-6 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.7)] p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Quick actions</p>
             <div className="mt-3 space-y-2">
-              <Button className="w-full bg-stone-900 hover:bg-stone-800">Add Credits</Button>
+              <Button asChild className="w-full bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
               <Button variant="secondary" className="w-full border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
                 Generate API Key
               </Button>
@@ -157,7 +157,7 @@ export default function ClawRouterDashboardPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button className="bg-stone-900 hover:bg-stone-800">Add Credits</Button>
+              <Button asChild className="bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
               <Button variant="secondary" asChild className="border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
                 <Link href="/clawrouter">Back to sales page</Link>
               </Button>

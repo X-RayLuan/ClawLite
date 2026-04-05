@@ -1,0 +1,155 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { getSupabaseClient } from "@/lib/supabase";
+
+const presetAmounts = [5, 10, 20, 50, 100];
+
+export default function AddCreditsPage() {
+  const router = useRouter();
+  const supabase = useMemo(() => getSupabaseClient(), []);
+  const [checking, setChecking] = useState(true);
+  const [selectedAmount, setSelectedAmount] = useState<number>(20);
+  const [customAmount, setCustomAmount] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+
+  useEffect(() => {
+    if (!supabase) {
+      router.replace("/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits");
+      return;
+    }
+
+    const client = supabase;
+    let mounted = true;
+
+    async function settleSession() {
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await client.auth.getSession();
+        if (!mounted) return;
+
+        if (data.session?.user) {
+          setChecking(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
+      if (mounted) {
+        router.replace("/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits");
+      }
+    }
+
+    settleSession();
+
+    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.replace("/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits");
+        return;
+      }
+
+      setChecking(false);
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router, supabase]);
+
+  if (checking) {
+    return <main className="mx-auto min-h-[60vh] max-w-4xl px-6 py-16 text-stone-600">Loading add credits…</main>;
+  }
+
+  const resolvedAmount = customAmount.trim() ? Number(customAmount) || 0 : selectedAmount;
+
+  return (
+    <main className="min-h-screen bg-[rgba(247,243,236,0.92)] px-4 py-10 text-stone-950 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-center justify-between gap-4">
+          <Button variant="ghost" asChild className="px-0 text-stone-700 hover:bg-transparent hover:text-stone-950">
+            <Link href="/clawrouter/dashboard">← Back to Dashboard</Link>
+          </Button>
+          <Badge className="border-stone-300 bg-white/80 text-stone-700">Credits</Badge>
+        </div>
+
+        <Card className="mt-6 rounded-[32px] border border-stone-300/60 bg-white/92 p-7 shadow-none sm:p-8">
+          <div className="text-center">
+            <h1 className="font-display text-4xl font-semibold tracking-[-0.04em] text-stone-950 sm:text-5xl">
+              Add Credits
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-stone-600 sm:text-base">
+              Top up your ClawRouter balance and keep your managed model access ready for API calls.
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <p className="text-sm font-medium text-stone-700">Select Amount</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {presetAmounts.map((amount) => {
+                const active = !customAmount.trim() && selectedAmount === amount;
+                return (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAmount(amount);
+                      setCustomAmount("");
+                    }}
+                    className={`rounded-2xl border px-4 py-4 text-base font-semibold transition ${
+                      active
+                        ? "border-stone-900 bg-stone-900 text-white"
+                        : "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
+                    }`}
+                  >
+                    ${amount}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <label htmlFor="customAmount" className="text-sm font-medium text-stone-700">
+              Custom Amount (USD)
+            </label>
+            <input
+              id="customAmount"
+              inputMode="decimal"
+              value={customAmount}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              placeholder="Enter custom amount"
+              className="mt-3 w-full rounded-2xl border border-stone-300 bg-[rgba(248,244,237,0.72)] px-4 py-4 text-base text-stone-950 outline-none focus:border-stone-500"
+            />
+          </div>
+
+          <div className="mt-8">
+            <label htmlFor="promoCode" className="text-sm font-medium text-stone-700">
+              Promo Code (Optional)
+            </label>
+            <input
+              id="promoCode"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter promo code"
+              className="mt-3 w-full rounded-2xl border border-stone-300 bg-[rgba(248,244,237,0.72)] px-4 py-4 text-base text-stone-950 outline-none focus:border-stone-500"
+            />
+          </div>
+
+          <Button className="mt-8 h-14 w-full rounded-2xl bg-stone-900 text-base font-semibold hover:bg-stone-800" disabled={resolvedAmount <= 0}>
+            Pay ${resolvedAmount || 0} with Stripe
+          </Button>
+
+          <p className="mt-4 text-center text-sm text-stone-500">
+            Secure payment via Stripe. Credits never expire.
+          </p>
+        </Card>
+      </div>
+    </main>
+  );
+}
