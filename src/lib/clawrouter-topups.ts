@@ -2,6 +2,33 @@ type MinimalSupabaseClient = {
   from: (table: string) => any;
 };
 
+export async function ensureClawRouterAccount(input: {
+  supabase: MinimalSupabaseClient;
+  accountId: string;
+  email?: string | null;
+}) {
+  const now = new Date().toISOString();
+  const response = await input.supabase
+    .from("accounts")
+    .upsert(
+      {
+        id: input.accountId,
+        user_id: input.accountId,
+        email: input.email || null,
+        updated_at: now,
+      },
+      { onConflict: "id" },
+    )
+    .select("id, email, credit_balance_usd")
+    .single();
+
+  if (!response || response.error || !response.data) {
+    throw new Error(response?.error?.message || "failed_to_upsert_topup_account");
+  }
+
+  return response.data;
+}
+
 export async function settleTopupCheckoutSession(input: {
   supabase: MinimalSupabaseClient;
   accountId: string;
@@ -11,6 +38,12 @@ export async function settleTopupCheckoutSession(input: {
   promoCode?: string | null;
   metadata?: Record<string, unknown> | null;
 }) {
+  await ensureClawRouterAccount({
+    supabase: input.supabase,
+    accountId: input.accountId,
+    email: typeof input.metadata?.stripe_customer_email === "string" ? String(input.metadata?.stripe_customer_email) : null,
+  });
+
   const existing = await input.supabase
     .from("topup_transactions")
     .select("id, status")

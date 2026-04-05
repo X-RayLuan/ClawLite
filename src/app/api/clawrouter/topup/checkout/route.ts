@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
+import { ensureClawRouterAccount } from "@/lib/clawrouter-topups";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -17,6 +19,11 @@ export async function POST(request: NextRequest) {
     const authorization = request.headers.get("authorization");
     const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
     const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
+    await ensureClawRouterAccount({
+      supabase: getSupabaseAdminClient(),
+      accountId: userId,
+      email,
+    });
 
     const body = await request.json().catch(() => ({}));
     const amount = Number(body.amount || 0);
