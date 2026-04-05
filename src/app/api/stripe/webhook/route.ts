@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
+import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
 
 export const runtime = "nodejs";
 
@@ -39,7 +40,36 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        const kind = session.metadata?.kind;
         const localSessionId = session.metadata?.checkout_session_id;
+
+        if (kind === "clawrouter_topup") {
+          const accountId = session.metadata?.account_id;
+          const amountUsd = Number(session.metadata?.amount_usd || 0);
+          const promoCode = session.metadata?.promo_code || null;
+
+          if (!accountId || !Number.isFinite(amountUsd) || amountUsd <= 0) {
+            throw new Error("invalid_topup_metadata");
+          }
+
+          await settleTopupCheckoutSession({
+            supabase,
+            accountId,
+            stripeSessionId: session.id,
+            stripeEventId: event.id,
+            amountUsd,
+            promoCode,
+            metadata: {
+              stripe_payment_status: session.payment_status,
+              stripe_customer_email: session.customer_details?.email ?? null,
+              stripe_status: session.status,
+              settled_at: new Date().toISOString(),
+            },
+          });
+
+          await ensureClawRouterApiKey(supabase, accountId);
+          break;
+        }
 
         if (localSessionId) {
           const settled = await settleCheckoutSessionRecord({

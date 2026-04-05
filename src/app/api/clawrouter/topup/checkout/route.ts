@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
+import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,10 @@ export async function POST(request: NextRequest) {
     if (!process.env.NEXT_PUBLIC_SITE_URL) {
       return NextResponse.json({ ok: false, error: "missing_site_url" }, { status: 500 });
     }
+
+    const authorization = request.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+    const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
 
     const body = await request.json().catch(() => ({}));
     const amount = Number(body.amount || 0);
@@ -40,7 +45,9 @@ export async function POST(request: NextRequest) {
           : "Top up your ClawRouter account balance.",
         "line_items[0][price_data][unit_amount]": unitAmount,
         "line_items[0][quantity]": 1,
+        customer_email: email || undefined,
         "metadata[kind]": "clawrouter_topup",
+        "metadata[account_id]": userId,
         "metadata[amount_usd]": String(amount),
         "metadata[promo_code]": promoCode,
         success_url: `${siteUrl}/clawrouter/dashboard?topup=success&amount=${encodeURIComponent(String(amount))}`,

@@ -19,14 +19,16 @@ const navItems = [
   "Profile",
 ];
 
-const summaryCards = [
-  { label: "Balance", value: "$0.00", note: "Top up to start managed routing" },
-  { label: "Total Spent", value: "$0.00", note: "All-time spend across ClawRouter" },
-  { label: "Today", value: "$0.00", note: "Current-day cost" },
-  { label: "Total Tokens", value: "0", note: "Input + output tokens so far" },
-  { label: "Avg Cost / Req", value: "$0.00", note: "Cost efficiency will appear here" },
-  { label: "API Keys", value: "0", note: "Generate your first managed key" },
-];
+function buildSummaryCards(balanceUsd: number, activeApiKeys: number) {
+  return [
+    { label: "Balance", value: `$${balanceUsd.toFixed(2)}`, note: "Available credits for managed routing" },
+    { label: "Total Spent", value: "$0.00", note: "All-time spend across ClawRouter" },
+    { label: "Today", value: "$0.00", note: "Current-day cost" },
+    { label: "Total Tokens", value: "0", note: "Input + output tokens so far" },
+    { label: "Avg Cost / Req", value: "$0.00", note: "Cost efficiency will appear here" },
+    { label: "API Keys", value: String(activeApiKeys), note: "Managed keys currently active" },
+  ];
+}
 
 const modelRows = [
   { model: "clawrouter/auto", provider: "Managed route", status: "Default" },
@@ -58,8 +60,19 @@ export default function ClawRouterDashboardPage() {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
+  const [balanceUsd, setBalanceUsd] = useState(0);
+  const [activeApiKeys, setActiveApiKeys] = useState(0);
+  const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
+  const [topupState, setTopupState] = useState<string | null>(null);
+  const [topupAmount, setTopupAmount] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setTopupState(params.get("topup"));
+      setTopupAmount(params.get("amount"));
+    }
+
     if (!supabase) {
       router.replace("/login?returnTo=%2Fclawrouter%2Fdashboard");
       return;
@@ -75,6 +88,22 @@ export default function ClawRouterDashboardPage() {
 
         if (data.session?.user) {
           setEmail(data.session.user.email || null);
+
+          const accessToken = data.session.access_token;
+          if (accessToken) {
+            const response = await fetch("/api/clawrouter/account", {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
+            const payload = await response.json().catch(() => null);
+            if (mounted && response.ok && payload?.ok) {
+              setBalanceUsd(Number(payload.account?.creditBalanceUsd || 0));
+              setActiveApiKeys(Number(payload.account?.activeApiKeys || 0));
+              setTopups(payload.topups || []);
+            }
+          }
+
           setChecking(false);
           return;
         }
@@ -108,6 +137,8 @@ export default function ClawRouterDashboardPage() {
   if (checking) {
     return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
   }
+
+  const summaryCards = buildSummaryCards(balanceUsd, activeApiKeys);
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
@@ -146,6 +177,15 @@ export default function ClawRouterDashboardPage() {
         </aside>
 
         <section className="space-y-6">
+          {topupState === "success" ? (
+            <Card className="rounded-[24px] border border-emerald-300/60 bg-emerald-50/90 p-5 shadow-none">
+              <p className="text-sm font-semibold text-emerald-900">Credits added successfully</p>
+              <p className="mt-2 text-sm text-emerald-800">
+                Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn’t updated yet, refresh once after the webhook settles.
+              </p>
+            </Card>
+          ) : null}
+
           <div className="flex flex-col gap-4 rounded-[32px] border border-stone-300/60 bg-white/88 p-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <Badge className="border-stone-300 bg-[rgba(248,244,237,0.9)] text-stone-700">Dashboard</Badge>
@@ -217,11 +257,19 @@ export default function ClawRouterDashboardPage() {
 
           <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Last 7 days</p>
-              <div className="mt-5 grid h-56 grid-cols-7 items-end gap-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                {[14, 22, 18, 38, 26, 44, 31].map((height, index) => (
-                  <div key={index} className="rounded-full bg-stone-900/85" style={{ height: `${height}%` }} />
-                ))}
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Top-up History</p>
+              <div className="mt-5 space-y-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
+                {topups.length ? topups.map((row) => (
+                  <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3 text-sm text-stone-800">
+                    <div>
+                      <p className="font-medium text-stone-950">${Number(row.amount_usd || 0).toFixed(2)} top-up</p>
+                      <p className="text-xs text-stone-500">{new Date(row.created_at).toLocaleString()}</p>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
+                  </div>
+                )) : (
+                  <p className="text-sm text-stone-600">No completed top-ups yet.</p>
+                )}
               </div>
             </Card>
 

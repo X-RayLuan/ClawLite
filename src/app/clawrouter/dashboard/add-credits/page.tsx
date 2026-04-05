@@ -75,10 +75,18 @@ export default function AddCreditsPage() {
     setError("");
 
     try {
+      const { data: sessionData } = await supabase!.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Please sign in again.");
+      }
+
       const response = await fetch("/api/clawrouter/topup/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           amount: resolvedAmount,
