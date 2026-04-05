@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
+import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 
 export const runtime = "nodejs";
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
         const localSessionId = session.metadata?.checkout_session_id;
 
         if (localSessionId) {
-          await settleCheckoutSessionRecord({
+          const settled = await settleCheckoutSessionRecord({
             supabase,
             sessionId: localSessionId,
             status: "completed",
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
               settled_at: new Date().toISOString(),
             },
           });
+
+          await ensureClawRouterApiKey(supabase, settled.accountId);
         }
         break;
       }
