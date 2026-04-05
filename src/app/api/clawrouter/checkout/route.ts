@@ -96,7 +96,17 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { ok: false, error: error?.message || "failed_to_create_checkout" },
+      {
+        ok: false,
+        error: error?.message || "failed_to_create_checkout",
+        type: error?.type || null,
+        code: error?.code || null,
+        statusCode: error?.statusCode || null,
+        requestId: error?.requestId || null,
+        rawType: error?.raw?.type || null,
+        rawCode: error?.raw?.code || null,
+        rawMessage: error?.raw?.message || null,
+      },
       { status: error?.message === "invalid_account_id" ? 400 : 500 },
     );
   }
