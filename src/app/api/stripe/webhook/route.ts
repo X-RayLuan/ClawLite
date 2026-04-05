@@ -1,0 +1,116 @@
+import Stripe from "stripe";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
+
+export const runtime = "nodejs";
+
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+export async function POST(req: Request) {
+  try {
+    if (!stripe) {
+      return NextResponse.json({ ok: false, error: "missing_stripe_secret_key" }, { status: 500 });
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      return NextResponse.json({ ok: false, error: "missing_stripe_webhook_secret" }, { status: 500 });
+    }
+
+    const body = await req.text();
+    const signature = headers().get("stripe-signature");
+
+    if (!signature) {
+      return NextResponse.json({ ok: false, error: "missing_stripe_signature" }, { status: 400 });
+    }
+
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET,
+    );
+
+    const supabase = getSupabaseAdminClient();
+
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const localSessionId = session.metadata?.checkout_session_id;
+
+        if (localSessionId) {
+          await settleCheckoutSessionRecord({
+            supabase,
+            sessionId: localSessionId,
+            status: "completed",
+            provider: "stripe",
+            externalSessionId: session.id,
+            settlement: {
+              stripe_event_id: event.id,
+              stripe_session_id: session.id,
+              stripe_payment_status: session.payment_status,
+              stripe_customer_email: session.customer_details?.email ?? null,
+              stripe_status: session.status,
+              settled_at: new Date().toISOString(),
+            },
+          });
+        }
+        break;
+      }
+
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const localSessionId = session.metadata?.checkout_session_id;
+
+        if (localSessionId) {
+          await settleCheckoutSessionRecord({
+            supabase,
+            sessionId: localSessionId,
+            status: "expired",
+            provider: "stripe",
+            externalSessionId: session.id,
+            settlement: {
+              stripe_event_id: event.id,
+              stripe_session_id: session.id,
+              stripe_status: session.status,
+            },
+          });
+        }
+        break;
+      }
+
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const localSessionId = session.metadata?.checkout_session_id;
+
+        if (localSessionId) {
+          await settleCheckoutSessionRecord({
+            supabase,
+            sessionId: localSessionId,
+            status: "failed",
+            provider: "stripe",
+            externalSessionId: session.id,
+            settlement: {
+              stripe_event_id: event.id,
+              stripe_session_id: session.id,
+              stripe_status: session.status,
+            },
+          });
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { ok: false, error: error?.message || "stripe_webhook_failed" },
+      { status: 400 },
+    );
+  }
+}

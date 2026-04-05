@@ -11,7 +11,11 @@
     "lint": "next lint",
     "build:next": "next build",
     "build:electron": "npm run build:next && electron-builder",
-    "build:win": "npm run build:next && electron-builder --win"
+    "build:win": "npm run build:next && electron-builder --win",
+    "seo:validate-programmatic": "node scripts/validate-programmatic-pages.mjs",
+    "seo:check-blog-faq": "node scripts/check-blog-faq-schema.mjs",
+    "seo:import-programmatic-pages": "node scripts/import-programmatic-pages.mjs",
+    "seo:sync-batch": "npm run seo:import-programmatic-pages && npm run seo:validate-programmatic"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
@@ -25,6 +29,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "^4.0.1",
+    "stripe": "^18.4.0",
     "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
