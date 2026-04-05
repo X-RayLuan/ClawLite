@@ -17,6 +17,8 @@ export default function AddCreditsPage() {
   const [selectedAmount, setSelectedAmount] = useState<number>(20);
   const [customAmount, setCustomAmount] = useState("");
   const [promoCode, setPromoCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!supabase) {
@@ -67,6 +69,35 @@ export default function AddCreditsPage() {
   }
 
   const resolvedAmount = customAmount.trim() ? Number(customAmount) || 0 : selectedAmount;
+
+  async function handleCheckout() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/clawrouter/topup/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: resolvedAmount,
+          promoCode,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.checkoutUrl) {
+        throw new Error(payload?.rawMessage || payload?.error || "failed_to_create_topup_checkout");
+      }
+
+      window.location.href = payload.checkoutUrl;
+    } catch (err: any) {
+      setError(err?.message || "Could not create Stripe checkout session.");
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] px-4 py-10 text-stone-950 sm:px-6 lg:px-8">
@@ -141,9 +172,15 @@ export default function AddCreditsPage() {
             />
           </div>
 
-          <Button className="mt-8 h-14 w-full rounded-2xl bg-stone-900 text-base font-semibold hover:bg-stone-800" disabled={resolvedAmount <= 0}>
-            Pay ${resolvedAmount || 0} with Stripe
+          <Button
+            className="mt-8 h-14 w-full rounded-2xl bg-stone-900 text-base font-semibold hover:bg-stone-800"
+            disabled={resolvedAmount <= 0 || loading}
+            onClick={handleCheckout}
+          >
+            {loading ? "Opening Stripe…" : `Pay $${resolvedAmount || 0} with Stripe`}
           </Button>
+
+          {error ? <p className="mt-4 text-center text-sm text-red-600">{error}</p> : null}
 
           <p className="mt-4 text-center text-sm text-stone-500">
             Secure payment via Stripe. Credits never expire.
