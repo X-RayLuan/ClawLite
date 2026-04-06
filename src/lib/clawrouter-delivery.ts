@@ -96,23 +96,25 @@ export async function ensureManagedKeyDelivery(input: {
 export async function assignInventoryKeyToAccount(input: {
   supabase: MinimalSupabaseClient;
   accountId: string;
+  stripeSessionId?: string | null;
 }) {
-  const existing = await input.supabase
-    .from("account_key_deliveries")
-    .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
-    .eq("account_id", input.accountId)
-    .eq("delivery_mode", "inventory_key")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (input.stripeSessionId) {
+    const existing = await input.supabase
+      .from("account_key_deliveries")
+      .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+      .eq("account_id", input.accountId)
+      .eq("delivery_mode", "inventory_key")
+      .contains("metadata", { stripe_session_id: input.stripeSessionId })
+      .limit(1)
+      .maybeSingle();
 
-  if (existing?.error && existing.error.code !== "PGRST116") {
-    throw new Error(existing.error.message || "failed_to_load_existing_inventory_delivery");
-  }
+    if (existing?.error && existing.error.code !== "PGRST116") {
+      throw new Error(existing.error.message || "failed_to_load_existing_inventory_delivery");
+    }
 
-  if (existing?.data) {
-    return { delivery: mapDelivery(existing.data), created: false, soldOut: false };
+    if (existing?.data) {
+      return { delivery: mapDelivery(existing.data), created: false, soldOut: false };
+    }
   }
 
   const available = await input.supabase
@@ -167,7 +169,9 @@ export async function assignInventoryKeyToAccount(input: {
       face_value_usd: inventoryUpdate.data.face_value_usd,
       sale_price_usd: inventoryUpdate.data.sale_price_usd,
       status: "active",
-      metadata: {},
+      metadata: {
+        stripe_session_id: input.stripeSessionId || null,
+      },
       updated_at: now,
     })
     .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
@@ -201,25 +205,10 @@ export async function reconcileInventoryAccessFromStripe(input: {
     if (session?.metadata?.delivery_mode !== "inventory_key") continue;
     if (session?.metadata?.account_id !== input.accountId) continue;
 
-    const existing = await input.supabase
-      .from("account_key_deliveries")
-      .select("id")
-      .eq("account_id", input.accountId)
-      .eq("delivery_mode", "inventory_key")
-      .limit(1)
-      .maybeSingle();
-
-    if (existing?.error && existing.error.code !== "PGRST116") {
-      throw new Error(existing.error.message || "failed_to_check_inventory_delivery_before_reconcile");
-    }
-
-    if (existing?.data) {
-      continue;
-    }
-
     const assignment = await assignInventoryKeyToAccount({
       supabase: input.supabase,
       accountId: input.accountId,
+      stripeSessionId: session.id,
     });
 
     if (!assignment.soldOut && assignment.delivery) {

@@ -76,6 +76,7 @@ export async function POST(req: Request) {
           const assignment = await assignInventoryKeyToAccount({
             supabase,
             accountId,
+            stripeSessionId: session.id,
           });
 
           if (assignment.soldOut) {
@@ -134,6 +135,7 @@ export async function POST(req: Request) {
             const assignment = await assignInventoryKeyToAccount({
               supabase,
               accountId: settled.accountId,
+              stripeSessionId: session.id,
             });
             if (assignment.soldOut) {
               throw new Error("inventory_key_sold_out");
