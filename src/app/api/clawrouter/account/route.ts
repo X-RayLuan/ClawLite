@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawrouter-topups";
-import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
+import { listDeliveredKeysForAccount, reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
       supabase,
       accountId: userId,
       email,
+    });
+
+    await reconcileInventoryAccessFromStripe({
+      supabase,
+      accountId: userId,
     });
 
     const account = await supabase

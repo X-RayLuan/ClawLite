@@ -1,3 +1,5 @@
+import { listStripeCheckoutSessionsViaFetch } from "@/lib/stripe-rest";
+
 type MinimalSupabaseClient = {
   from: (table: string) => any;
 };
@@ -176,4 +178,54 @@ export async function assignInventoryKeyToAccount(input: {
   }
 
   return { delivery: mapDelivery(deliveryInsert.data), created: true, soldOut: false };
+}
+
+export async function reconcileInventoryAccessFromStripe(input: {
+  supabase: MinimalSupabaseClient;
+  accountId: string;
+}) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { reconciled: 0 };
+  }
+
+  const sessions = await listStripeCheckoutSessionsViaFetch({
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    limit: 25,
+  });
+
+  let reconciled = 0;
+
+  for (const session of sessions) {
+    if (session?.status !== "complete" || session?.payment_status !== "paid") continue;
+    if (session?.metadata?.kind !== "clawrouter_access") continue;
+    if (session?.metadata?.delivery_mode !== "inventory_key") continue;
+    if (session?.metadata?.account_id !== input.accountId) continue;
+
+    const existing = await input.supabase
+      .from("account_key_deliveries")
+      .select("id")
+      .eq("account_id", input.accountId)
+      .eq("delivery_mode", "inventory_key")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.error && existing.error.code !== "PGRST116") {
+      throw new Error(existing.error.message || "failed_to_check_inventory_delivery_before_reconcile");
+    }
+
+    if (existing?.data) {
+      continue;
+    }
+
+    const assignment = await assignInventoryKeyToAccount({
+      supabase: input.supabase,
+      accountId: input.accountId,
+    });
+
+    if (!assignment.soldOut && assignment.delivery) {
+      reconciled += 1;
+    }
+  }
+
+  return { reconciled };
 }
