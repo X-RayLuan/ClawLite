@@ -44,6 +44,23 @@ export async function POST(req: Request) {
         const kind = session.metadata?.kind;
         const localSessionId = session.metadata?.checkout_session_id;
 
+        if (kind === "clawrouter_access") {
+          const accountId = session.metadata?.account_id;
+          if (!accountId) {
+            throw new Error("invalid_access_metadata");
+          }
+
+          const assignment = await assignInventoryKeyToAccount({
+            supabase,
+            accountId,
+          });
+
+          if (assignment.soldOut) {
+            throw new Error("inventory_key_sold_out");
+          }
+          break;
+        }
+
         if (kind === "clawrouter_topup") {
           const accountId = session.metadata?.account_id;
           const amountUsd = Number(session.metadata?.amount_usd || 0);

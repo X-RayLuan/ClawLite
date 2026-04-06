@@ -124,7 +124,7 @@ function SalesPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" asChild className="min-w-[220px] bg-stone-900 hover:bg-stone-800">
-                <Link href="/login?returnTo=%2Fclawrouter%2Fdashboard">Get ClawRouter Access</Link>
+                <Link href="/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits">Get ClawRouter Access</Link>
               </Button>
               <Button size="lg" variant="secondary" asChild className="min-w-[180px] border-stone-300 bg-white/70 text-stone-900 hover:bg-white">
                 <ExternalAuthLink href="https://docs.kie.ai">API Documentation</ExternalAuthLink>
@@ -182,7 +182,7 @@ function SalesPage() {
                 <p className="mt-4 text-base leading-7 text-stone-600">{item.body}</p>
                 <div className="mt-6">
                   <Button asChild className="bg-stone-900 hover:bg-stone-800">
-                    <Link href="/login?returnTo=%2Fclawrouter%2Fdashboard">Get ClawRouter Access</Link>
+                    <Link href="/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits">Get ClawRouter Access</Link>
                   </Button>
                 </div>
               </div>
@@ -232,7 +232,7 @@ function SalesPage() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {modelCards.map((item) => (
-            <Link key={item.title} href="/login?returnTo=%2Fclawrouter%2Fdashboard" className="group rounded-[24px] border border-stone-300/60 bg-white p-6 transition-colors hover:border-stone-400 hover:bg-white/60">
+            <Link key={item.title} href="/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits" className="group rounded-[24px] border border-stone-300/60 bg-white p-6 transition-colors hover:border-stone-400 hover:bg-white/60">
               <p className="text-sm font-medium text-stone-700">{item.category}</p>
               <h3 className="mt-3 text-lg font-semibold text-stone-950">{item.title}</h3>
               <p className="mt-3 text-sm leading-6 text-stone-600">{item.body}</p>

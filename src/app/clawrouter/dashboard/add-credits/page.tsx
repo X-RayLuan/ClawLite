@@ -9,13 +9,13 @@ import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
 
 const presetAmounts = [5, 10, 20, 50, 100];
+const enabledAmount = 5;
 
 export default function AddCreditsPage() {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [checking, setChecking] = useState(true);
-  const [selectedAmount, setSelectedAmount] = useState<number>(20);
-  const [customAmount, setCustomAmount] = useState("");
+  const [selectedAmount, setSelectedAmount] = useState<number>(enabledAmount);
   const [promoCode, setPromoCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -68,7 +68,7 @@ export default function AddCreditsPage() {
     return <main className="mx-auto min-h-[60vh] max-w-4xl px-6 py-16 text-stone-600">Loading add credits…</main>;
   }
 
-  const resolvedAmount = customAmount.trim() ? Number(customAmount) || 0 : selectedAmount;
+  const resolvedAmount = selectedAmount;
 
   async function handleCheckout() {
     setLoading(true);
@@ -123,7 +123,7 @@ export default function AddCreditsPage() {
               Add Credits
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-stone-600 sm:text-base">
-              Top up your ClawRouter balance and keep your managed model access ready for API calls.
+              Buy ClawRouter access. The $5 option is live now and delivers one inventory API key worth $10 in upstream value. Higher amounts stay disabled until the next release.
             </p>
           </div>
 
@@ -131,40 +131,30 @@ export default function AddCreditsPage() {
             <p className="text-sm font-medium text-stone-700">Select Amount</p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
               {presetAmounts.map((amount) => {
-                const active = !customAmount.trim() && selectedAmount === amount;
+                const active = selectedAmount === amount;
+                const enabled = amount === enabledAmount;
                 return (
                   <button
                     key={amount}
                     type="button"
                     onClick={() => {
+                      if (!enabled) return;
                       setSelectedAmount(amount);
-                      setCustomAmount("");
                     }}
+                    disabled={!enabled}
                     className={`rounded-2xl border px-4 py-4 text-base font-semibold transition ${
                       active
                         ? "border-stone-900 bg-stone-900 text-white"
-                        : "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
+                        : enabled
+                          ? "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
+                          : "cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400"
                     }`}
                   >
-                    ${amount}
+                    ${amount}{!enabled ? " · Soon" : ""}
                   </button>
                 );
               })}
             </div>
-          </div>
-
-          <div className="mt-8">
-            <label htmlFor="customAmount" className="text-sm font-medium text-stone-700">
-              Custom Amount (USD)
-            </label>
-            <input
-              id="customAmount"
-              inputMode="decimal"
-              value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
-              placeholder="Enter custom amount"
-              className="mt-3 w-full rounded-2xl border border-stone-300 bg-[rgba(248,244,237,0.72)] px-4 py-4 text-base text-stone-950 outline-none focus:border-stone-500"
-            />
           </div>
 
           <div className="mt-8">
