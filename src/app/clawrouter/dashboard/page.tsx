@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,8 +63,43 @@ export default function ClawRouterDashboardPage() {
   const [balanceUsd, setBalanceUsd] = useState(0);
   const [activeApiKeys, setActiveApiKeys] = useState(0);
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
+  const [apiKeys, setApiKeys] = useState<Array<{ id: string; name: string; keyPrefix: string; status: string; createdAt: string | null; plaintextSecret?: string | null }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [keyError, setKeyError] = useState("");
+
+  const loadDashboardData = useCallback(async (accessToken: string) => {
+    const [accountResponse, keysResponse] = await Promise.all([
+      fetch("/api/clawrouter/account", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      }),
+      fetch("/api/clawrouter/keys", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      }),
+    ]);
+
+    const accountPayload = await accountResponse.json().catch(() => null);
+    const keysPayload = await keysResponse.json().catch(() => null);
+
+    if (accountResponse.ok && accountPayload?.ok) {
+      setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
+      setActiveApiKeys(Number(accountPayload.account?.activeApiKeys || 0));
+      setTopups(accountPayload.topups || []);
+    }
+
+    if (keysResponse.ok && keysPayload?.ok) {
+      setApiKeys(keysPayload.keys || []);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -91,17 +126,7 @@ export default function ClawRouterDashboardPage() {
 
           const accessToken = data.session.access_token;
           if (accessToken) {
-            const response = await fetch("/api/clawrouter/account", {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-            const payload = await response.json().catch(() => null);
-            if (mounted && response.ok && payload?.ok) {
-              setBalanceUsd(Number(payload.account?.creditBalanceUsd || 0));
-              setActiveApiKeys(Number(payload.account?.activeApiKeys || 0));
-              setTopups(payload.topups || []);
-            }
+            await loadDashboardData(accessToken);
           }
 
           setChecking(false);
@@ -132,10 +157,42 @@ export default function ClawRouterDashboardPage() {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [loadDashboardData, router, supabase]);
 
   if (checking) {
     return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
+  }
+
+  async function handleGenerateKey() {
+    if (!supabase) return;
+    setCreatingKey(true);
+    setKeyError("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) throw new Error("Please sign in again.");
+      const response = await fetch("/api/clawrouter/keys", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "failed_to_create_key");
+      await loadDashboardData(accessToken);
+      if (payload?.key) {
+        setApiKeys((prev) => {
+          const next = [payload.key, ...prev.filter((item) => item.id !== payload.key.id)];
+          return next;
+        });
+      }
+    } catch (error: any) {
+      setKeyError(error?.message || "Failed to generate API key.");
+    } finally {
+      setCreatingKey(false);
+    }
   }
 
   const summaryCards = buildSummaryCards(balanceUsd, activeApiKeys);
@@ -169,8 +226,13 @@ export default function ClawRouterDashboardPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Quick actions</p>
             <div className="mt-3 space-y-2">
               <Button asChild className="w-full bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
-              <Button variant="secondary" className="w-full border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
-                Generate API Key
+              <Button
+                variant="secondary"
+                className="w-full border-stone-300 bg-white/80 text-stone-900 hover:bg-white"
+                onClick={handleGenerateKey}
+                disabled={creatingKey}
+              >
+                {creatingKey ? "Generating…" : "Generate API Key"}
               </Button>
             </div>
           </div>
@@ -226,13 +288,37 @@ export default function ClawRouterDashboardPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">API Keys</p>
                   <h2 className="mt-2 text-xl font-semibold text-stone-950">Managed access keys</h2>
                 </div>
-                <Button className="bg-stone-900 hover:bg-stone-800">Generate API Key</Button>
+                <Button className="bg-stone-900 hover:bg-stone-800" onClick={handleGenerateKey} disabled={creatingKey}>
+                  {creatingKey ? "Generating…" : "Generate API Key"}
+                </Button>
               </div>
               <div className="mt-5 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                <p className="text-sm font-medium text-stone-950">No active key displayed yet</p>
-                <p className="mt-2 text-sm leading-6 text-stone-600">
-                  After payment and activation, the first managed key should appear here. Long-term UX should reveal plaintext only once, then keep only key prefix and metadata visible.
-                </p>
+                {apiKeys.length ? (
+                  <div className="space-y-3">
+                    {apiKeys.map((key) => (
+                      <div key={key.id} className="rounded-2xl bg-white/75 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-stone-950">{key.name}</p>
+                            <p className="text-xs text-stone-500">{key.keyPrefix}••••••••</p>
+                          </div>
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
+                        </div>
+                        {key.plaintextSecret ? (
+                          <p className="mt-2 break-all text-xs text-emerald-700">New key: {key.plaintextSecret}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-stone-950">No active key displayed yet</p>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">
+                      After payment and activation, the first managed key should appear here. Long-term UX should reveal plaintext only once, then keep only key prefix and metadata visible.
+                    </p>
+                  </>
+                )}
+                {keyError ? <p className="mt-3 text-sm text-red-600">{keyError}</p> : null}
               </div>
             </Card>
 

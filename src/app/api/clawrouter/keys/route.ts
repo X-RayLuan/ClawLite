@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureClawRouterApiKey, listApiKeysForAccount } from "@/lib/clawrouter-keys";
+import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
-    const accountId = request.nextUrl.searchParams.get("accountId");
-    const keys = await listApiKeysForAccount(getSupabaseAdminClient(), accountId);
-    return NextResponse.json({ ok: true, keys });
+    const authorization = request.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+    const { userId } = await getAuthenticatedClawRouterUser(accessToken);
+    const keys = await listApiKeysForAccount(getSupabaseAdminClient(), userId);
+    return NextResponse.json({ ok: true, keys }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error?.message || "failed_to_list_keys" }, { status: 500 });
   }
@@ -16,17 +19,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const result = await ensureClawRouterApiKey(
-      getSupabaseAdminClient(),
-      typeof body.accountId === "string" ? body.accountId : null,
-    );
+    const authorization = request.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+    const { userId } = await getAuthenticatedClawRouterUser(accessToken);
+    const result = await ensureClawRouterApiKey(getSupabaseAdminClient(), userId);
 
     return NextResponse.json({
       ok: true,
       key: result.key,
       created: result.created,
-    });
+    }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error?.message || "failed_to_create_key" }, { status: 500 });
   }

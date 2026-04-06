@@ -55,18 +55,25 @@ export async function GET(request: NextRequest) {
       throw new Error(topups.error.message || "failed_to_load_topups");
     }
 
-    return NextResponse.json({
-      ok: true,
-      account: {
-        id: userId,
-        email: account.data?.email || email,
-        plan: account.data?.plan || "free",
-        billingStatus: account.data?.billing_status || "inactive",
-        creditBalanceUsd: Number(account.data?.credit_balance_usd || 0),
-        activeApiKeys: keys.count || 0,
+    return NextResponse.json(
+      {
+        ok: true,
+        account: {
+          id: userId,
+          email: account.data?.email || email,
+          plan: account.data?.plan || "free",
+          billingStatus: account.data?.billing_status || "inactive",
+          creditBalanceUsd: Number(account.data?.credit_balance_usd || 0),
+          activeApiKeys: keys.count || 0,
+        },
+        topups: topups.data || [],
       },
-      topups: topups.data || [],
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { ok: false, error: error?.message || "failed_to_load_clawrouter_account" },
