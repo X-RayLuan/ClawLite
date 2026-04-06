@@ -46,9 +46,32 @@ export async function POST(req: Request) {
 
         if (kind === "clawrouter_access") {
           const accountId = session.metadata?.account_id;
-          if (!accountId) {
+          const paidAmountUsd = Number(session.metadata?.amount_usd || 0);
+          const creditedAmountUsd = paidAmountUsd === 5 ? 10 : paidAmountUsd;
+          const promoCode = session.metadata?.promo_code || null;
+
+          if (!accountId || !Number.isFinite(creditedAmountUsd) || creditedAmountUsd <= 0) {
             throw new Error("invalid_access_metadata");
           }
+
+          await settleTopupCheckoutSession({
+            supabase,
+            accountId,
+            stripeSessionId: session.id,
+            stripeEventId: event.id,
+            amountUsd: creditedAmountUsd,
+            promoCode,
+            metadata: {
+              kind: "clawrouter_access",
+              paid_amount_usd: paidAmountUsd,
+              bonus_amount_usd: Math.max(creditedAmountUsd - paidAmountUsd, 0),
+              credited_amount_usd: creditedAmountUsd,
+              stripe_payment_status: session.payment_status,
+              stripe_customer_email: session.customer_details?.email ?? null,
+              stripe_status: session.status,
+              settled_at: new Date().toISOString(),
+            },
+          });
 
           const assignment = await assignInventoryKeyToAccount({
             supabase,

@@ -135,10 +135,11 @@ export async function reconcileTopupsFromStripe(input: {
 
   for (const session of sessions) {
     if (session?.status !== "complete" || session?.payment_status !== "paid") continue;
-    if (session?.metadata?.kind !== "clawrouter_topup") continue;
+    if (!["clawrouter_topup", "clawrouter_access"].includes(session?.metadata?.kind || "")) continue;
     if (session?.metadata?.account_id !== input.accountId) continue;
 
-    const amountUsd = Number(session?.metadata?.amount_usd || 0);
+    const paidAmountUsd = Number(session?.metadata?.amount_usd || 0);
+    const amountUsd = session?.metadata?.kind === "clawrouter_access" && paidAmountUsd === 5 ? 10 : paidAmountUsd;
     if (!Number.isFinite(amountUsd) || amountUsd <= 0) continue;
 
     const result = await settleTopupCheckoutSession({
@@ -149,6 +150,10 @@ export async function reconcileTopupsFromStripe(input: {
       promoCode: session?.metadata?.promo_code || null,
       metadata: {
         reconciled_from_account_api: true,
+        kind: session?.metadata?.kind || null,
+        paid_amount_usd: paidAmountUsd,
+        bonus_amount_usd: Math.max(amountUsd - paidAmountUsd, 0),
+        credited_amount_usd: amountUsd,
         stripe_customer_email: session?.customer_details?.email || session?.customer_email || input.email || null,
         stripe_payment_status: session?.payment_status || null,
         stripe_status: session?.status || null,
