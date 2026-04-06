@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const deliveryMode = typeof body.deliveryMode === "string" ? body.deliveryMode : "inventory_key";
+
     const stripeSession = await createStripeCheckoutSessionViaFetch({
       secretKey: process.env.STRIPE_SECRET_KEY,
       fields: {
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
         "metadata[account_id]": session.accountId,
         "metadata[installer_setup_token]": session.installerSetupToken || "",
         "metadata[product]": "clawrouter",
+        "metadata[delivery_mode]": deliveryMode,
       },
     });
 

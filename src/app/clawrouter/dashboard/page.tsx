@@ -63,7 +63,7 @@ export default function ClawRouterDashboardPage() {
   const [balanceUsd, setBalanceUsd] = useState(0);
   const [activeApiKeys, setActiveApiKeys] = useState(0);
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
-  const [apiKeys, setApiKeys] = useState<Array<{ id: string; name: string; keyPrefix: string; status: string; createdAt: string | null; plaintextSecret?: string | null }>>([]);
+  const [deliveredKeys, setDeliveredKeys] = useState<Array<{ id: string; deliveryMode: "managed_key" | "inventory_key"; displayName: string; provider: string; plaintextKey: string | null; keyPrefix: string | null; faceValueUsd: number | null; salePriceUsd: number | null; status: string; createdAt: string | null }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
   const [creatingKey, setCreatingKey] = useState(false);
@@ -94,10 +94,11 @@ export default function ClawRouterDashboardPage() {
       setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
       setActiveApiKeys(Number(accountPayload.account?.activeApiKeys || 0));
       setTopups(accountPayload.topups || []);
+      setDeliveredKeys(accountPayload.deliveredKeys || []);
     }
 
     if (keysResponse.ok && keysPayload?.ok) {
-      setApiKeys(keysPayload.keys || []);
+      // key list remains available via /api/clawrouter/keys; dashboard renders the normalized delivered key surface.
     }
   }, []);
 
@@ -182,11 +183,8 @@ export default function ClawRouterDashboardPage() {
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.ok) throw new Error(payload?.error || "failed_to_create_key");
       await loadDashboardData(accessToken);
-      if (payload?.key) {
-        setApiKeys((prev) => {
-          const next = [payload.key, ...prev.filter((item) => item.id !== payload.key.id)];
-          return next;
-        });
+      if (payload?.delivery) {
+        setDeliveredKeys((prev) => [payload.delivery, ...prev.filter((item) => item.id !== payload.delivery.id)]);
       }
     } catch (error: any) {
       setKeyError(error?.message || "Failed to generate API key.");
@@ -285,36 +283,42 @@ export default function ClawRouterDashboardPage() {
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">API Keys</p>
-                  <h2 className="mt-2 text-xl font-semibold text-stone-950">Managed access keys</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Delivered Keys</p>
+                  <h2 className="mt-2 text-xl font-semibold text-stone-950">Inventory + managed access</h2>
                 </div>
                 <Button className="bg-stone-900 hover:bg-stone-800" onClick={handleGenerateKey} disabled={creatingKey}>
-                  {creatingKey ? "Generating…" : "Generate API Key"}
+                  {creatingKey ? "Generating…" : "Generate Managed Key"}
                 </Button>
               </div>
               <div className="mt-5 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                {apiKeys.length ? (
+                {deliveredKeys.length ? (
                   <div className="space-y-3">
-                    {apiKeys.map((key) => (
+                    {deliveredKeys.map((key) => (
                       <div key={key.id} className="rounded-2xl bg-white/75 px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-stone-950">{key.name}</p>
-                            <p className="text-xs text-stone-500">{key.keyPrefix}••••••••</p>
+                            <p className="text-sm font-medium text-stone-950">{key.displayName}</p>
+                            <p className="text-xs text-stone-500">
+                              {key.deliveryMode === "inventory_key" ? "Inventory delivery" : "Managed key"} · {key.provider}
+                            </p>
                           </div>
                           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
                         </div>
-                        {key.plaintextSecret ? (
-                          <p className="mt-2 break-all text-xs text-emerald-700">New key: {key.plaintextSecret}</p>
+                        <p className="mt-2 break-all text-xs text-stone-700">{key.plaintextKey || `${key.keyPrefix || "key"}••••••••`}</p>
+                        {key.faceValueUsd != null || key.salePriceUsd != null ? (
+                          <p className="mt-2 text-xs text-stone-500">
+                            {key.faceValueUsd != null ? `Face value $${key.faceValueUsd.toFixed(2)}` : ""}
+                            {key.salePriceUsd != null ? ` · Sold at $${key.salePriceUsd.toFixed(2)}` : ""}
+                          </p>
                         ) : null}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-stone-950">No active key displayed yet</p>
+                    <p className="text-sm font-medium text-stone-950">No delivered key yet</p>
                     <p className="mt-2 text-sm leading-6 text-stone-600">
-                      After payment and activation, the first managed key should appear here. Long-term UX should reveal plaintext only once, then keep only key prefix and metadata visible.
+                      Inventory-delivery purchases will show the assigned upstream key here. Managed ClawLite keys also appear here when you generate them manually.
                     </p>
                   </>
                 )}

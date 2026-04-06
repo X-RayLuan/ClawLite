@@ -5,6 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
+import { assignInventoryKeyToAccount } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -88,7 +89,18 @@ export async function POST(req: Request) {
             },
           });
 
-          await ensureClawRouterApiKey(supabase, settled.accountId);
+          const deliveryMode = session.metadata?.delivery_mode || "inventory_key";
+          if (deliveryMode === "inventory_key") {
+            const assignment = await assignInventoryKeyToAccount({
+              supabase,
+              accountId: settled.accountId,
+            });
+            if (assignment.soldOut) {
+              throw new Error("inventory_key_sold_out");
+            }
+          } else {
+            await ensureClawRouterApiKey(supabase, settled.accountId);
+          }
         }
         break;
       }

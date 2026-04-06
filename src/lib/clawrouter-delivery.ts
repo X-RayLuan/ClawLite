@@ -2,6 +2,11 @@ type MinimalSupabaseClient = {
   from: (table: string) => any;
 };
 
+function makeKeyPrefix(secret?: string | null) {
+  if (!secret) return null;
+  return secret.slice(0, 16);
+}
+
 export type DeliveredKeyView = {
   id: string;
   deliveryMode: "managed_key" | "inventory_key";
@@ -84,4 +89,91 @@ export async function ensureManagedKeyDelivery(input: {
   }
 
   return mapDelivery(response.data);
+}
+
+export async function assignInventoryKeyToAccount(input: {
+  supabase: MinimalSupabaseClient;
+  accountId: string;
+}) {
+  const existing = await input.supabase
+    .from("account_key_deliveries")
+    .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+    .eq("account_id", input.accountId)
+    .eq("delivery_mode", "inventory_key")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.error && existing.error.code !== "PGRST116") {
+    throw new Error(existing.error.message || "failed_to_load_existing_inventory_delivery");
+  }
+
+  if (existing?.data) {
+    return { delivery: mapDelivery(existing.data), created: false, soldOut: false };
+  }
+
+  const available = await input.supabase
+    .from("inventory_keys")
+    .select("id, provider, name, plaintext_key, face_value_usd, sale_price_usd, status")
+    .eq("status", "available")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (available?.error && available.error.code !== "PGRST116") {
+    throw new Error(available.error.message || "failed_to_load_available_inventory_key");
+  }
+
+  if (!available?.data) {
+    return { delivery: null, created: false, soldOut: true };
+  }
+
+  const now = new Date().toISOString();
+  const inventoryUpdate = await input.supabase
+    .from("inventory_keys")
+    .update({
+      status: "assigned",
+      assigned_account_id: input.accountId,
+      assigned_at: now,
+      updated_at: now,
+    })
+    .eq("id", available.data.id)
+    .eq("status", "available")
+    .select("id, provider, name, plaintext_key, face_value_usd, sale_price_usd, status")
+    .maybeSingle();
+
+  if (inventoryUpdate?.error && inventoryUpdate.error.code !== "PGRST116") {
+    throw new Error(inventoryUpdate.error.message || "failed_to_assign_inventory_key");
+  }
+
+  if (!inventoryUpdate?.data) {
+    return { delivery: null, created: false, soldOut: true };
+  }
+
+  const deliveryInsert = await input.supabase
+    .from("account_key_deliveries")
+    .insert({
+      account_id: input.accountId,
+      delivery_mode: "inventory_key",
+      source_type: "inventory_key",
+      source_id: inventoryUpdate.data.id,
+      display_name: inventoryUpdate.data.name,
+      provider: inventoryUpdate.data.provider,
+      plaintext_key: inventoryUpdate.data.plaintext_key,
+      key_prefix: makeKeyPrefix(inventoryUpdate.data.plaintext_key),
+      face_value_usd: inventoryUpdate.data.face_value_usd,
+      sale_price_usd: inventoryUpdate.data.sale_price_usd,
+      status: "active",
+      metadata: {},
+      updated_at: now,
+    })
+    .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+    .single();
+
+  if (!deliveryInsert || deliveryInsert.error || !deliveryInsert.data) {
+    throw new Error(deliveryInsert?.error?.message || "failed_to_create_inventory_delivery");
+  }
+
+  return { delivery: mapDelivery(deliveryInsert.data), created: true, soldOut: false };
 }
