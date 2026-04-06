@@ -65,6 +65,7 @@ export default function ClawRouterDashboardPage() {
   const [deliveredKeys, setDeliveredKeys] = useState<Array<{ id: string; deliveryMode: "managed_key" | "inventory_key"; displayName: string; provider: string; plaintextKey: string | null; keyPrefix: string | null; faceValueUsd: number | null; salePriceUsd: number | null; status: string; createdAt: string | null }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   const loadDashboardData = useCallback(async (accessToken: string) => {
     const accountResponse = await fetch("/api/clawrouter/account", {
@@ -144,6 +145,17 @@ export default function ClawRouterDashboardPage() {
 
   if (checking) {
     return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
+  }
+
+  async function handleCopyKey(keyId: string, plaintextKey: string | null) {
+    if (!plaintextKey) return;
+    try {
+      await navigator.clipboard.writeText(plaintextKey);
+      setCopiedKeyId(keyId);
+      window.setTimeout(() => setCopiedKeyId((current) => (current === keyId ? null : current)), 1500);
+    } catch {
+      setCopiedKeyId(null);
+    }
   }
 
   const summaryCards = buildSummaryCards(balanceUsd, deliveredKeys.length);
@@ -250,7 +262,19 @@ export default function ClawRouterDashboardPage() {
                           </div>
                           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
                         </div>
-                        <p className="mt-2 break-all text-xs text-stone-700">{key.plaintextKey || `${key.keyPrefix || "key"}••••••••`}</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          <p className="min-w-0 flex-1 truncate rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs text-stone-700">
+                            {key.keyPrefix || "key"}••••••••••••••••
+                          </p>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
+                            onClick={() => handleCopyKey(key.id, key.plaintextKey)}
+                          >
+                            {copiedKeyId === key.id ? "Copied" : "Copy"}
+                          </Button>
+                        </div>
                         {key.faceValueUsd != null || key.salePriceUsd != null ? (
                           <p className="mt-2 text-xs text-stone-500">
                             {key.faceValueUsd != null ? `Face value $${key.faceValueUsd.toFixed(2)}` : ""}
