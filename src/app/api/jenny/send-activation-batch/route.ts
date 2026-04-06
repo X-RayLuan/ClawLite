@@ -30,6 +30,8 @@ type ProbeState = {
   lastProbeRecipientCount?: number
   circuitBreakerState: 'open' | 'closed'
   blocker?: string | null
+  copySentToOps?: boolean
+  copySentAt?: string | null
 }
 
 const SEND_DELAY_MS = 250
@@ -141,6 +143,7 @@ async function sendWithRetry({
   html,
   campaignId,
   userId,
+  copyToOps,
 }: {
   resend: Resend
   from: string
@@ -149,6 +152,7 @@ async function sendWithRetry({
   html: string
   campaignId: string
   userId: string
+  copyToOps: boolean
 }) {
   let lastError: Error | null = null
 
@@ -156,6 +160,7 @@ async function sendWithRetry({
     const response = await resend.emails.send({
       from,
       to: [email],
+      cc: copyToOps ? ['aiagentautomation@gmail.com'] : undefined,
       subject,
       html,
       headers: {
@@ -309,9 +314,20 @@ export async function POST(req: NextRequest) {
       error?: string
     }> = []
     let breakerReason: string | null = null
+    const nextProbeState: ProbeState = {
+      ...probeState,
+      date: today,
+      runtime: OFFICIAL_JENNY_RUNTIME,
+      copySentToOps: Boolean(probeState.copySentToOps),
+      copySentAt: probeState.copySentAt || null,
+    }
 
-    for (const recipient of recipients) {
+    for (let i = 0; i < recipients.length; i += 1) {
+      const recipient = recipients[i]
       const email = recipient.email?.trim()
+
+      const shouldCopyToOps = !dryRun && !nextProbeState.copySentToOps && i === 0
+
       if (!email) {
         results.push({
           userId: recipient.userId,
@@ -341,7 +357,13 @@ export async function POST(req: NextRequest) {
           html: renderActivationEmail({ firstName: recipient.firstName, ctaUrl }),
           campaignId,
           userId: recipient.userId,
+          copyToOps: shouldCopyToOps,
         })
+
+        if (shouldCopyToOps && !nextProbeState.copySentToOps) {
+          nextProbeState.copySentToOps = true
+          nextProbeState.copySentAt = new Date().toISOString()
+        }
 
         results.push({
           userId: recipient.userId,
@@ -373,12 +395,6 @@ export async function POST(req: NextRequest) {
     const failed = results.length - accepted
 
     if (!dryRun) {
-      const nextProbeState: ProbeState = {
-        ...probeState,
-        date: today,
-        runtime: OFFICIAL_JENNY_RUNTIME,
-      }
-
       if (mode === 'probe') {
         nextProbeState.lastProbeAt = new Date().toISOString()
         nextProbeState.lastProbeRecipientCount = recipients.length

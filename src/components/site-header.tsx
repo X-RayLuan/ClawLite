@@ -34,29 +34,29 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/5 bg-white/70 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+    <header className="sticky top-0 z-50 border-b border-stone-300/50 bg-[rgba(248,244,237,0.85)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-[var(--fd-layout-width)] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-stone-900">
           <Image src="/clawlitelogo.png" alt="clawlite logo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" priority />
           <span>ClawLite</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-          <Link href="/">{nav.home}</Link>
-          <Link href="/setup">{nav.setup ?? "Setup"}</Link>
-          <Link href="/marketing-agent-team">{nav.marketingAgentTeam ?? "Marketing Agent Team"}</Link>
-          <Link href="/skills">{nav.skills ?? "Skills"}</Link>
-          <Link href="/troubleshoot">{nav.troubleshoot}</Link>
-          <Link href="/docs" className="text-ink/70 hover:text-ink">
+        <nav className="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex">
+          <Link href="/" className="transition-colors hover:text-stone-900">{nav.home}</Link>
+          <Link href="/setup" className="transition-colors hover:text-stone-900">{nav.setup ?? "Setup"}</Link>
+          <Link href="/marketing-agent-team" className="transition-colors hover:text-stone-900">{nav.marketingAgentTeam ?? "Marketing Agent Team"}</Link>
+          <Link href="/skills" className="transition-colors hover:text-stone-900">{nav.skills ?? "Skills"}</Link>
+          <Link href="/clawrouter" className="transition-colors hover:text-stone-900">{nav.clawrouter ?? "ClawRouter"}</Link>
+          <Link href="/docs" className="transition-colors hover:text-stone-900">
             {nav.docs}
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           {loggedIn ? (
-            <button type="button" onClick={handleLogout} className="text-sm text-ink/80 hover:text-ink">
+            <button type="button" onClick={handleLogout} className="text-sm text-stone-500 transition-colors hover:text-stone-900">
               Logout
             </button>
           ) : (
-            <Link href="/login" className="text-sm text-ink/80 hover:text-ink">
+            <Link href="/login" className="text-sm text-stone-500 transition-colors hover:text-stone-900">
               Login
             </Link>
           )}

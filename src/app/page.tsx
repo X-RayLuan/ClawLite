@@ -82,30 +82,31 @@ export default function HomePage() {
 
   return (
     <main className="gradient-bg">
-      <section className="mx-auto grid max-w-6xl gap-10 px-6 pb-14 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      {/* Hero */}
+      <section className="mx-auto grid max-w-[var(--fd-layout-width)] gap-10 px-4 pb-14 pt-20 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14 lg:px-8 xl:gap-20">
         <div className="space-y-6">
-          <Badge className="border-coral/20 bg-coral/10 text-coral">{hero.eyebrow}</Badge>
+          <Badge>{hero.eyebrow}</Badge>
 
-          <h1 className="font-display text-4xl font-semibold leading-[1.05] text-ink md:text-6xl">
+          <h1 className="font-display text-[clamp(1.8rem,10.5vw,3.4rem)] font-semibold leading-[0.88] tracking-[-0.06em] text-stone-900">
             {hero.title}
             <span className="ml-3 inline-flex items-center align-middle">
               <Image src="/clawlitelogo.png" alt="clawlite logo" width={44} height={44} className="h-11 w-11 rounded-xl object-cover" priority />
             </span>
           </h1>
 
-          <p className="max-w-xl text-lg text-ink/70 md:text-xl">{hero.subtitle}</p>
+          <p className="max-w-xl text-lg leading-relaxed text-stone-500 md:text-xl">{hero.subtitle}</p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" className="shadow-glow" asChild>
+            <Button size="lg" asChild>
               <Link href={DOWNLOAD_LOGIN_HREF}>{hero.start}</Link>
             </Button>
           </div>
 
-          <Card className="max-w-xl border-sea/20 bg-sea/5 p-4 shadow-soft">
+          <Card className="max-w-xl p-5 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">New to OpenClaw?</p>
-                <p className="mt-1 text-sm text-ink/75">Start with the guided setup page before you download.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">New to OpenClaw?</p>
+                <p className="mt-1 text-sm text-stone-500">Start with the guided setup page before you download.</p>
               </div>
               <Button asChild variant="secondary">
                 <Link href="/setup">See Setup Guide</Link>
@@ -120,13 +121,10 @@ export default function HomePage() {
           transition={{ duration: 0.55 }}
           className="relative"
         >
-          <div className="hero-grid-glow absolute -inset-6 -z-10 rounded-[2rem]" />
-          <Card className="relative overflow-hidden border-black/10 bg-white/90 p-4">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sea/20 blur-3xl" />
-            <div className="absolute -bottom-8 left-1/3 h-36 w-36 rounded-full bg-coral/20 blur-3xl" />
+          <Card className="relative overflow-hidden p-5 sm:p-6">
             <div className="relative space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">{hero.previewTitle}</p>
-              <div className="overflow-hidden rounded-2xl border border-black/5 bg-black/5">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">{hero.previewTitle}</p>
+              <div className="overflow-hidden rounded-xl border border-stone-300/70">
                 <img src="/clawlite-install.gif" alt="clawlite install preview" className="h-auto w-full" />
               </div>
             </div>
@@ -134,14 +132,15 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-10">
-        <div className="mb-4 text-center">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">Setup Video</Badge>
-          <h2 className="mt-3 font-display text-2xl font-semibold text-ink md:text-3xl">
+      {/* Setup Video */}
+      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+        <div className="mb-6 text-center">
+          <Badge>Setup Video</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
             Watch: ClawLite Setup in 5 Minutes
           </h2>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-black/10 bg-white/90 shadow-soft">
+        <div className="overflow-hidden rounded-[2.2rem] border border-stone-300/70 shadow-soft">
           <video
             className="w-full"
             controls
@@ -155,99 +154,106 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-8">
-        <div className="grid gap-4 rounded-3xl border border-black/5 bg-white/70 p-5 shadow-soft md:grid-cols-4 md:p-7">
-          {setupSteps.map((step) => (
-            <div key={step.id} className="rounded-2xl bg-white/90 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">{step.id}</p>
-              <p className="mt-2 text-base font-semibold text-ink">{step.title}</p>
-              <p className="mt-1 text-sm text-ink/65">{step.description}</p>
-            </div>
-          ))}
-        </div>
+      {/* Setup Steps */}
+      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 pb-14 sm:px-6 lg:px-8">
+        <Card className="p-5 sm:p-6 md:p-7">
+          <div className="grid gap-4 md:grid-cols-4">
+            {setupSteps.map((step) => (
+              <div key={step.id} className="rounded-xl bg-white/40 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">{step.id}</p>
+                <p className="mt-2 text-base font-semibold text-stone-900">{step.title}</p>
+                <p className="mt-1 text-sm text-stone-500">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-12">
-        <div className="mb-6 text-center">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">Why ClawLite</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+      {/* Why ClawLite */}
+      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+        <div className="mb-10 text-center">
+          <Badge>Why ClawLite</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
             Install fast. Run cheaper. Stay safe.
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-lg text-ink/70">
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
             ClawLite gives you one-click setup, lower token costs, and a built-in SOUL Backup safety layer.
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-black/10 bg-white/90 p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
-              <span className="text-2xl">⚡</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x26A1;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">One-Click Install</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">One-Click Install</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               Go from zero to a working OpenClaw stack in minutes, without manual setup friction.
             </p>
           </Card>
 
-          <Card className="border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-soft">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
-              <span className="text-2xl">💰</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x1F4B0;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">Cheaper Token Routing</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Cheaper Token Routing</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               Cut ongoing model spend with optimized routing and predictable usage control.
             </p>
           </Card>
 
-          <Card className="border-black/10 bg-white/90 p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
-              <span className="text-2xl">🛡️</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x1F6E1;&#xFE0F;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">SOUL Backup</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">SOUL Backup</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               Versioned backup and restore for your OpenClaw brain, with safer rollback when changes go wrong.
             </p>
           </Card>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-12">
-        <div className="grid gap-6 rounded-3xl border border-black/10 bg-white/90 p-6 shadow-soft md:grid-cols-[1.2fr_0.8fr] md:p-8">
-          <div>
-            <Badge className="border-coral/20 bg-coral/10 text-coral">SOUL Backup</Badge>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
-              Never lose your OpenClaw brain.
-            </h2>
-            <p className="mt-3 max-w-2xl text-lg text-ink/70">
-              Backup, diff, and restore your critical configs from the UI — so recovery is fast, visible, and auditable.
-            </p>
+      {/* SOUL Backup Feature */}
+      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+        <Card className="p-5 sm:p-6 md:p-8">
+          <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr] lg:gap-14">
+            <div>
+              <Badge>SOUL Backup</Badge>
+              <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
+                Never lose your OpenClaw brain.
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
+                Backup, diff, and restore your critical configs from the UI — so recovery is fast, visible, and auditable.
+              </p>
 
-            <ul className="mt-5 space-y-2 text-sm text-ink/75">
-              <li>• One-click backup with integrity validation</li>
-              <li>• Diff preview before restore (sensitive fields masked)</li>
-              <li>• Failure alerts and audit trail for every action</li>
-            </ul>
+              <ul className="mt-5 space-y-2 text-sm text-stone-500">
+                <li>&#x2022; One-click backup with integrity validation</li>
+                <li>&#x2022; Diff preview before restore (sensitive fields masked)</li>
+                <li>&#x2022; Failure alerts and audit trail for every action</li>
+              </ul>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild>
-                <Link href="/login">Enable SOUL Backup</Link>
-              </Button>
-              <Button asChild variant="secondary">
-                <Link href="/login">View Backup Docs</Link>
-              </Button>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link href="/login">Enable SOUL Backup</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link href="/login">View Backup Docs</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-stone-300/70 bg-white/40 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Recovery Flow</p>
+              <div className="mt-3 space-y-3 text-sm text-stone-600">
+                <div className="rounded-xl bg-white/50 p-3">1. Choose backup version</div>
+                <div className="rounded-xl bg-white/50 p-3">2. Review diff preview</div>
+                <div className="rounded-xl bg-white/50 p-3">3. Confirm restore safely</div>
+                <div className="rounded-xl bg-white/50 p-3">4. Verify + audit log</div>
+              </div>
             </div>
           </div>
-
-          <Card className="border-black/10 bg-black/5 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/55">Recovery Flow</p>
-            <div className="mt-3 space-y-3 text-sm text-ink/75">
-              <div className="rounded-xl bg-white/80 p-3">1. Choose backup version</div>
-              <div className="rounded-xl bg-white/80 p-3">2. Review diff preview</div>
-              <div className="rounded-xl bg-white/80 p-3">3. Confirm restore safely</div>
-              <div className="rounded-xl bg-white/80 p-3">4. Verify + audit log</div>
-            </div>
-          </Card>
-        </div>
+        </Card>
       </section>
 
 
@@ -260,161 +266,163 @@ export default function HomePage() {
       </Script>
       <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" />
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="mb-8 text-center">
-          <Badge className="border-sea/20 bg-sea/10 text-sea">Done = Verified</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+      {/* Verified Section */}
+      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+        <div className="mb-10 text-center">
+          <Badge>Done = Verified</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
             Not just installed — proven to work.
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-lg text-ink/70">
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
             ClawLite is the only OpenClaw installer that verifies every step, backs up your configs, and guarantees 40% cheaper tokens.
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-black/10 bg-white/90 p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
-              <span className="text-2xl">⚡</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x26A1;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">5 minutes. Zero DevOps. Verified.</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">5 minutes. Zero DevOps. Verified.</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               One-click install. Every dependency verified. First query successful.
             </p>
-            <div className="mt-4 space-y-1 text-xs text-ink/60">
+            <div className="mt-4 space-y-1 text-xs text-stone-400">
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Installation complete</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Dependencies verified</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>API keys authenticated</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>First query successful</span>
               </div>
             </div>
           </Card>
 
-          <Card className="border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
-              <span className="text-2xl">💰</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x1F4B0;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">40% cheaper tokens. Verified savings.</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">40% cheaper tokens. Verified savings.</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               Not a promise. A verified 40% savings on every single call.
             </p>
-            <div className="mt-4 space-y-1 text-xs text-ink/60">
+            <div className="mt-4 space-y-1 text-xs text-stone-400">
               <div className="flex items-center gap-2">
-                <span className="text-coral">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Token pricing locked in</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-coral">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>No hidden fees</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-coral">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Real-time usage dashboard</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-coral">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Monthly savings report</span>
               </div>
             </div>
           </Card>
 
-          <Card className="border-black/10 bg-white/90 p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sea/10">
-              <span className="text-2xl">🔒</span>
+          <Card className="p-5 sm:p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
+              <span className="text-2xl">&#x1F512;</span>
             </div>
-            <h3 className="text-xl font-semibold text-ink">Your configs are assets. Verified safe.</h3>
-            <p className="mt-2 text-sm text-ink/70">
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Your configs are assets. Verified safe.</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
               Automatic backups. Encrypted storage. One-click restore. Zero data loss.
             </p>
-            <div className="mt-4 space-y-1 text-xs text-ink/60">
+            <div className="mt-4 space-y-1 text-xs text-stone-400">
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Automatic daily backups</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Encrypted at rest (AES-256)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>One-click restore</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sea">✓</span>
+                <span className="text-stone-600">&#x2713;</span>
                 <span>Audit trail</span>
               </div>
             </div>
           </Card>
         </div>
 
-        <div className="mt-8 text-center">
-          <Button size="lg" className="shadow-glow" asChild>
+        <div className="mt-10 text-center">
+          <Button size="lg" asChild>
             <Link href={DOWNLOAD_LOGIN_HREF}>Get Started Free</Link>
           </Button>
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="mb-5">
-          <Badge className="border-coral/20 bg-coral/10 text-coral">Pricing</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-ink">BYOK or ClawLite Tokens. Your choice.</h2>
+      {/* Pricing */}
+      <section id="pricing" className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+        <div className="mb-8">
+          <Badge>Pricing</Badge>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">BYOK or ClawLite Tokens. Your choice.</h2>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Flexible</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.byok.label}</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.byok.platformFee}</div>
-            <p className="mt-2 text-sm text-ink/65">{pricingConfig.byok.description}</p>
-            <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• Connect your own OpenAI/Anthropic/other keys</li>
-              <li>• Full control over spend and provider choice</li>
-              <li>• Great for technical users and experiments</li>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Flexible</p>
+            <h3 className="mt-2 font-display text-2xl font-semibold text-stone-900">{pricingConfig.byok.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-stone-900">{pricingConfig.byok.platformFee}</div>
+            <p className="mt-2 text-sm text-stone-500">{pricingConfig.byok.description}</p>
+            <ul className="mt-4 space-y-2 text-sm text-stone-500">
+              <li>&#x2022; Connect your own OpenAI/Anthropic/other keys</li>
+              <li>&#x2022; Full control over spend and provider choice</li>
+              <li>&#x2022; Great for technical users and experiments</li>
             </ul>
-          </article>
+          </Card>
 
-          <article className="rounded-3xl border border-coral/30 bg-gradient-to-br from-coral/10 via-white to-sea/10 p-6 shadow-glow">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">Recommended</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.tokens.label}</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.tokens.pricingLabel}</div>
-            <p className="mt-2 text-sm text-ink/65">{pricingConfig.tokens.description}</p>
-            <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• {pricingConfig.tokens.discountText}</li>
-              <li>• One-click setup, no provider key hunting</li>
+          <Card className="border-2 !border-stone-900 p-5 shadow-elevated sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-900">Recommended</p>
+            <h3 className="mt-2 font-display text-2xl font-semibold text-stone-900">{pricingConfig.tokens.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-stone-900">{pricingConfig.tokens.pricingLabel}</div>
+            <p className="mt-2 text-sm text-stone-500">{pricingConfig.tokens.description}</p>
+            <ul className="mt-4 space-y-2 text-sm text-stone-500">
+              <li>&#x2022; {pricingConfig.tokens.discountText}</li>
+              <li>&#x2022; One-click setup, no provider key hunting</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
               </Button>
             </div>
-          </article>
+          </Card>
 
-          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-soft">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sea">Hands-on Help</p>
-            <h3 className="mt-2 text-2xl font-semibold text-ink">{pricingConfig.remoteImplementation.label}</h3>
-            <div className="mt-2 text-3xl font-semibold text-ink">{pricingConfig.remoteImplementation.price}</div>
-            <p className="mt-2 text-sm text-ink/65">{pricingConfig.remoteImplementation.description}</p>
-            <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• Guided setup with a real operator</li>
-              <li>• Faster path to a working deployment</li>
-              <li>• Best for teams that want implementation help, not homework</li>
+          <Card className="p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Hands-on Help</p>
+            <h3 className="mt-2 font-display text-2xl font-semibold text-stone-900">{pricingConfig.remoteImplementation.label}</h3>
+            <div className="mt-2 text-3xl font-semibold text-stone-900">{pricingConfig.remoteImplementation.price}</div>
+            <p className="mt-2 text-sm text-stone-500">{pricingConfig.remoteImplementation.description}</p>
+            <ul className="mt-4 space-y-2 text-sm text-stone-500">
+              <li>&#x2022; Guided setup with a real operator</li>
+              <li>&#x2022; Faster path to a working deployment</li>
+              <li>&#x2022; Best for teams that want implementation help, not homework</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
                 <ExternalAuthLink href={pricingConfig.remoteImplementation.stripeUrl}>{pricingConfig.remoteImplementation.ctaLabel}</ExternalAuthLink>
               </Button>
             </div>
-          </article>
+          </Card>
         </div>
       </section>
     </main>

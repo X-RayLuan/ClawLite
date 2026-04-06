@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { blogPosts, blogStaticParams, type BlogPost } from '@/data/blog/posts';
@@ -38,10 +39,36 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
 }
 
 const slugAliases: Record<string, string> = {
-  '2026-03-21-why-ai-teams-quit-after-the-demo': 'why-ai-teams-quit-after-the-demo',
-  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-installation-guide',
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'ai-agent-setup-friction',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
   '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
-  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-ai-assistant-guide'
+  'openclaw-setup-friction': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'managing-ai-cost-anxiety-with-clawlite': 'why-cheap-ai-tokens-still-feel-expensive-in-practice',
+  'the-real-ai-premium-is-not-power-it-is-reliability': 'why-boring-reliability-is-a-pricing-feature-in-ai-workflows',
+  'best-cheap-models-for-openclaw-tool-use': 'openclaw-cost-control-starts-with-routing-not-hype',
+  'what-is-a-self-hosted-ai-assistant': 'self-hosted-ai-assistant-with-less-setup-friction-and-more-predictable-spend',
+  'clawlite-vs-chatgpt-plus': 'best-chatgpt-alternative-for-developers',
+  'how-to-install-an-ai-assistant-easily': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'byok-ai-assistant-guide': 'byok-vs-managed-tokens-which-cost-model-fits-better',
+  'how-ai-browser-agents-automate-web-workflows-for-smb-teams': 'what-is-an-ai-browser-agent',
+  'openclaw-alternative': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
+  'how-to-install-openclaw': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'clawlite-vs-openclaw': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
+  'best-ai-agent-platform': 'ai-assistant-buyers-guide-for-small-teams',
+  'openclaw-token-cost': 'openclaw-pricing-explained',
+  'what-is-clawlite': 'ai-assistant-buyers-guide-for-small-teams',
+  'openclaw-for-beginners': 'openclaw-setup-guide-for-beginners',
+  'clawlite-free-trial': 'ai-assistant-buyers-guide-for-small-teams',
+  'ai-browser-agent-vs-rpa': 'what-is-an-ai-browser-agent',
+  'best-ai-browser-automation-tools': 'what-is-an-ai-browser-agent',
+  'ai-browser-agents-vs-traditional-rpa-for-modern-operations': 'what-is-an-ai-browser-agent',
+  'clawlite-vs-chatgpt-plus-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
+  'best-affordable-ai-assistant-for-small-teams': 'ai-assistant-buyers-guide-for-small-teams',
+  'best-affordable-ai-assistant-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
+  'clawlite-vs-cursor': 'what-developers-should-optimize-before-choosing-ai-assistant',
+  'best-byok-ai-assistant': 'byok-vs-managed-tokens-which-cost-model-fits-better',
+  'openclaw-install-guide-fastest-way': 'how-to-install-openclaw-in-10-minutes',
+  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-vs-managed-tokens-which-cost-model-fits-better'
 };
 
 export function generateStaticParams() {
@@ -49,6 +76,25 @@ export function generateStaticParams() {
     ...blogStaticParams(),
     { slug: 'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control' }
   ];
+}
+
+export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const canonicalSlug = params.slug;
+  const post = getPost(params.slug);
+
+  if (!post) {
+    return {
+      title: '404: This page could not be found.'
+    };
+  }
+
+  return {
+    title: post.title,
+    description: normalizeContent(post.content).split('\n').find((line) => line.trim())?.slice(0, 160) ?? post.title,
+    alternates: {
+      canonical: `https://clawlite.ai/blog/${canonicalSlug}`
+    }
+  };
 }
 
 function getPost(slug: string): BlogPost | undefined {

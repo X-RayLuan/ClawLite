@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Manrope } from "next/font/google";
+import { Source_Serif_4, Inter } from "next/font/google";
 import "./globals.css";
 import { LangProvider } from "@/components/lang-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
-const displayFont = Space_Grotesk({
+const displayFont = Source_Serif_4({
   subsets: ["latin"],
-  variable: "--font-display"
+  variable: "--font-display",
+  display: "swap"
 });
 
-const bodyFont = Manrope({
+const bodyFont = Inter({
   subsets: ["latin"],
-  variable: "--font-body"
+  variable: "--font-body",
+  display: "swap"
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://clawlite.ai'),
   title: "OpenClaw Setup Wizard",
   description: "Install OpenClaw in minutes with a friendly, guided wizard.",
   icons: {
@@ -28,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
         <LangProvider>
-          <div className="min-h-screen bg-white">
+          <div className="min-h-screen">
             <SiteHeader />
             {children}
             <SiteFooter />

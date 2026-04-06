@@ -4,6 +4,13 @@
 
 :root {
   color-scheme: light;
+  --fd-layout-width: 1400px;
+  --memo-bg: rgba(248, 244, 237, 0.92);
+  --memo-card: rgba(255, 250, 244, 0.78);
+  --memo-border: rgba(213, 210, 207, 0.6);
+  --memo-text: #1c1917;
+  --memo-text-muted: #78716c;
+  --memo-text-faint: #a8a29e;
 }
 
 * {
@@ -11,30 +18,30 @@
 }
 
 body {
-  @apply bg-[#fcfcfa] text-[#171712] font-body antialiased;
+  background: linear-gradient(
+    180deg,
+    rgba(248, 244, 237, 0.92) 0%,
+    rgba(246, 240, 231, 0.75) 18%,
+    rgba(250, 248, 243, 0.82) 44%,
+    rgba(244, 238, 229, 0.92) 100%
+  );
+  color: var(--memo-text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* usememos exact gradient — no radial accents */
 .gradient-bg {
-  background:
-    radial-gradient(circle at 6% 0%, rgba(249, 115, 22, 0.24), transparent 28%),
-    radial-gradient(circle at 90% 8%, rgba(14, 165, 166, 0.22), transparent 32%),
-    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.08), transparent 45%),
-    linear-gradient(180deg, #fcfcfa 0%, #f8fafc 100%);
-}
-
-.hero-grid-glow {
-  background-image:
-    linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-    radial-gradient(circle at center, rgba(249, 115, 22, 0.22), transparent 55%);
-  background-size: 26px 26px, 26px 26px, auto;
+  background: transparent;
 }
 
 .section-card {
-  @apply rounded-[20px] border bg-white shadow-soft backdrop-blur;
-  border-color: #e8e5dc;
+  @apply rounded-[2.2rem] border border-stone-300/70 backdrop-blur-sm;
+  background: var(--memo-card);
+  box-shadow: 0 24px 90px -58px rgba(68, 50, 33, 0.4);
 }
 
 .command-code {
-  @apply rounded-2xl bg-slate-900 text-slate-100 px-4 py-3 font-mono text-sm;
+  @apply rounded-xl bg-stone-900 text-stone-100 px-4 py-3 font-mono text-sm;
 }

@@ -11,33 +11,33 @@ export function SiteFooter() {
   const nav = pageContent.nav;
 
   return (
-    <footer className="border-t border-black/5 bg-white/70">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm text-ink/70 md:flex-row md:items-center md:justify-between">
+    <footer className="border-t border-stone-300/50 bg-[rgba(248,244,237,0.6)]">
+      <div className="mx-auto flex max-w-[var(--fd-layout-width)] flex-col gap-4 px-4 py-10 text-sm text-stone-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
         <div>
-          <p className="font-semibold text-ink">{footer.tagline}</p>
-          <p className="mt-1">{footer.cta}</p>
+          <p className="font-semibold text-stone-900">{footer.tagline}</p>
+          <p className="mt-1 text-stone-500">{footer.cta}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <Link href="/marketing-agent-team" className="text-ink hover:text-ink/70">
+          <Link href="/marketing-agent-team" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.marketingAgentTeam ?? "Marketing Agent Team"}
           </Link>
-          <Link href="/troubleshoot" className="text-ink hover:text-ink/70">
+          <Link href="/troubleshoot" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.troubleshoot}
           </Link>
-          <Link href="/skills" className="text-ink hover:text-ink/70">
+          <Link href="/skills" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.skills ?? "Skills"}
           </Link>
-          <Link href="/docs" className="text-ink hover:text-ink/70">
+          <Link href="/docs" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.docs}
           </Link>
-          <Link href="/blog" className="text-ink hover:text-ink/70">
+          <Link href="/blog" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.blog ?? "Blog"}
           </Link>
           <a
             href="https://discord.com/invite/YgxA4HWJMx"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ink hover:text-ink/70"
+            className="text-stone-500 transition-colors hover:text-stone-900"
           >
             Discord
           </a>
@@ -45,7 +45,7 @@ export function SiteFooter() {
             href="https://x.com/Rockwood_Ray"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ink hover:text-ink/70"
+            className="text-stone-500 transition-colors hover:text-stone-900"
           >
             X
           </a>
@@ -53,7 +53,7 @@ export function SiteFooter() {
             href="https://www.facebook.com/groups/clawlite"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ink hover:text-ink/70"
+            className="text-stone-500 transition-colors hover:text-stone-900"
           >
             Facebook
           </a>

@@ -15,13 +15,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-full font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 disabled:opacity-60",
-          variant === "primary" && "bg-ink text-white hover:bg-ink/90",
-          variant === "secondary" && "bg-white text-ink border border-black/10 hover:border-black/20",
-          variant === "ghost" && "bg-transparent text-ink hover:bg-ink/5",
-          size === "sm" && "px-4 py-2 text-sm",
-          size === "md" && "px-5 py-2.5 text-sm",
-          size === "lg" && "px-6 py-3 text-base",
+          "inline-flex items-center justify-center rounded-full font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 disabled:opacity-60",
+          variant === "primary" && "bg-stone-900 text-white hover:bg-stone-800",
+          variant === "secondary" && "border border-stone-300/80 bg-transparent text-stone-900 hover:bg-stone-100/50",
+          variant === "ghost" && "bg-transparent text-stone-700 hover:bg-stone-200/50",
+          size === "sm" && "px-5 py-2.5 text-sm",
+          size === "md" && "px-6 py-3 text-sm",
+          size === "lg" && "px-6 py-3.5 text-sm sm:text-base",
           className
         )}
         {...props}
