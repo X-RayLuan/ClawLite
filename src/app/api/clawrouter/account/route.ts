@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawrouter-topups";
+import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,8 @@ export async function GET(request: NextRequest) {
       throw new Error(topups.error.message || "failed_to_load_topups");
     }
 
+    const deliveredKeys = await listDeliveredKeysForAccount(supabase, userId);
+
     return NextResponse.json(
       {
         ok: true,
@@ -67,6 +70,7 @@ export async function GET(request: NextRequest) {
           activeApiKeys: keys.count || 0,
         },
         topups: topups.data || [],
+        deliveredKeys,
       },
       {
         headers: {
