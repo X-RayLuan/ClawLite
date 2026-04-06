@@ -1,3 +1,5 @@
+import { listStripeCheckoutSessionsViaFetch } from "@/lib/stripe-rest";
+
 type MinimalSupabaseClient = {
   from: (table: string) => any;
 };
@@ -113,4 +115,50 @@ export async function settleTopupCheckoutSession(input: {
     alreadySettled: false,
     nextBalance,
   };
+}
+
+export async function reconcileTopupsFromStripe(input: {
+  supabase: MinimalSupabaseClient;
+  accountId: string;
+  email?: string | null;
+}) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { reconciled: 0 };
+  }
+
+  const sessions = await listStripeCheckoutSessionsViaFetch({
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    limit: 25,
+  });
+
+  let reconciled = 0;
+
+  for (const session of sessions) {
+    if (session?.status !== "complete" || session?.payment_status !== "paid") continue;
+    if (session?.metadata?.kind !== "clawrouter_topup") continue;
+    if (session?.metadata?.account_id !== input.accountId) continue;
+
+    const amountUsd = Number(session?.metadata?.amount_usd || 0);
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) continue;
+
+    const result = await settleTopupCheckoutSession({
+      supabase: input.supabase,
+      accountId: input.accountId,
+      stripeSessionId: session.id,
+      amountUsd,
+      promoCode: session?.metadata?.promo_code || null,
+      metadata: {
+        reconciled_from_account_api: true,
+        stripe_customer_email: session?.customer_details?.email || session?.customer_email || input.email || null,
+        stripe_payment_status: session?.payment_status || null,
+        stripe_status: session?.status || null,
+      },
+    });
+
+    if (!result.alreadySettled) {
+      reconciled += 1;
+    }
+  }
+
+  return { reconciled };
 }

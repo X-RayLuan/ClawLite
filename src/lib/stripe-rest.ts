@@ -13,6 +13,52 @@ function makeStripeAuthHeader(secretKey: string) {
   return `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
 }
 
+async function readStripeJson(response: Response) {
+  const text = await response.text();
+  let parsed: any = null;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  return parsed;
+}
+
+export async function listStripeCheckoutSessionsViaFetch({
+  secretKey,
+  limit = 20,
+}: {
+  secretKey: string;
+  limit?: number;
+}) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions?limit=${limit}`, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+    cache: "no-store",
+  });
+
+  const parsed = await readStripeJson(response);
+
+  if (!response.ok) {
+    const error = new Error(parsed?.error?.message || parsed?.raw || "stripe_fetch_list_checkout_sessions_failed") as Error & {
+      type?: string | null;
+      code?: string | null;
+      statusCode?: number;
+      requestId?: string | null;
+      raw?: any;
+    };
+    error.type = parsed?.error?.type || null;
+    error.code = parsed?.error?.code || null;
+    error.statusCode = response.status;
+    error.requestId = response.headers.get("request-id");
+    error.raw = parsed?.error || parsed;
+    throw error;
+  }
+
+  return parsed?.data || [];
+}
+
 export async function createStripeCheckoutSessionViaFetch({
   secretKey,
   fields,
@@ -30,13 +76,7 @@ export async function createStripeCheckoutSessionViaFetch({
     cache: "no-store",
   });
 
-  const text = await response.text();
-  let parsed: any = null;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    parsed = { raw: text };
-  }
+  const parsed = await readStripeJson(response);
 
   if (!response.ok) {
     const error = new Error(parsed?.error?.message || parsed?.raw || "stripe_fetch_create_checkout_failed") as Error & {

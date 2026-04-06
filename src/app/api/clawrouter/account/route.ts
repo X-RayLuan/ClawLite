@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawrouter-topups";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,18 @@ export async function GET(request: NextRequest) {
     const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
     const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
     const supabase = getSupabaseAdminClient();
+
+    await ensureClawRouterAccount({
+      supabase,
+      accountId: userId,
+      email,
+    });
+
+    await reconcileTopupsFromStripe({
+      supabase,
+      accountId: userId,
+      email,
+    });
 
     const account = await supabase
       .from("accounts")
