@@ -14,6 +14,11 @@ import {
 const MAC_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite.dmg";
 const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe";
 
+function getDownloadLink(base: string, platform: "mac" | "win", email: string) {
+  if (!email) return base;
+  return `/api/installer-download?email=${encodeURIComponent(email)}&platform=${platform}`;
+}
+
 export default function DownloadsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -149,10 +154,10 @@ export default function DownloadsPage() {
           <p className="mt-2 text-sm text-ink/70">Download the latest ClawLite installer for macOS or Windows.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild>
-              <a href={MAC_LINK} target="_blank" rel="noreferrer">Download macOS</a>
+              <a href={getDownloadLink(MAC_LINK, "mac", email)} target="_blank" rel="noreferrer">Download macOS</a>
             </Button>
             <Button asChild variant="secondary">
-              <a href={WIN_LINK} target="_blank" rel="noreferrer">Download Windows</a>
+              <a href={getDownloadLink(WIN_LINK, "win", email)} target="_blank" rel="noreferrer">Download Windows</a>
             </Button>
           </div>
         </section>
