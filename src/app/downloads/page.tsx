@@ -138,6 +138,14 @@ export default function DownloadsPage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
+  function handleDownload(platform: "mac" | "win") {
+    if (email) {
+      navigator.clipboard.writeText(email).catch(() => {});
+    }
+    const base = platform === "mac" ? MAC_LINK : WIN_LINK;
+    window.open(getDownloadLink(base, platform, email), "_blank");
+  }
+
   if (loading) {
     return <main className="mx-auto max-w-6xl px-6 py-16 text-ink/70">Checking login status...</main>;
   }
@@ -153,12 +161,8 @@ export default function DownloadsPage() {
           <h2 className="mt-2 text-lg font-semibold text-ink">Free Download Installer</h2>
           <p className="mt-2 text-sm text-ink/70">Download the latest ClawLite installer for macOS or Windows.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild>
-              <a href={getDownloadLink(MAC_LINK, "mac", email)} target="_blank" rel="noreferrer">Download macOS</a>
-            </Button>
-            <Button asChild variant="secondary">
-              <a href={getDownloadLink(WIN_LINK, "win", email)} target="_blank" rel="noreferrer">Download Windows</a>
-            </Button>
+            <Button onClick={() => handleDownload("mac")}>Download macOS</Button>
+            <Button variant="secondary" onClick={() => handleDownload("win")}>Download Windows</Button>
           </div>
         </section>
 
