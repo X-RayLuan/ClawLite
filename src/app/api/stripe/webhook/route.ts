@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
-import { assignInventoryKeyToAccount } from "@/lib/clawrouter-delivery";
+import { assignInventoryKeyToAccount, ensureManagedKeyDelivery } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -109,7 +109,14 @@ export async function POST(req: Request) {
             },
           });
 
-          await ensureClawRouterApiKey(supabase, accountId);
+          const keyResult = await ensureClawRouterApiKey(supabase, accountId);
+          if (keyResult.key.plaintextSecret) {
+            await ensureManagedKeyDelivery({
+              supabase,
+              accountId,
+              apiKey: keyResult.key,
+            });
+          }
           break;
         }
 
