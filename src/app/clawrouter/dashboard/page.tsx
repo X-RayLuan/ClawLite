@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { mapAssignedInventoryKeys, selectVisibleInventoryKeys } from "@/lib/clawrouter-dashboard";
 import { getSupabaseClient } from "@/lib/supabase";
 
 const navItems = [
@@ -81,7 +82,12 @@ export default function ClawRouterDashboardPage() {
     if (accountResponse.ok && accountPayload?.ok) {
       setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
       setTopups(accountPayload.topups || []);
-      setDeliveredKeys((accountPayload.deliveredKeys || []).filter((key: any) => key.deliveryMode === "inventory_key"));
+      const currentAssignedInventory = mapAssignedInventoryKeys(accountPayload.assignedInventoryKeys || []);
+      setDeliveredKeys(
+        currentAssignedInventory.length
+          ? currentAssignedInventory
+          : selectVisibleInventoryKeys(accountPayload.deliveredKeys || [])
+      );
     }
   }, []);
 
