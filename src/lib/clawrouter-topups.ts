@@ -1,4 +1,5 @@
 import { listStripeCheckoutSessionsViaFetch } from "@/lib/stripe-rest";
+import { collectReconciledInventoryAccessSessionIds } from "./clawrouter-topups-reconcile.js";
 
 type MinimalSupabaseClient = {
   from: (table: string) => any;
@@ -123,7 +124,7 @@ export async function reconcileTopupsFromStripe(input: {
   email?: string | null;
 }) {
   if (!process.env.STRIPE_SECRET_KEY) {
-    return { reconciled: 0 };
+    return { reconciled: 0, reconciledInventoryAccessSessionIds: [] as string[] };
   }
 
   const sessions = await listStripeCheckoutSessionsViaFetch({
@@ -132,6 +133,7 @@ export async function reconcileTopupsFromStripe(input: {
   });
 
   let reconciled = 0;
+  const settledSessions = [];
 
   for (const session of sessions) {
     if (session?.status !== "complete" || session?.payment_status !== "paid") continue;
@@ -159,11 +161,21 @@ export async function reconcileTopupsFromStripe(input: {
         stripe_status: session?.status || null,
       },
     });
+    settledSessions.push({
+      id: session.id,
+      metadata: {
+        kind: session?.metadata?.kind || null,
+      },
+      alreadySettled: result.alreadySettled,
+    });
 
     if (!result.alreadySettled) {
       reconciled += 1;
     }
   }
 
-  return { reconciled };
+  return {
+    reconciled,
+    reconciledInventoryAccessSessionIds: collectReconciledInventoryAccessSessionIds(settledSessions),
+  };
 }

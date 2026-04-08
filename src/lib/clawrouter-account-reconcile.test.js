@@ -22,6 +22,10 @@ test('maybeReconcileClawRouterAccount runs both reconcile passes when forced', a
     email: 'user@example.com',
     reconcileTopups: async (input) => {
       calls.push(['topups', input]);
+      return {
+        reconciled: 1,
+        reconciledInventoryAccessSessionIds: ['cs_new_access'],
+      };
     },
     reconcileInventoryAccess: async (input) => {
       calls.push(['inventory', input]);
@@ -42,6 +46,7 @@ test('maybeReconcileClawRouterAccount runs both reconcile passes when forced', a
       {
         supabase,
         accountId: 'acct_123',
+        stripeSessionIds: ['cs_new_access'],
       },
     ],
   ]);

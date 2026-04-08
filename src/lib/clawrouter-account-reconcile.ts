@@ -8,9 +8,15 @@ type ReconcileTopupsInput = {
   email?: string | null;
 };
 
+type ReconcileTopupsResult = {
+  reconciled?: number;
+  reconciledInventoryAccessSessionIds?: string[];
+};
+
 type ReconcileInventoryInput = {
   supabase: MinimalSupabaseClient;
   accountId: string;
+  stripeSessionIds?: string[];
 };
 
 export function shouldForceClawRouterAccountReconcile(searchParams: URLSearchParams) {
@@ -22,12 +28,12 @@ export async function maybeReconcileClawRouterAccount(input: {
   supabase: MinimalSupabaseClient;
   accountId: string;
   email?: string | null;
-  reconcileTopups: (input: ReconcileTopupsInput) => Promise<unknown>;
+  reconcileTopups: (input: ReconcileTopupsInput) => Promise<ReconcileTopupsResult>;
   reconcileInventoryAccess: (input: ReconcileInventoryInput) => Promise<unknown>;
 }) {
   if (!input.shouldReconcile) return;
 
-  await input.reconcileTopups({
+  const topupResult = await input.reconcileTopups({
     supabase: input.supabase,
     accountId: input.accountId,
     email: input.email,
@@ -36,5 +42,6 @@ export async function maybeReconcileClawRouterAccount(input: {
   await input.reconcileInventoryAccess({
     supabase: input.supabase,
     accountId: input.accountId,
+    stripeSessionIds: topupResult?.reconciledInventoryAccessSessionIds || [],
   });
 }

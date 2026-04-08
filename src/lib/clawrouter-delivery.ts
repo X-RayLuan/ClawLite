@@ -232,8 +232,14 @@ export async function assignInventoryKeyToAccount(input: {
 export async function reconcileInventoryAccessFromStripe(input: {
   supabase: MinimalSupabaseClient;
   accountId: string;
+  stripeSessionIds?: string[];
 }) {
   if (!process.env.STRIPE_SECRET_KEY) {
+    return { reconciled: 0 };
+  }
+
+  const sessionIdFilter = Array.isArray(input.stripeSessionIds) ? input.stripeSessionIds.filter(Boolean) : [];
+  if (sessionIdFilter.length === 0) {
     return { reconciled: 0 };
   }
 
@@ -249,6 +255,7 @@ export async function reconcileInventoryAccessFromStripe(input: {
     if (session?.metadata?.kind !== "clawrouter_access") continue;
     if (session?.metadata?.delivery_mode !== "inventory_key") continue;
     if (session?.metadata?.account_id !== input.accountId) continue;
+    if (!sessionIdFilter.includes(session.id)) continue;
 
     const assignment = await assignInventoryKeyToAccount({
       supabase: input.supabase,
