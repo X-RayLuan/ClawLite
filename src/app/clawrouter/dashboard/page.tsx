@@ -68,8 +68,12 @@ export default function ClawRouterDashboardPage() {
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
-  const loadDashboardData = useCallback(async (accessToken: string) => {
-    const accountResponse = await fetch("/api/clawrouter/account", {
+  const loadDashboardData = useCallback(async (accessToken: string, options?: { refreshBilling?: boolean }) => {
+    const accountUrl = options?.refreshBilling
+      ? "/api/clawrouter/account?refreshBilling=1"
+      : "/api/clawrouter/account";
+
+    const accountResponse = await fetch(accountUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Cache-Control": "no-store",
@@ -107,6 +111,9 @@ export default function ClawRouterDashboardPage() {
     let mounted = true;
 
     async function settleSession() {
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const refreshBilling = params?.get("topup") === "success";
+
       for (let i = 0; i < 8; i += 1) {
         const { data } = await client.auth.getSession();
         if (!mounted) return;
@@ -116,7 +123,7 @@ export default function ClawRouterDashboardPage() {
 
           const accessToken = data.session.access_token;
           if (accessToken) {
-            await loadDashboardData(accessToken);
+            await loadDashboardData(accessToken, { refreshBilling });
           }
 
           setChecking(false);

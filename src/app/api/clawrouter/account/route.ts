@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { ensureClawRouterAccount } from "@/lib/clawrouter-topups";
-import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
+import { maybeReconcileClawRouterAccount, shouldForceClawRouterAccountReconcile } from "@/lib/clawrouter-account-reconcile";
+import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawrouter-topups";
+import { listDeliveredKeysForAccount, reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,15 @@ export async function GET(request: NextRequest) {
       supabase,
       accountId: userId,
       email,
+    });
+
+    await maybeReconcileClawRouterAccount({
+      shouldReconcile: shouldForceClawRouterAccountReconcile(request.nextUrl.searchParams),
+      supabase,
+      accountId: userId,
+      email,
+      reconcileTopups: reconcileTopupsFromStripe,
+      reconcileInventoryAccess: reconcileInventoryAccessFromStripe,
     });
 
     const account = await supabase
