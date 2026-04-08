@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
+import { buildRootAuthCallbackRedirect } from "@/lib/root-auth-callback";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
 import Script from "next/script";
@@ -26,6 +27,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!supabase) return;
+
+    const authCallbackRedirect = buildRootAuthCallbackRedirect(window.location.href);
+    if (authCallbackRedirect) {
+      window.location.replace(authCallbackRedirect);
+      return;
+    }
 
     const client = supabase;
     let mounted = true;
