@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getContentForLang } from "@/lib/content";
 import { LangToggle } from "@/components/lang-toggle";
 import { useLang } from "@/components/lang-provider";
+import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function SiteHeader() {
@@ -56,7 +57,7 @@ export function SiteHeader() {
               Logout
             </button>
           ) : (
-            <Link href="/login" className="text-sm text-stone-500 transition-colors hover:text-stone-900">
+            <Link href={DOWNLOAD_LOGIN_HREF} className="text-sm text-stone-500 transition-colors hover:text-stone-900">
               Login
             </Link>
           )}

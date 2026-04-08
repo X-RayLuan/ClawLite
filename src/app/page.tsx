@@ -402,7 +402,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
+                <Link href={DOWNLOAD_LOGIN_HREF}>Get 50% Discount Token Coupon</Link>
               </Button>
             </div>
           </Card>

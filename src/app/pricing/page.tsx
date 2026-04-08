@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalAuthLink } from "@/components/external-auth-link";
+import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
 
 export const metadata = {
   title: "ClawLite Pricing",
@@ -36,7 +37,7 @@ export default function PricingPage() {
             </ul>
             <div className="mt-6">
               <Button asChild variant="secondary">
-                <Link href="/login">Start Free</Link>
+                <Link href={DOWNLOAD_LOGIN_HREF}>Start Free</Link>
               </Button>
             </div>
           </article>
@@ -53,7 +54,7 @@ export default function PricingPage() {
             </ul>
             <div className="mt-6">
               <Button asChild>
-                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
+                <Link href={DOWNLOAD_LOGIN_HREF}>Get 50% Discount Token Coupon</Link>
               </Button>
             </div>
           </article>

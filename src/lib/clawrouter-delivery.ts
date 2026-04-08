@@ -1,4 +1,5 @@
 import { listStripeCheckoutSessionsViaFetch } from "@/lib/stripe-rest";
+import { reactivateInventoryDelivery } from "./clawrouter-delivery-reuse.js";
 
 type MinimalSupabaseClient = {
   from: (table: string) => any;
@@ -153,6 +154,50 @@ export async function assignInventoryKeyToAccount(input: {
 
   if (!inventoryUpdate?.data) {
     return { delivery: null, created: false, soldOut: true };
+  }
+
+  const existingDelivery = await input.supabase
+    .from("account_key_deliveries")
+    .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, metadata, created_at")
+    .eq("account_id", input.accountId)
+    .eq("delivery_mode", "inventory_key")
+    .eq("source_type", "inventory_key")
+    .eq("source_id", inventoryUpdate.data.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingDelivery?.error && existingDelivery.error.code !== "PGRST116") {
+    throw new Error(existingDelivery.error.message || "failed_to_load_reusable_inventory_delivery");
+  }
+
+  if (existingDelivery?.data) {
+    const reactivated = reactivateInventoryDelivery(
+      existingDelivery.data,
+      inventoryUpdate.data,
+      input.stripeSessionId || null,
+    );
+    const deliveryUpdate = await input.supabase
+      .from("account_key_deliveries")
+      .update({
+        display_name: reactivated.display_name,
+        provider: reactivated.provider,
+        plaintext_key: reactivated.plaintext_key,
+        key_prefix: reactivated.key_prefix,
+        face_value_usd: reactivated.face_value_usd,
+        sale_price_usd: reactivated.sale_price_usd,
+        status: reactivated.status,
+        metadata: reactivated.metadata,
+        updated_at: now,
+      })
+      .eq("id", existingDelivery.data.id)
+      .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+      .single();
+
+    if (!deliveryUpdate || deliveryUpdate.error || !deliveryUpdate.data) {
+      throw new Error(deliveryUpdate?.error?.message || "failed_to_reactivate_inventory_delivery");
+    }
+
+    return { delivery: mapDelivery(deliveryUpdate.data), created: false, soldOut: false };
   }
 
   const deliveryInsert = await input.supabase

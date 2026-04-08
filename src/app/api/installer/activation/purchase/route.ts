@@ -1,23 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { createCheckoutSessionRecord, markCheckoutSessionPending } from "@/lib/clawrouter-checkout";
+import {
+  createCheckoutSessionRecord,
+  markCheckoutSessionPending,
+  resolveInstallerActivationState,
+} from "@/lib/clawrouter-checkout";
 import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 
 export const runtime = "nodejs";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function resolveAccountIdFromInput(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  accountIdInput: unknown,
+): Promise<string | null> {
+  if (typeof accountIdInput !== "string") {
+    return null;
+  }
+
+  const value = accountIdInput.trim();
+  if (!value) return null;
+  if (UUID_RE.test(value)) return value;
+  if (!value.includes("@")) return null;
+
+  const accountRow = await supabase
+    .from("accounts")
+    .select("id")
+    .eq("email", value)
+    .maybeSingle();
+
+  return accountRow?.data?.id || null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { setupToken, intent } = body;
+    const { setupToken, intent, accountId } = body;
 
     if (!setupToken) {
       return NextResponse.json({ error: "setupToken is required" }, { status: 400 });
     }
 
     const supabase = getSupabaseAdminClient();
+    let resolvedAccountId = await resolveAccountIdFromInput(supabase, accountId);
+    if (!resolvedAccountId) {
+      const activation = await resolveInstallerActivationState(supabase, setupToken);
+      resolvedAccountId = activation.account.accountId || null;
+    }
+
+    if (!resolvedAccountId) {
+      return NextResponse.json({ error: "accountId is required" }, { status: 400 });
+    }
 
     const session = await createCheckoutSessionRecord({
       supabase,
+      accountId: resolvedAccountId,
       installerSetupToken: setupToken,
       source: "installer",
       metadata: {
