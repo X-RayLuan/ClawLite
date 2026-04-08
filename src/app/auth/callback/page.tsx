@@ -84,6 +84,12 @@ export default function AuthCallbackPage() {
 
       if (settledUser) {
         try {
+          window.localStorage.removeItem("clawlite-post-login-returnTo");
+        } catch {
+          // ignore storage failures
+        }
+
+        try {
           const rpcClient = client as any;
           await rpcClient.rpc("sync_auth_user_to_profile", {
             p_user_id: settledUser.id,

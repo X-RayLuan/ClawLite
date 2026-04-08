@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ExternalAuthLink } from "@/components/external-auth-link";
 import { DOWNLOAD_LOGIN_HREF } from "@/lib/auth-flow";
+import { consumePendingPostLoginReturnTo } from "@/lib/post-login-return";
 import { buildRootAuthCallbackRedirect } from "@/lib/root-auth-callback";
 import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -40,9 +41,9 @@ export default function HomePage() {
     const consumePendingReturnTo = () => {
       try {
         const pending = window.localStorage.getItem("clawlite-post-login-returnTo");
-        if (!pending || !pending.startsWith("/")) return null;
+        const target = consumePendingPostLoginReturnTo(window.location.href, pending);
         window.localStorage.removeItem("clawlite-post-login-returnTo");
-        return pending;
+        return target;
       } catch {
         return null;
       }
