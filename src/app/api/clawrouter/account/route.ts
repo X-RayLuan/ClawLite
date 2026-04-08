@@ -51,6 +51,16 @@ export async function GET(request: NextRequest) {
     }
 
     const deliveredKeys = await listDeliveredKeysForAccount(supabase, userId);
+    const assignedInventory = await supabase
+      .from("inventory_keys")
+      .select("id, provider, name, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, assigned_account_id, assigned_at")
+      .eq("assigned_account_id", userId)
+      .eq("status", "assigned")
+      .order("assigned_at", { ascending: false });
+
+    if (assignedInventory?.error) {
+      throw new Error(assignedInventory.error.message || "failed_to_load_assigned_inventory_keys");
+    }
 
     return NextResponse.json(
       {
@@ -65,6 +75,7 @@ export async function GET(request: NextRequest) {
         },
         topups: topups.data || [],
         deliveredKeys,
+        assignedInventoryKeys: assignedInventory.data || [],
       },
       {
         headers: {
