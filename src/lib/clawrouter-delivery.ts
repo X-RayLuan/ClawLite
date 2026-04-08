@@ -1,5 +1,6 @@
 import { listStripeCheckoutSessionsViaFetch } from "@/lib/stripe-rest";
 import { reactivateInventoryDelivery } from "./clawrouter-delivery-reuse.js";
+import { selectReusableInventoryAssignment } from "./clawrouter-delivery-idempotency.js";
 
 type MinimalSupabaseClient = {
   from: (table: string) => any;
@@ -116,6 +117,123 @@ export async function assignInventoryKeyToAccount(input: {
     if (existing?.data) {
       return { delivery: mapDelivery(existing.data), created: false, soldOut: false };
     }
+  }
+
+  const activeDelivery = await input.supabase
+    .from("account_key_deliveries")
+    .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, metadata, created_at")
+    .eq("account_id", input.accountId)
+    .eq("delivery_mode", "inventory_key")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (activeDelivery?.error && activeDelivery.error.code !== "PGRST116") {
+    throw new Error(activeDelivery.error.message || "failed_to_load_active_inventory_delivery");
+  }
+
+  const assignedInventory = await input.supabase
+    .from("inventory_keys")
+    .select("id, provider, name, plaintext_key, face_value_usd, sale_price_usd, status")
+    .eq("assigned_account_id", input.accountId)
+    .eq("status", "assigned")
+    .order("assigned_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (assignedInventory?.error && assignedInventory.error.code !== "PGRST116") {
+    throw new Error(assignedInventory.error.message || "failed_to_load_existing_assigned_inventory_key");
+  }
+
+  let assignedInventoryDelivery = null;
+  if (assignedInventory?.data) {
+    const existingAssignedDelivery = await input.supabase
+      .from("account_key_deliveries")
+      .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, metadata, created_at")
+      .eq("account_id", input.accountId)
+      .eq("delivery_mode", "inventory_key")
+      .eq("source_type", "inventory_key")
+      .eq("source_id", assignedInventory.data.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingAssignedDelivery?.error && existingAssignedDelivery.error.code !== "PGRST116") {
+      throw new Error(existingAssignedDelivery.error.message || "failed_to_load_assigned_inventory_delivery");
+    }
+
+    assignedInventoryDelivery = existingAssignedDelivery?.data || null;
+  }
+
+  const reusableAssignment = selectReusableInventoryAssignment({
+    activeDelivery: activeDelivery?.data || null,
+    assignedInventory: assignedInventory?.data || null,
+    assignedInventoryDelivery,
+  });
+
+  if (reusableAssignment.kind === 'active_delivery' && reusableAssignment.delivery) {
+    return { delivery: mapDelivery(reusableAssignment.delivery), created: false, soldOut: false };
+  }
+
+  if (reusableAssignment.kind === 'assigned_inventory' && reusableAssignment.inventory) {
+    const now = new Date().toISOString();
+    if (reusableAssignment.delivery) {
+      const reactivated = reactivateInventoryDelivery(
+        reusableAssignment.delivery,
+        reusableAssignment.inventory,
+        input.stripeSessionId || null,
+      );
+      const deliveryUpdate = await input.supabase
+        .from("account_key_deliveries")
+        .update({
+          display_name: reactivated.display_name,
+          provider: reactivated.provider,
+          plaintext_key: reactivated.plaintext_key,
+          key_prefix: reactivated.key_prefix,
+          face_value_usd: reactivated.face_value_usd,
+          sale_price_usd: reactivated.sale_price_usd,
+          status: reactivated.status,
+          metadata: reactivated.metadata,
+          updated_at: now,
+        })
+        .eq("id", reusableAssignment.delivery.id)
+        .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+        .single();
+
+      if (!deliveryUpdate || deliveryUpdate.error || !deliveryUpdate.data) {
+        throw new Error(deliveryUpdate?.error?.message || "failed_to_reactivate_assigned_inventory_delivery");
+      }
+
+      return { delivery: mapDelivery(deliveryUpdate.data), created: false, soldOut: false };
+    }
+
+    const deliveryInsert = await input.supabase
+      .from("account_key_deliveries")
+      .insert({
+        account_id: input.accountId,
+        delivery_mode: "inventory_key",
+        source_type: "inventory_key",
+        source_id: reusableAssignment.inventory.id,
+        display_name: reusableAssignment.inventory.name,
+        provider: reusableAssignment.inventory.provider,
+        plaintext_key: reusableAssignment.inventory.plaintext_key,
+        key_prefix: makeKeyPrefix(reusableAssignment.inventory.plaintext_key),
+        face_value_usd: reusableAssignment.inventory.face_value_usd,
+        sale_price_usd: reusableAssignment.inventory.sale_price_usd,
+        status: "active",
+        metadata: {
+          stripe_session_id: input.stripeSessionId || null,
+        },
+        updated_at: now,
+      })
+      .select("id, delivery_mode, display_name, provider, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, created_at")
+      .single();
+
+    if (!deliveryInsert || deliveryInsert.error || !deliveryInsert.data) {
+      throw new Error(deliveryInsert?.error?.message || "failed_to_create_assigned_inventory_delivery");
+    }
+
+    return { delivery: mapDelivery(deliveryInsert.data), created: false, soldOut: false };
   }
 
   const available = await input.supabase
