@@ -1,6 +1,6 @@
-export const INSTALLER_VERSION = 'v1.3.89'
+export const INSTALLER_VERSION = 'v1.3.137'
 
-const RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Installer/releases/download/${INSTALLER_VERSION}`
+const RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/${INSTALLER_VERSION}`
 
 export const MAC_INSTALLER_URL = `${RELEASE_BASE}/clawlite.dmg`
 export const WIN_INSTALLER_URL = `${RELEASE_BASE}/clawlite-setup.exe`
