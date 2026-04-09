@@ -1,4 +1,4 @@
-export const INSTALLER_VERSION = 'v1.3.137'
+export const INSTALLER_VERSION = 'v1.3.138'
 
 const RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/${INSTALLER_VERSION}`
 
