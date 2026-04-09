@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
 
 export const runtime = "nodejs";
-
-const MAC_DMG_URL =
-  "https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/latest/download/clawlite.dmg";
-const WIN_EXE_URL =
-  "https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/latest/download/clawlite-setup.exe";
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
@@ -13,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   // The redirect URL is what macOS preserves in com.apple.metadata:kMDItemWhereFroms.
   // The email is embedded in the source URL so the installer can read it on first launch.
-  const target = platform === "win" ? WIN_EXE_URL : MAC_DMG_URL;
+  const target = platform === "win" ? WIN_INSTALLER_URL : MAC_INSTALLER_URL;
 
   if (!email) {
     return NextResponse.redirect(target, 302);
