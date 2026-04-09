@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { blogPosts } from '@/data/blog/posts';
+import { skillPageSlugs } from '@/data/skill-pages';
 
 const BASE_URL = 'https://clawlite.ai';
 
@@ -12,6 +13,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: post.date ? new Date(post.date) : now,
     changeFrequency: 'weekly' as const,
     priority: 0.75
+  }));
+
+  const skillEntries: MetadataRoute.Sitemap = skillPageSlugs.map((slug) => ({
+    url: `${BASE_URL}/skills/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.72
   }));
 
   return [
@@ -46,6 +54,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.7
     },
+    ...skillEntries,
     {
       url: `${BASE_URL}/troubleshoot`,
       lastModified: now,

@@ -23,6 +23,11 @@ export default function HomePage() {
   const pageContent = getContentForLang(lang);
   const hero = pageContent.hero;
   const setupSteps = pageContent.setup.steps.slice(0, 4);
+  const calmProofPoints = [
+    "3 minute setup path",
+    "BYOK free or discounted ClawLite tokens",
+    "SOUL Backup for safe rollback",
+  ];
 
   useEffect(() => {
     if (!supabase) return;
@@ -100,19 +105,10 @@ export default function HomePage() {
             <Button size="lg" asChild>
               <Link href={DOWNLOAD_LOGIN_HREF}>{hero.start}</Link>
             </Button>
+            <Button size="lg" variant="secondary" asChild>
+              <Link href="/setup">See Setup Guide</Link>
+            </Button>
           </div>
-
-          <Card className="max-w-xl p-5 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">New to OpenClaw?</p>
-                <p className="mt-1 text-sm text-stone-500">Start with the guided setup page before you download.</p>
-              </div>
-              <Button asChild variant="secondary">
-                <Link href="/setup">See Setup Guide</Link>
-              </Button>
-            </div>
-          </Card>
         </div>
 
         <motion.div
@@ -169,15 +165,15 @@ export default function HomePage() {
         </Card>
       </section>
 
-      {/* Why ClawLite */}
+      {/* Why teams pick ClawLite */}
       <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
         <div className="mb-10 text-center">
           <Badge>Why ClawLite</Badge>
           <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
-            Install fast. Run cheaper. Stay safe.
+            Three things matter: setup speed, token cost, and recovery.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
-            ClawLite gives you one-click setup, lower token costs, and a built-in SOUL Backup safety layer.
+            So the homepage now says that plainly, instead of making you decode it across five different sections.
           </p>
         </div>
 
@@ -186,9 +182,9 @@ export default function HomePage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
               <span className="text-2xl">&#x26A1;</span>
             </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">One-Click Install</h3>
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Install without the yak shave</h3>
             <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Go from zero to a working OpenClaw stack in minutes, without manual setup friction.
+              Get to a working OpenClaw setup in minutes, with a guided path when you want it and fewer manual steps when you do not.
             </p>
           </Card>
 
@@ -196,9 +192,9 @@ export default function HomePage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
               <span className="text-2xl">&#x1F4B0;</span>
             </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Cheaper Token Routing</h3>
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Use your own key, or buy cheaper tokens</h3>
             <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Cut ongoing model spend with optimized routing and predictable usage control.
+              BYOK stays free. ClawLite Tokens keep the fast path simple and cut spend for people who do not want to babysit providers.
             </p>
           </Card>
 
@@ -206,56 +202,37 @@ export default function HomePage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
               <span className="text-2xl">&#x1F6E1;&#xFE0F;</span>
             </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">SOUL Backup</h3>
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Recovery is part of setup</h3>
             <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Versioned backup and restore for your OpenClaw brain, with safer rollback when changes go wrong.
+              SOUL Backup gives you rollback, diff review, and a visible audit trail, so “try it” does not have to mean “hope nothing breaks.”
             </p>
           </Card>
         </div>
-      </section>
 
-      {/* SOUL Backup Feature */}
-      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
-        <Card className="p-5 sm:p-6 md:p-8">
-          <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr] lg:gap-14">
+        <Card className="mt-6 p-5 sm:p-6 md:p-8">
+          <div className="grid gap-8 md:grid-cols-[1.15fr_0.85fr] md:items-start">
             <div>
-              <Badge>SOUL Backup</Badge>
-              <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
-                Never lose your OpenClaw brain.
-              </h2>
-              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
-                Backup, diff, and restore your critical configs from the UI — so recovery is fast, visible, and auditable.
+              <Badge>Done = Verified</Badge>
+              <h3 className="mt-3 font-display text-2xl font-semibold leading-[1.05] text-stone-900 sm:text-3xl">
+                Not just installed. Proven to work.
+              </h3>
+              <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone-500 sm:text-lg">
+                ClawLite is strongest when the boring parts are visible: install complete, keys connected, first query works, and recovery is there if you need it.
               </p>
-
-              <ul className="mt-5 space-y-2 text-sm text-stone-500">
-                <li>&#x2022; One-click backup with integrity validation</li>
-                <li>&#x2022; Diff preview before restore (sensitive fields masked)</li>
-                <li>&#x2022; Failure alerts and audit trail for every action</li>
-              </ul>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild>
-                  <Link href="/login">Enable SOUL Backup</Link>
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link href="/login">View Backup Docs</Link>
-                </Button>
-              </div>
             </div>
 
-            <div className="rounded-xl border border-stone-300/70 bg-white/40 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Recovery Flow</p>
-              <div className="mt-3 space-y-3 text-sm text-stone-600">
-                <div className="rounded-xl bg-white/50 p-3">1. Choose backup version</div>
-                <div className="rounded-xl bg-white/50 p-3">2. Review diff preview</div>
-                <div className="rounded-xl bg-white/50 p-3">3. Confirm restore safely</div>
-                <div className="rounded-xl bg-white/50 p-3">4. Verify + audit log</div>
+            <div className="rounded-2xl border border-stone-300/70 bg-white/50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Verification checklist</p>
+              <div className="mt-3 space-y-2 text-sm text-stone-600">
+                <div className="rounded-xl bg-white/70 px-3 py-2">Install completed</div>
+                <div className="rounded-xl bg-white/70 px-3 py-2">Provider or token path connected</div>
+                <div className="rounded-xl bg-white/70 px-3 py-2">First query successful</div>
+                <div className="rounded-xl bg-white/70 px-3 py-2">Backup and restore path available</div>
               </div>
             </div>
           </div>
         </Card>
       </section>
-
 
       <Script id="chatpilot-config" strategy="beforeInteractive">
         {`window.chatpilotConfig = {
@@ -265,111 +242,6 @@ export default function HomePage() {
         }`}
       </Script>
       <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" />
-
-      {/* Verified Section */}
-      <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
-        <div className="mb-10 text-center">
-          <Badge>Done = Verified</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">
-            Not just installed — proven to work.
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
-            ClawLite is the only OpenClaw installer that verifies every step, backs up your configs, and guarantees 40% cheaper tokens.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="p-5 sm:p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
-              <span className="text-2xl">&#x26A1;</span>
-            </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">5 minutes. Zero DevOps. Verified.</h3>
-            <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              One-click install. Every dependency verified. First query successful.
-            </p>
-            <div className="mt-4 space-y-1 text-xs text-stone-400">
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Installation complete</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Dependencies verified</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>API keys authenticated</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>First query successful</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-5 sm:p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
-              <span className="text-2xl">&#x1F4B0;</span>
-            </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">40% cheaper tokens. Verified savings.</h3>
-            <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Not a promise. A verified 40% savings on every single call.
-            </p>
-            <div className="mt-4 space-y-1 text-xs text-stone-400">
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Token pricing locked in</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>No hidden fees</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Real-time usage dashboard</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Monthly savings report</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-5 sm:p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
-              <span className="text-2xl">&#x1F512;</span>
-            </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Your configs are assets. Verified safe.</h3>
-            <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Automatic backups. Encrypted storage. One-click restore. Zero data loss.
-            </p>
-            <div className="mt-4 space-y-1 text-xs text-stone-400">
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Automatic daily backups</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Encrypted at rest (AES-256)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>One-click restore</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-stone-600">&#x2713;</span>
-                <span>Audit trail</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <div className="mt-10 text-center">
-          <Button size="lg" asChild>
-            <Link href={DOWNLOAD_LOGIN_HREF}>Get Started Free</Link>
-          </Button>
-        </div>
-      </section>
 
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">

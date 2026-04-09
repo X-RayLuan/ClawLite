@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { skillCatalog } from "@/lib/skill-catalog";
+import { skillPages } from "@/data/skill-pages";
 
 const categoryOrder = ["OpenClaw Ops", "SEO / GEO", "Frontend", "Automation", "Memory", "Growth", "Research"];
 
@@ -59,6 +60,11 @@ export default function SkillsPage() {
       <section className="mx-auto max-w-6xl px-6 pb-6">
         <div className="grid gap-4 rounded-3xl border border-black/5 bg-white/70 p-5 shadow-soft md:grid-cols-3 md:p-7">
           <div className="rounded-2xl bg-white/90 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">ClawLite GEO Cluster</p>
+            <p className="mt-2 text-3xl font-semibold text-ink">{skillPages.length}</p>
+            <p className="mt-1 text-sm text-ink/65">Permanent /skills pages written for search, GEO, and real operator reuse.</p>
+          </div>
+          <div className="rounded-2xl bg-white/90 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">Catalog Skills</p>
             <p className="mt-2 text-3xl font-semibold text-ink">{skillCatalog.length}</p>
             <p className="mt-1 text-sm text-ink/65">OpenClaw Ops by us; the rest are recommended to explore.</p>
@@ -72,6 +78,43 @@ export default function SkillsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">ClawLite Angle</p>
             <p className="mt-2 text-lg font-semibold text-ink">Cheaper tokens + safer operations</p>
             <p className="mt-1 text-sm text-ink/65">Tools should compound speed, reliability, and control.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <div className="rounded-3xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-coral">ClawLite published skill pages</p>
+              <h2 className="mt-2 font-display text-2xl font-semibold text-ink md:text-3xl">GEO and content quality cluster</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/70 md:text-base">
+                These are permanent ClawLite skill landing pages with actionable prompts, audit templates, and workflow recipes, not just directory cards.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {skillPages.map((page) => (
+              <Card key={page.slug} className="flex h-full flex-col border-black/10 bg-white/95 p-6 shadow-soft">
+                <div className="flex items-start justify-between gap-3">
+                  <Badge className="border-coral/20 bg-coral/10 text-coral">Published by ClawLite</Badge>
+                </div>
+                <h3 className="mt-4 text-xl font-semibold text-ink">{page.h1}</h3>
+                <p className="mt-3 text-sm leading-6 text-ink/70">{page.metaDescription}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {page.secondaryKeywords.slice(0, 2).map((item) => (
+                    <span key={item} className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-xs text-ink/65">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button asChild>
+                    <Link href={`/skills/${page.slug}`}>Open page</Link>
+                  </Button>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
