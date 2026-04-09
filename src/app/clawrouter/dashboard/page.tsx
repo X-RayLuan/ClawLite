@@ -282,7 +282,7 @@ export default function ClawRouterDashboardPage() {
               onClick={() => setActiveTab("dashboard")}
               className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${activeTab === "dashboard" ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100"}`}
             >
-              Dashboard
+              Chat/Coding
             </button>
             <button
               type="button"
