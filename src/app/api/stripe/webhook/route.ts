@@ -120,6 +120,28 @@ export async function POST(req: Request) {
           break;
         }
 
+        if (kind === "seedance_video_credits") {
+          const orderId = session.metadata?.orderId;
+          if (!orderId) {
+            throw new Error("invalid_seedance_checkout_metadata");
+          }
+
+          const { confirmSeedanceOrder } = await import("@/lib/seedance-resale");
+          await confirmSeedanceOrder(supabase, {
+            orderId,
+            providerEventId: event.id,
+            providerStatus: session.payment_status ?? session.status ?? "completed",
+            settleMetadata: {
+              stripe_session_id: session.id,
+              stripe_payment_status: session.payment_status,
+              stripe_customer_email: session.customer_details?.email ?? null,
+              stripe_status: session.status,
+              settled_at: new Date().toISOString(),
+            },
+          });
+          break;
+        }
+
         if (localSessionId) {
           const settled = await settleCheckoutSessionRecord({
             supabase,
