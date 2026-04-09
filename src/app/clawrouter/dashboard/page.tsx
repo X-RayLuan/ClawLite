@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { mapAssignedInventoryKeys, selectVisibleInventoryKeys } from "@/lib/clawrouter-dashboard";
 import { getSupabaseClient } from "@/lib/supabase";
+import { SeedanceSection, type SeedanceSummary, type SeedanceKey, type SeedanceUsage } from "./SeedanceSection";
 
 const navItems = [
   "Dashboard",
@@ -67,6 +68,17 @@ export default function ClawRouterDashboardPage() {
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [seedanceSummary, setSeedanceSummary] = useState<SeedanceSummary>(null);
+  const [seedanceKeys, setSeedanceKeys] = useState<SeedanceKey[]>([]);
+  const [seedanceUsage, setSeedanceUsage] = useState<SeedanceUsage[]>([]);
+  const [videoTopupState, setVideoTopupState] = useState<string | null>(null);
+  const [videoOrderId, setVideoOrderId] = useState<string | null>(null);
+  const [creatingSeedanceKey, setCreatingSeedanceKey] = useState(false);
+  const [createdSeedanceKey, setCreatedSeedanceKey] = useState<string | null>(null);
+  const [seedanceActionError, setSeedanceActionError] = useState<string | null>(null);
+  const [revokingSeedanceKey, setRevokingSeedanceKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "seedance">("dashboard");
 
   const loadDashboardData = useCallback(async (accessToken: string, options?: { refreshBilling?: boolean }) => {
     const accountUrl = options?.refreshBilling
@@ -93,6 +105,20 @@ export default function ClawRouterDashboardPage() {
           : selectVisibleInventoryKeys(accountPayload.deliveredKeys || [])
       );
     }
+
+    // Seedance data (parallel, non-blocking)
+    const authHeaders = { Authorization: `Bearer ${accessToken}` };
+    const [seedBalRes, seedKeysRes, seedUsageRes] = await Promise.all([
+      fetch("/api/seedance/resale/balance", { headers: authHeaders, cache: "no-store" }).catch(() => null),
+      fetch("/api/seedance/resale/list-keys", { headers: authHeaders, cache: "no-store" }).catch(() => null),
+      fetch("/api/seedance/resale/usage", { headers: authHeaders, cache: "no-store" }).catch(() => null),
+    ]);
+    const seedBal = seedBalRes ? await seedBalRes.json().catch(() => null) : null;
+    if (seedBalRes?.ok && seedBal?.ok) setSeedanceSummary(seedBal.summary);
+    const seedKeys = seedKeysRes ? await seedKeysRes.json().catch(() => null) : null;
+    if (seedKeysRes?.ok && seedKeys?.ok) setSeedanceKeys(seedKeys.keys || []);
+    const seedUsage = seedUsageRes ? await seedUsageRes.json().catch(() => null) : null;
+    if (seedUsageRes?.ok && seedUsage?.ok) setSeedanceUsage(seedUsage.usage || []);
   }, []);
 
   useEffect(() => {
@@ -100,6 +126,8 @@ export default function ClawRouterDashboardPage() {
       const params = new URLSearchParams(window.location.search);
       setTopupState(params.get("topup"));
       setTopupAmount(params.get("amount"));
+      setVideoTopupState(params.get("videoTopup") || null);
+      setVideoOrderId(params.get("orderId") || null);
     }
 
     if (!supabase) {
@@ -123,6 +151,7 @@ export default function ClawRouterDashboardPage() {
 
           const accessToken = data.session.access_token;
           if (accessToken) {
+            setAccessToken(accessToken);
             await loadDashboardData(accessToken, { refreshBilling });
           }
 
@@ -173,6 +202,43 @@ export default function ClawRouterDashboardPage() {
 
   const summaryCards = buildSummaryCards(balanceUsd, deliveredKeys.length);
 
+  async function handleRevokeSeedanceKey(licenseId: string) {
+    if (!accessToken) return;
+    setRevokingSeedanceKey(licenseId);
+    try {
+      await fetch("/api/seedance/resale/revoke-key", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ licenseId }),
+      });
+      await loadDashboardData(accessToken);
+    } finally {
+      setRevokingSeedanceKey(null);
+    }
+  }
+
+  async function handleCreateSeedanceKey() {
+    if (!accessToken || !videoOrderId) return;
+    setCreatingSeedanceKey(true);
+    setSeedanceActionError(null);
+    setCreatedSeedanceKey(null);
+    try {
+      const res = await fetch("/api/seedance/resale/create-key", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: videoOrderId }),
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res.ok || !payload?.license?.plaintextLicense) throw new Error(payload?.error || "failed");
+      setCreatedSeedanceKey(payload.license.plaintextLicense);
+      await loadDashboardData(accessToken);
+    } catch (err: any) {
+      setSeedanceActionError(err?.message || "Failed to create video key");
+    } finally {
+      setCreatingSeedanceKey(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8">
@@ -210,161 +276,196 @@ export default function ClawRouterDashboardPage() {
         </aside>
 
         <section className="space-y-6">
-          {topupState === "success" ? (
-            <Card className="rounded-[24px] border border-emerald-300/60 bg-emerald-50/90 p-5 shadow-none">
-              <p className="text-sm font-semibold text-emerald-900">Credits added successfully</p>
-              <p className="mt-2 text-sm text-emerald-800">
-                Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn’t updated yet, refresh once after the webhook settles.
-              </p>
-            </Card>
-          ) : null}
-
-          <div className="flex flex-col gap-4 rounded-[32px] border border-stone-300/60 bg-white/88 p-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <Badge className="border-stone-300 bg-[rgba(248,244,237,0.9)] text-stone-700">Dashboard</Badge>
-              <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-stone-950">
-                ClawRouter account workspace
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 sm:text-base">
-                This is the logged-in surface after “Get ClawRouter Access”: add credits, manage API keys, inspect available models, and track spend and usage in one place.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
-              <Button variant="secondary" asChild className="border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
-                <Link href="/clawrouter">Back to sales page</Link>
-              </Button>
-            </div>
+          <div className="flex flex-wrap gap-2 rounded-[24px] border border-stone-300/60 bg-white/88 p-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("dashboard")}
+              className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${activeTab === "dashboard" ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100"}`}
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("seedance")}
+              className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${activeTab === "seedance" ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100"}`}
+            >
+              Seedance2 / Video
+            </button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {summaryCards.map((card) => (
-              <Card key={card.label} className="rounded-[24px] border border-stone-300/60 bg-white/90 p-5 shadow-none">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{card.label}</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-stone-950">{card.value}</h2>
-                <p className="mt-2 text-sm leading-6 text-stone-600">{card.note}</p>
-              </Card>
-            ))}
-          </div>
+          {activeTab === "dashboard" ? (
+            <>
+              {topupState === "success" ? (
+                <Card className="rounded-[24px] border border-emerald-300/60 bg-emerald-50/90 p-5 shadow-none">
+                  <p className="text-sm font-semibold text-emerald-900">Credits added successfully</p>
+                  <p className="mt-2 text-sm text-emerald-800">
+                    Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn’t updated yet, refresh once after the webhook settles.
+                  </p>
+                </Card>
+              ) : null}
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <ChartShell title="Usage by Model" subtitle="Breakdown appears here once requests start flowing through ClawRouter." />
-            <ChartShell title="Usage by Provider" subtitle="Provider mix, spend share, and routing distribution will render here." />
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-4 rounded-[32px] border border-stone-300/60 bg-white/88 p-6 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">API Keys</p>
-                  <h2 className="mt-2 text-xl font-semibold text-stone-950">Assigned inventory access keys</h2>
+                  <Badge className="border-stone-300 bg-[rgba(248,244,237,0.9)] text-stone-700">Dashboard</Badge>
+                  <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-stone-950">
+                    ClawRouter account workspace
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 sm:text-base">
+                    This is the logged-in surface after “Get ClawRouter Access”: add credits, manage API keys, inspect available models, and track spend and usage in one place.
+                  </p>
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Auto-delivered after purchase</span>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild className="bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
+                  <Button variant="secondary" asChild className="border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
+                    <Link href="/clawrouter">Back to sales page</Link>
+                  </Button>
+                </div>
               </div>
-              <div className="mt-5 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                {deliveredKeys.length ? (
-                  <div className="space-y-3">
-                    {deliveredKeys.map((key) => (
-                      <div key={key.id} className="rounded-2xl bg-white/75 px-4 py-3">
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {summaryCards.map((card) => (
+                  <Card key={card.label} className="rounded-[24px] border border-stone-300/60 bg-white/90 p-5 shadow-none">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{card.label}</p>
+                    <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-stone-950">{card.value}</h2>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">{card.note}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ChartShell title="Usage by Model" subtitle="Breakdown appears here once requests start flowing through ClawRouter." />
+                <ChartShell title="Usage by Provider" subtitle="Provider mix, spend share, and routing distribution will render here." />
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+                <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">API Keys</p>
+                      <h2 className="mt-2 text-xl font-semibold text-stone-950">Assigned inventory access keys</h2>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Auto-delivered after purchase</span>
+                  </div>
+                  <div className="mt-5 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
+                    {deliveredKeys.length ? (
+                      <div className="space-y-3">
+                        {deliveredKeys.map((key) => (
+                          <div key={key.id} className="rounded-2xl bg-white/75 px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-medium text-stone-950">{key.displayName}</p>
+                                <p className="text-xs text-stone-500">
+                                  {key.deliveryMode === "inventory_key" ? "Inventory delivery" : "Managed key"} · {key.provider}
+                                </p>
+                              </div>
+                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-3">
+                              <p className="min-w-0 flex-1 truncate rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs text-stone-700">
+                                {key.keyPrefix || "key"}••••••••••••••••
+                              </p>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
+                                onClick={() => handleCopyKey(key.id, key.plaintextKey)}
+                              >
+                                {copiedKeyId === key.id ? "Copied" : "Copy"}
+                              </Button>
+                            </div>
+                            {key.faceValueUsd != null || key.salePriceUsd != null ? (
+                              <p className="mt-2 text-xs text-stone-500">
+                                {key.faceValueUsd != null ? `Face value $${key.faceValueUsd.toFixed(2)}` : ""}
+                                {key.salePriceUsd != null ? ` · Sold at $${key.salePriceUsd.toFixed(2)}` : ""}
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-stone-950">No delivered key yet</p>
+                        <p className="mt-2 text-sm leading-6 text-stone-600">
+                          After a successful $5 access purchase, your assigned upstream key will appear here automatically.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Models</p>
+                  <h2 className="mt-2 text-xl font-semibold text-stone-950">Available lanes</h2>
+                  <div className="mt-4 space-y-3">
+                    {modelRows.map((row) => (
+                      <div key={row.model} className="rounded-[20px] border border-stone-200 bg-[rgba(248,244,237,0.7)] px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-stone-950">{key.displayName}</p>
-                            <p className="text-xs text-stone-500">
-                              {key.deliveryMode === "inventory_key" ? "Inventory delivery" : "Managed key"} · {key.provider}
-                            </p>
+                            <p className="text-sm font-medium text-stone-950">{row.model}</p>
+                            <p className="text-xs text-stone-500">{row.provider}</p>
                           </div>
-                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-3">
-                          <p className="min-w-0 flex-1 truncate rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs text-stone-700">
-                            {key.keyPrefix || "key"}••••••••••••••••
-                          </p>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
-                            onClick={() => handleCopyKey(key.id, key.plaintextKey)}
-                          >
-                            {copiedKeyId === key.id ? "Copied" : "Copy"}
-                          </Button>
-                        </div>
-                        {key.faceValueUsd != null || key.salePriceUsd != null ? (
-                          <p className="mt-2 text-xs text-stone-500">
-                            {key.faceValueUsd != null ? `Face value $${key.faceValueUsd.toFixed(2)}` : ""}
-                            {key.salePriceUsd != null ? ` · Sold at $${key.salePriceUsd.toFixed(2)}` : ""}
-                          </p>
-                        ) : null}
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-stone-950">No delivered key yet</p>
-                    <p className="mt-2 text-sm leading-6 text-stone-600">
-                      After a successful $5 access purchase, your assigned upstream key will appear here automatically.
-                    </p>
-                  </>
-                )}
+                </Card>
               </div>
-            </Card>
 
-            <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Models</p>
-              <h2 className="mt-2 text-xl font-semibold text-stone-950">Available lanes</h2>
-              <div className="mt-4 space-y-3">
-                {modelRows.map((row) => (
-                  <div key={row.model} className="rounded-[20px] border border-stone-200 bg-[rgba(248,244,237,0.7)] px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-stone-950">{row.model}</p>
-                        <p className="text-xs text-stone-500">{row.provider}</p>
+              <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+                <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Top-up History</p>
+                  <div className="mt-5 space-y-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
+                    {topups.length ? topups.map((row) => (
+                      <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3 text-sm text-stone-800">
+                        <div>
+                          <p className="font-medium text-stone-950">${Number(row.amount_usd || 0).toFixed(2)} top-up</p>
+                          <p className="text-xs text-stone-500">{new Date(row.created_at).toLocaleString()}</p>
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
-                    </div>
+                    )) : (
+                      <p className="text-sm text-stone-600">No completed top-ups yet.</p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+                </Card>
 
-          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-            <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Top-up History</p>
-              <div className="mt-5 space-y-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                {topups.length ? topups.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3 text-sm text-stone-800">
-                    <div>
-                      <p className="font-medium text-stone-950">${Number(row.amount_usd || 0).toFixed(2)} top-up</p>
-                      <p className="text-xs text-stone-500">{new Date(row.created_at).toLocaleString()}</p>
+                <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Recent requests</p>
+                  <div className="mt-4 overflow-hidden rounded-[22px] border border-stone-200">
+                    <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+                      <span>Time</span>
+                      <span>Model</span>
+                      <span>Provider</span>
+                      <span>Cost</span>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
+                    {requestRows.map((row, index) => (
+                      <div key={index} className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-3 text-sm text-stone-700">
+                        <span>{row.time}</span>
+                        <span>{row.model}</span>
+                        <span>{row.provider}</span>
+                        <span>{row.cost}</span>
+                      </div>
+                    ))}
                   </div>
-                )) : (
-                  <p className="text-sm text-stone-600">No completed top-ups yet.</p>
-                )}
+                </Card>
               </div>
-            </Card>
-
-            <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Recent requests</p>
-              <div className="mt-4 overflow-hidden rounded-[22px] border border-stone-200">
-                <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
-                  <span>Time</span>
-                  <span>Model</span>
-                  <span>Provider</span>
-                  <span>Cost</span>
-                </div>
-                {requestRows.map((row, index) => (
-                  <div key={index} className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-3 text-sm text-stone-700">
-                    <span>{row.time}</span>
-                    <span>{row.model}</span>
-                    <span>{row.provider}</span>
-                    <span>{row.cost}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+            </>
+          ) : (
+            <SeedanceSection
+              seedanceSummary={seedanceSummary}
+              seedanceKeys={seedanceKeys}
+              seedanceUsage={seedanceUsage}
+              videoTopupState={videoTopupState}
+              videoOrderId={videoOrderId}
+              creatingSeedanceKey={creatingSeedanceKey}
+              createdSeedanceKey={createdSeedanceKey}
+              seedanceActionError={seedanceActionError}
+              revokingSeedanceKey={revokingSeedanceKey}
+              onCreateKey={handleCreateSeedanceKey}
+              onRevokeKey={handleRevokeSeedanceKey}
+            />
+          )}
         </section>
       </div>
     </main>
