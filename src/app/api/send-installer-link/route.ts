@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getInstallerUrl } from '@/lib/installer-links'
 
 function getReleaseLink(os: string) {
-  if (os === 'windows') {
-    return 'https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe'
-  }
-  return 'https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite.dmg'
+  return getInstallerUrl(os)
 }
 
 export async function POST(request: NextRequest) {

@@ -3,16 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { getSupabaseClient } from "@/lib/supabase";
+import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
 import {
   getCouponExperience,
   getPartnerCouponConfig,
   normalizePartnerSlug,
   PARTNER_REFERRAL_COOKIE,
 } from "@/lib/partner-referral";
-
-const MAC_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite.dmg";
-const WIN_LINK = "https://github.com/X-RayLuan/ClawLite-Installer/releases/latest/download/clawlite-setup.exe";
+import { getSupabaseClient } from "@/lib/supabase";
 
 function getDownloadLink(base: string, platform: "mac" | "win", email: string) {
   if (!email) return base;
@@ -142,7 +140,7 @@ export default function DownloadsPage() {
     if (email) {
       navigator.clipboard.writeText(email).catch(() => {});
     }
-    const base = platform === "mac" ? MAC_LINK : WIN_LINK;
+    const base = platform === "mac" ? MAC_INSTALLER_URL : WIN_INSTALLER_URL;
     window.open(getDownloadLink(base, platform, email), "_blank");
   }
 
