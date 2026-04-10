@@ -8,12 +8,12 @@ import {
   getInstallerUrl
 } from '../src/lib/installer-links.ts'
 
-test('installer links keep macOS on the previous line and move Windows to v1.3.141', () => {
-  assert.equal(INSTALLER_VERSION.windows, 'v1.3.141')
+test('installer links keep macOS on the previous line and move Windows to v1.3.142', () => {
+  assert.equal(INSTALLER_VERSION.windows, 'v1.3.142')
   assert.equal(INSTALLER_VERSION.macos, 'v1.3.137')
   assert.equal(
     WIN_INSTALLER_URL,
-    'https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/v1.3.141/clawlite-setup.exe'
+    'https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/v1.3.142/clawlite-setup.exe'
   )
   assert.equal(
     MAC_INSTALLER_URL,
@@ -24,7 +24,7 @@ test('installer links keep macOS on the previous line and move Windows to v1.3.1
 test('getInstallerUrl returns the pinned windows and macOS artifacts', () => {
   assert.equal(
     getInstallerUrl('windows'),
-    'https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/v1.3.141/clawlite-setup.exe'
+    'https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/v1.3.142/clawlite-setup.exe'
   )
   assert.equal(
     getInstallerUrl('macos'),
