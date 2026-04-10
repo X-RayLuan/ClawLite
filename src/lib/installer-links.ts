@@ -1,5 +1,5 @@
 export const INSTALLER_VERSION = {
-  macos: 'v1.3.137',
+  macos: 'v1.3.147',
   windows: 'v1.3.147'
 } as const
 
