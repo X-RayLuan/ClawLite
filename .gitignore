@@ -21,3 +21,4 @@ lazyclaw-*.json
 # Build outputs
 dist/
 out/
+.env*.local

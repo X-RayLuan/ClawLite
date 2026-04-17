@@ -6,6 +6,7 @@ import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
 import { assignInventoryKeyToAccount, ensureManagedKeyDelivery } from "@/lib/clawrouter-delivery";
+import { addRechargeBalance } from "@/lib/recharge";
 
 export const runtime = "nodejs";
 
@@ -94,6 +95,7 @@ export async function POST(req: Request) {
             throw new Error("invalid_topup_metadata");
           }
 
+          // 记录 topup_transactions（旧系统兼容）
           await settleTopupCheckoutSession({
             supabase,
             accountId,
@@ -109,6 +111,12 @@ export async function POST(req: Request) {
             },
           });
 
+          // 新余额系统：插入 recharge_orders + balance_transactions
+          await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
+            promoCode: promoCode ?? undefined,
+          });
+
+          // 保留原有 managed key 发放逻辑
           const keyResult = await ensureClawRouterApiKey(supabase, accountId);
           if (keyResult.key.plaintextSecret) {
             await ensureManagedKeyDelivery({

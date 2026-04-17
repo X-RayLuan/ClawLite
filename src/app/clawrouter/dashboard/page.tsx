@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,14 @@ import { mapAssignedInventoryKeys, selectVisibleInventoryKeys } from "@/lib/claw
 import { getSupabaseClient } from "@/lib/supabase";
 
 const navItems = [
-  "Dashboard",
-  "API Keys",
-  "Quick Start",
-  "Models",
-  "Usage",
-  "Top-up History",
-  "Affiliate",
-  "Profile",
+  { label: "Dashboard", href: "/clawrouter/dashboard" },
+  { label: "API Keys", href: null },
+  { label: "Quick Start", href: null },
+  { label: "Models", href: null },
+  { label: "Usage", href: "/dashboard/usage" },
+  { label: "Top-up History", href: null },
+  { label: "Affiliate", href: null },
+  { label: "Profile", href: null },
 ];
 
 function buildSummaryCards(balanceUsd: number, deliveredKeyCount: number) {
@@ -84,7 +85,6 @@ export default function ClawRouterDashboardPage() {
     const accountPayload = await accountResponse.json().catch(() => null);
 
     if (accountResponse.ok && accountPayload?.ok) {
-      setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
       setTopups(accountPayload.topups || []);
       const currentAssignedInventory = mapAssignedInventoryKeys(accountPayload.assignedInventoryKeys || []);
       setDeliveredKeys(
@@ -92,6 +92,29 @@ export default function ClawRouterDashboardPage() {
           ? currentAssignedInventory
           : selectVisibleInventoryKeys(accountPayload.deliveredKeys || [])
       );
+    }
+
+    // Fetch balance from new usage summary API
+    try {
+      const summaryRes = await fetch("/api/usage/summary", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      });
+      if (summaryRes.ok) {
+        const summaryData: { balance?: { balanceUsd: number; availableBalanceUsd: number } } = await summaryRes.json().catch(() => null);
+        if (summaryData?.balance) {
+          // Use availableBalanceUsd (spendable balance) as the primary balance display
+          setBalanceUsd(Number(summaryData.balance.availableBalanceUsd ?? summaryData.balance.balanceUsd ?? 0));
+        }
+      }
+    } catch {
+      // Fall back to account balance if usage summary fails
+      if (accountResponse.ok && accountPayload?.ok) {
+        setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
+      }
     }
   }, []);
 
@@ -188,14 +211,28 @@ export default function ClawRouterDashboardPage() {
           </div>
 
           <nav className="mt-5 space-y-1.5">
-            {navItems.map((item, index) => (
-              <div
-                key={item}
-                className={`rounded-2xl px-4 py-3 text-sm ${index === 0 ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
-              >
-                {item}
-              </div>
-            ))}
+            {navItems.map((item, index) => {
+              const isActive = index === 0;
+              if (item.href) {
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`block rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <div
+                  key={item.label}
+                  className={`rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                >
+                  {item.label}
+                </div>
+              );
+            })}
           </nav>
 
           <div className="mt-6 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.7)] p-4">

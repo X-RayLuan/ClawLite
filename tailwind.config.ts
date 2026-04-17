@@ -20,7 +20,9 @@ const config: Config = {
           950: "#0c0a09"
         },
         ink: "#1c1917",
-        accent: "#ea580c"
+        accent: "#ea580c",
+        coral: "#e8604c",
+        sea: "#0f766e"
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "Times New Roman", "serif"],
