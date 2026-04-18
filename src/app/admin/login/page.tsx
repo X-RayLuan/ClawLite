@@ -127,7 +127,7 @@ export default function AdminLoginPage() {
       if (!res.ok) throw new Error(json.error || (lang === 'zh' ? '登录失败' : 'Login failed'));
       if (json.token) {
         setAdminToken(json.token);
-        router.push('/admin/ezrouter-keys');
+        router.push('/admin/customers');
       } else {
         throw new Error('登录响应缺少 token');
       }

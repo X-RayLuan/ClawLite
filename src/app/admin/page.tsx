@@ -7,7 +7,7 @@ export default function AdminHomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/admin/ezrouter-keys');
+    router.replace('/admin/customers');
   }, [router]);
 
   return (
