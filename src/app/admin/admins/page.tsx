@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { AdminNav } from '@/components/admin-nav';
+import { useLang } from '@/components/lang-provider';
+import { adminFetch } from '@/lib/admin-auth';
 
 export interface AdminUser {
   id: string;
@@ -44,9 +48,8 @@ function AddAdminModal({ open, onClose, onAdded }: {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch('/api/admin/admins', {
+      const res = await adminFetch('/api/admin/admins', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
@@ -98,6 +101,8 @@ function AddAdminModal({ open, onClose, onAdded }: {
 }
 
 export default function AdminsPage() {
+  const { isAuthenticated, checking } = useAdminAuth();
+  const { lang } = useLang();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -117,7 +122,11 @@ export default function AdminsPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
+  useEffect(() => {
+    if (checking) return;
+    if (!isAuthenticated) return;
+    fetchAdmins();
+  }, [checking, isAuthenticated, fetchAdmins]);
 
   const handleDelete = async (admin: AdminUser) => {
     if (!confirm(`确定移除管理员 ${admin.email}？`)) return;
@@ -132,8 +141,19 @@ export default function AdminsPage() {
     finally { setDeletingId(null); }
   };
 
+  if (checking) {
+    return (
+      <main className="gradient-bg min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-300 border-t-stone-900" />
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
   return (
     <main className="gradient-bg min-h-screen">
+      <AdminNav />
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-16">
         <Badge className="border-coral/20 bg-coral/10 text-coral">管理后台</Badge>
         <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">管理员管理</h1>
@@ -145,12 +165,12 @@ export default function AdminsPage() {
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>管理员列表</CardTitle>
+            <CardTitle>{lang === 'zh' ? '管理员列表' : 'Admin List'}</CardTitle>
             <Button size="sm" onClick={() => setShowAddModal(true)}>
               <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              添加管理员
+              {lang === 'zh' ? '添加管理员' : 'Add Admin'}
             </Button>
           </CardHeader>
           <CardContent>
@@ -158,12 +178,12 @@ export default function AdminsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-stone-200">
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">邮箱</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">角色</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">状态</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">创建时间</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">最后登录</th>
-                    <th className="py-3 text-left font-semibold text-stone-600">操作</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '邮箱' : 'Email'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '角色' : 'Role'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '状态' : 'Status'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '创建时间' : 'Created'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '最后登录' : 'Last Login'}</th>
+                    <th className="py-3 text-left font-semibold text-stone-600">{lang === 'zh' ? '操作' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -179,7 +199,7 @@ export default function AdminsPage() {
                     ))
                   ) : admins.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-stone-400">暂无管理员</td>
+                      <td colSpan={6} className="py-12 text-center text-stone-400">{lang === 'zh' ? '暂无管理员' : 'No admins'}</td>
                     </tr>
                   ) : (
                     admins.map((admin) => (
@@ -191,7 +211,7 @@ export default function AdminsPage() {
                               ? 'border-coral/30 bg-coral/10 text-coral'
                               : 'border-sea/30 bg-sea/10 text-sea'
                           }`}>
-                            {admin.role === 'super_admin' ? '超级管理员' : '管理员'}
+                            {admin.role === 'super_admin' ? (lang === 'zh' ? '超级管理员' : 'Super Admin') : (lang === 'zh' ? '管理员' : 'Admin')}
                           </span>
                         </td>
                         <td className="py-3 pr-4">
@@ -200,7 +220,7 @@ export default function AdminsPage() {
                               ? 'border-sea/30 bg-sea/10 text-sea'
                               : 'border-stone-300/70 bg-stone-100 text-stone-500'
                           }`}>
-                            {admin.is_active ? '● 有效' : '○ 已禁用'}
+                            {admin.is_active ? (lang === 'zh' ? '● 有效' : '● Active') : (lang === 'zh' ? '○ 已禁用' : '○ Disabled')}
                           </span>
                         </td>
                         <td className="py-3 pr-4 text-stone-500">{formatDate(admin.created_at)}</td>
@@ -214,7 +234,7 @@ export default function AdminsPage() {
                               disabled={deletingId === admin.id}
                               className="h-7 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
-                              {deletingId === admin.id ? '删除中…' : '移除'}
+                              {deletingId === admin.id ? (lang === 'zh' ? '删除中…' : 'Removing...') : (lang === 'zh' ? '移除' : 'Remove')}
                             </Button>
                           )}
                         </td>

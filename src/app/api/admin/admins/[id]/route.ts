@@ -10,7 +10,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const currentAdmin = requireSuperAdmin(request);
+    const authResult = requireSuperAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
+    const currentAdmin = authResult;
     const { id } = params;
 
     if (!id) {

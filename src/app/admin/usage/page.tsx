@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { AdminNav } from '@/components/admin-nav';
+import { useLang } from '@/components/lang-provider';
 
 export interface UsageOverview {
   total_requests: number;
@@ -61,6 +63,7 @@ function StatCard({ label, value, subValue, loading, accent = 'default' }: {
 
 export default function AdminUsagePage() {
   const { isAuthenticated, checking } = useAdminAuth();
+  const { lang } = useLang();
 
   const [overview, setOverview] = useState<UsageOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -102,11 +105,16 @@ export default function AdminUsagePage() {
 
   return (
     <main className="gradient-bg min-h-screen">
+      <AdminNav />
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-16">
-        <Badge className="border-coral/20 bg-coral/10 text-coral">管理后台</Badge>
-        <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">消费统计</h1>
+        <Badge className="border-coral/20 bg-coral/10 text-coral">{lang === 'zh' ? '管理后台' : 'Admin'}</Badge>
+        <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">
+          {lang === 'zh' ? '消费统计' : 'Usage Statistics'}
+        </h1>
         <p className="mt-2 max-w-2xl text-sm text-stone-500 sm:text-base">
-          全局消费概览，按客户分布分析。
+          {lang === 'zh'
+            ? '全局消费概览，按客户分布分析。'
+            : 'Global usage overview and customer distribution.'}
         </p>
       </section>
 
@@ -114,23 +122,23 @@ export default function AdminUsagePage() {
         {/* Overview Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            label="总请求数"
+            label={lang === 'zh' ? '总请求数' : 'Total Requests'}
             value={loadingOverview ? '—' : formatNumber(overview?.total_requests ?? 0)}
-            subValue="全部时间累计"
+            subValue={lang === 'zh' ? '全部时间累计' : 'All time'}
             loading={loadingOverview}
             accent="coral"
           />
           <StatCard
-            label="总 Token 消耗"
+            label={lang === 'zh' ? '总 Token 消耗' : 'Total Token'}
             value={loadingOverview ? '—' : formatNumber(totalTokens)}
-            subValue={`In ${formatNumber(overview?.total_tokens_in ?? 0)} / Out ${formatNumber(overview?.total_tokens_out ?? 0)}`}
+            subValue={`${lang === 'zh' ? '输入' : 'In'} ${formatNumber(overview?.total_tokens_in ?? 0)} / ${lang === 'zh' ? '输出' : 'Out'} ${formatNumber(overview?.total_tokens_out ?? 0)}`}
             loading={loadingOverview}
             accent="sea"
           />
           <StatCard
-            label="总费用"
+            label={lang === 'zh' ? '总费用' : 'Total Cost'}
             value={loadingOverview ? '—' : formatCurrency(overview?.total_cost ?? 0)}
-            subValue="全部时间累计"
+            subValue={lang === 'zh' ? '全部时间累计' : 'All time'}
             loading={loadingOverview}
             accent="default"
           />
@@ -139,17 +147,17 @@ export default function AdminUsagePage() {
         {/* Date Range + Refresh */}
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>日期筛选</CardTitle>
+            <CardTitle>{lang === 'zh' ? '日期筛选' : 'Date Filter'}</CardTitle>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-stone-400">从</span>
+                <span className="text-xs text-stone-400">{lang === 'zh' ? '从' : 'From'}</span>
                 <Input
                   type="date"
                   value={dateRange.start}
                   onChange={e => setDateRange(r => ({ ...r, start: e.target.value }))}
                   className="w-36"
                 />
-                <span className="text-xs text-stone-400">至</span>
+                <span className="text-xs text-stone-400">{lang === 'zh' ? '至' : 'To'}</span>
                 <Input
                   type="date"
                   value={dateRange.end}
@@ -161,7 +169,7 @@ export default function AdminUsagePage() {
                 <svg className="mr-1.5 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                刷新
+                {lang === 'zh' ? '刷新' : 'Refresh'}
               </Button>
             </div>
           </CardHeader>
@@ -170,17 +178,17 @@ export default function AdminUsagePage() {
         {/* Top Accounts Table */}
         <Card>
           <CardHeader>
-            <CardTitle>按客户费用排名（TOP 10）</CardTitle>
+            <CardTitle>{lang === 'zh' ? '按客户费用排名（TOP 10）' : 'Top 10 Accounts by Cost'}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-stone-200">
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">排名</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">客户邮箱</th>
-                    <th className="py-3 text-right font-semibold text-stone-600">累计费用 (USD)</th>
-                    <th className="py-3 text-right font-semibold text-stone-600">费用占比</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '排名' : 'Rank'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '客户邮箱' : 'Customer Email'}</th>
+                    <th className="py-3 text-right font-semibold text-stone-600">{lang === 'zh' ? '累计费用 (USD)' : 'Total Cost (USD)'}</th>
+                    <th className="py-3 text-right font-semibold text-stone-600">{lang === 'zh' ? '费用占比' : 'Cost Share'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,7 +204,7 @@ export default function AdminUsagePage() {
                     ))
                   ) : !overview?.top_accounts?.length ? (
                     <tr>
-                      <td colSpan={4} className="py-12 text-center text-stone-400">暂无消费数据</td>
+                      <td colSpan={4} className="py-12 text-center text-stone-400">{lang === 'zh' ? '暂无消费数据' : 'No usage data'}</td>
                     </tr>
                   ) : (
                     overview.top_accounts.map((acc, i) => {
@@ -232,7 +240,7 @@ export default function AdminUsagePage() {
             {/* Pagination */}
             {!loadingOverview && (overview?.total_requests ?? 0) > 0 && (
               <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-4">
-                <p className="text-xs text-stone-400">共 {overview?.top_accounts?.length || 0} 位客户</p>
+                <p className="text-xs text-stone-400">{lang === 'zh' ? '共' : 'Total'} {overview?.top_accounts?.length || 0} {lang === 'zh' ? '位客户' : 'customers'}</p>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="h-8 w-8 p-0">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 // GET /api/admin/admins — list all admins (super_admin or admin)
 export async function GET(request: NextRequest) {
   try {
-    requireAdminAuth(request);
+    const authResult = requireAdminAuth(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
 
     const { data, error } = await supabase
@@ -28,7 +29,9 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/admins — add new admin (super_admin only)
 export async function POST(request: NextRequest) {
   try {
-    const currentAdmin = requireSuperAdmin(request);
+    const adminResult = requireSuperAdmin(request);
+    if (adminResult instanceof NextResponse) return adminResult;
+    const currentAdmin = adminResult;
     const { email, name } = await request.json();
 
     if (!email || typeof email !== "string") {

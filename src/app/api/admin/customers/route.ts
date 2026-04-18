@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 // 返回：id, email, balance, created_at, last_active
 export async function GET(request: NextRequest) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
     const { searchParams } = request.nextUrl;
 

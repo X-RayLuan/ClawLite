@@ -7,7 +7,8 @@ export const runtime = "nodejs";
 // GET /api/admin/recharge-orders - 充值订单列表（分页、状态筛选）
 export async function GET(request: NextRequest) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
     const { searchParams } = request.nextUrl;
 

@@ -9,7 +9,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 // GET /api/admin/ezrouter-keys/:id - 获取单个 Key
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     const supabase = getSupabaseAdminClient();
     const { data, error } = await supabase
@@ -30,7 +31,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 // PATCH /api/admin/ezrouter-keys/:id - 更新 Key（状态、配置）
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     const body = await request.json();
     const supabase = getSupabaseAdminClient();
@@ -60,7 +62,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 // DELETE /api/admin/ezrouter-keys/:id - 从池中移除 Key
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     const supabase = getSupabaseAdminClient();
     const { error } = await supabase

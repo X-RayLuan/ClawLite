@@ -11,7 +11,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 // 生成 balance_transactions 记录
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     const supabase = getSupabaseAdminClient();
     const body = await request.json();

@@ -10,7 +10,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 // 返回：基本信息 + 余额 + 消费统计
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     const supabase = getSupabaseAdminClient();
 

@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { AdminNav } from '@/components/admin-nav';
+import { useLang } from '@/components/lang-provider';
+import { adminFetch } from '@/lib/admin-auth';
 
 export interface EzrouterKey {
   id: string;
@@ -62,6 +65,7 @@ interface KeyFormData {
 
 export default function EzrouterKeysPage() {
   const { isAuthenticated, checking } = useAdminAuth();
+  const { lang } = useLang();
 
   const [keys, setKeys] = useState<EzrouterKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,9 +124,8 @@ export default function EzrouterKeysPage() {
     try {
       const url = editingKey ? `/api/admin/ezrouter-keys/${editingKey.id}` : '/api/admin/ezrouter-keys';
       const method = editingKey ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
       const json = await res.json();
@@ -136,9 +139,9 @@ export default function EzrouterKeysPage() {
   };
 
   const handleDelete = async (key: EzrouterKey) => {
-    if (!confirm(`确定删除 Key「${key.name}」？`)) return;
+    if (!confirm(lang === 'zh' ? `确定删除 Key「${key.name}」？` : `Confirm delete key "${key.name}"?`)) return;
     try {
-      const res = await fetch(`/api/admin/ezrouter-keys/${key.id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/admin/ezrouter-keys/${key.id}`, { method: 'DELETE' });
       if (res.ok) await fetchKeys();
     } catch { /* silently fail */ }
   };
@@ -146,9 +149,8 @@ export default function EzrouterKeysPage() {
   const handleToggleStatus = async (key: EzrouterKey) => {
     const newStatus = key.status === 'active' ? 'inactive' : 'active';
     try {
-      const res = await fetch(`/api/admin/ezrouter-keys/${key.id}`, {
+      const res = await adminFetch(`/api/admin/ezrouter-keys/${key.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) await fetchKeys();
@@ -156,7 +158,9 @@ export default function EzrouterKeysPage() {
   };
 
   const isEditing = editingKey !== null;
-  const modalTitle = isEditing ? '编辑 Key' : '添加 Key';
+  const modalTitle = isEditing
+    ? (lang === 'zh' ? '编辑 Key' : 'Edit Key')
+    : (lang === 'zh' ? '添加 Key' : 'Add Key');
 
   if (checking) {
     return (
@@ -170,23 +174,28 @@ export default function EzrouterKeysPage() {
 
   return (
     <main className="gradient-bg min-h-screen">
+      <AdminNav />
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-16">
-        <Badge className="border-coral/20 bg-coral/10 text-coral">管理后台</Badge>
-        <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">EZRouter Key 池</h1>
+        <Badge className="border-coral/20 bg-coral/10 text-coral">{lang === 'zh' ? '管理后台' : 'Admin'}</Badge>
+        <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">
+          {lang === 'zh' ? 'EZRouter Key 池' : 'EZRouter Key Pool'}
+        </h1>
         <p className="mt-2 max-w-2xl text-sm text-stone-500 sm:text-base">
-          管理 EZRouter 的 Key 池，支持添加、编辑、删除和状态切换。
+          {lang === 'zh'
+            ? '管理 EZRouter 的 Key 池，支持添加、编辑、删除和状态切换。'
+            : 'Manage EZRouter keys. Supports add, edit, delete and status toggle.'}
         </p>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Key 列表</CardTitle>
+            <CardTitle>{lang === 'zh' ? 'Key 列表' : 'Key List'}</CardTitle>
             <Button size="sm" onClick={openAdd}>
               <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              添加 Key
+              {lang === 'zh' ? '添加 Key' : 'Add Key'}
             </Button>
           </CardHeader>
           <CardContent>
@@ -194,13 +203,13 @@ export default function EzrouterKeysPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-stone-200">
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">名称</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">Key 前缀</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">状态</th>
-                    <th className="py-3 pr-4 text-right font-semibold text-stone-600">使用次数</th>
-                    <th className="py-3 pr-4 text-right font-semibold text-stone-600">余额</th>
-                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">创建时间</th>
-                    <th className="py-3 text-left font-semibold text-stone-600">操作</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '名称' : 'Name'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? 'Key 前缀' : 'Key Prefix'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '状态' : 'Status'}</th>
+                    <th className="py-3 pr-4 text-right font-semibold text-stone-600">{lang === 'zh' ? '使用次数' : 'Use Count'}</th>
+                    <th className="py-3 pr-4 text-right font-semibold text-stone-600">{lang === 'zh' ? '余额' : 'Balance'}</th>
+                    <th className="py-3 pr-4 text-left font-semibold text-stone-600">{lang === 'zh' ? '创建时间' : 'Created'}</th>
+                    <th className="py-3 text-left font-semibold text-stone-600">{lang === 'zh' ? '操作' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,7 +225,7 @@ export default function EzrouterKeysPage() {
                     ))
                   ) : keys.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-stone-400">暂无 Key</td>
+                      <td colSpan={7} className="py-12 text-center text-stone-400">{lang === 'zh' ? '暂无 Key' : 'No keys yet'}</td>
                     </tr>
                   ) : (
                     keys.map((key) => (
@@ -233,7 +242,7 @@ export default function EzrouterKeysPage() {
                                 : 'border-stone-300/70 bg-stone-100 text-stone-500 cursor-pointer'
                             )}
                           >
-                            {key.status === 'active' ? '● Active' : '○ Inactive'}
+                            {key.status === 'active' ? (lang === 'zh' ? '● 正常' : '● Active') : (lang === 'zh' ? '○ 停用' : '○ Inactive')}
                           </button>
                         </td>
                         <td className="py-3 pr-4 text-right text-stone-600">{key.use_count ?? 0}</td>
@@ -244,10 +253,10 @@ export default function EzrouterKeysPage() {
                         <td className="py-3">
                           <div className="flex items-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => openEdit(key)} className="h-7 px-2 text-xs">
-                              编辑
+                              {lang === 'zh' ? '编辑' : 'Edit'}
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => handleDelete(key)} className="h-7 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50">
-                              删除
+                              {lang === 'zh' ? '删除' : 'Delete'}
                             </Button>
                           </div>
                         </td>
@@ -265,37 +274,37 @@ export default function EzrouterKeysPage() {
       <Modal open={showAddModal || isEditing} onClose={() => { setShowAddModal(false); setEditingKey(null); }} title={modalTitle}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-stone-600">名称 *</label>
-            <Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="例如: Production Key 1" />
+            <label className="mb-1 block text-xs font-semibold text-stone-600">{lang === 'zh' ? '名称 *' : 'Name *'}</label>
+            <Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={lang === 'zh' ? '例如: Production Key 1' : 'e.g. Production Key 1'} />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-stone-600">Key ID *</label>
+            <label className="mb-1 block text-xs font-semibold text-stone-600">{lang === 'zh' ? 'Key ID *' : 'Key ID *'}</label>
             <Input required value={form.ezrouter_key_id} onChange={e => setForm(f => ({ ...f, ezrouter_key_id: e.target.value }))} placeholder="ezrouter_key_xxx" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-stone-600">Key 内容（明文） *</label>
+            <label className="mb-1 block text-xs font-semibold text-stone-600">{lang === 'zh' ? 'Key 内容（明文） *' : 'Plaintext Key *'}</label>
             <Input required type="password" value={form.plaintext_key} onChange={e => setForm(f => ({ ...f, plaintext_key: e.target.value }))} placeholder="sk-xxx..." />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-stone-600">Key 前缀 *</label>
+            <label className="mb-1 block text-xs font-semibold text-stone-600">{lang === 'zh' ? 'Key 前缀 *' : 'Key Prefix *'}</label>
             <Input required value={form.key_prefix} onChange={e => setForm(f => ({ ...f, key_prefix: e.target.value }))} placeholder="sk-" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-stone-600">负载权重</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-600">{lang === 'zh' ? '负载权重' : 'Load Weight'}</label>
               <Input type="number" min={1} max={1000} value={form.load_weight} onChange={e => setForm(f => ({ ...f, load_weight: Number(e.target.value) }))} />
             </div>
             <div className="flex items-center pt-5">
               <label className="flex items-center gap-2 text-sm text-stone-700">
                 <input type="checkbox" checked={form.is_shared} onChange={e => setForm(f => ({ ...f, is_shared: e.target.checked }))} className="rounded border-stone-300" />
-                共享 Key
+                {lang === 'zh' ? '共享 Key' : 'Shared Key'}
               </label>
             </div>
           </div>
           {formError && <p className="text-xs text-red-500">{formError}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => { setShowAddModal(false); setEditingKey(null); }}>取消</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? '保存中…' : '保存'}</Button>
+            <Button type="button" variant="secondary" onClick={() => { setShowAddModal(false); setEditingKey(null); }}>{lang === 'zh' ? '取消' : 'Cancel'}</Button>
+            <Button type="submit" disabled={submitting}>{submitting ? (lang === 'zh' ? '保存中…' : 'Saving...') : (lang === 'zh' ? '保存' : 'Save')}</Button>
           </div>
         </form>
       </Modal>

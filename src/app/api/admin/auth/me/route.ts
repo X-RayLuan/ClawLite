@@ -6,7 +6,9 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
-    const payload = requireAdminAuth(request);
+    const authResult = requireAdminAuth(request);
+    if (authResult instanceof NextResponse) return authResult;
+    const payload = authResult;
     const supabase = getSupabaseAdminClient();
 
     const { data: admin, error } = await supabase

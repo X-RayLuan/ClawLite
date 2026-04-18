@@ -9,8 +9,8 @@ import crypto from 'crypto';
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'dev-secret-change-me';
 
 function base64url(input: Buffer | string): string {
-  const str = typeof input === 'string' ? input : Buffer.from(input);
-  return str.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const buf = typeof input === 'string' ? Buffer.from(input, 'utf8') : input;
+  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function base64urldecode(input: string): string {
@@ -20,7 +20,7 @@ function base64urldecode(input: string): string {
 }
 
 export function generateAdminToken(payload: {
-  adminUserId: string;
+  admin_user_id: string;
   email: string;
   role: string;
 }): string {
@@ -37,20 +37,20 @@ export function generateAdminToken(payload: {
 }
 
 export function verifyAdminToken(token: string):
-  | { adminUserId: string; email: string; role: string }
+  | { admin_user_id: string; email: string; role: string }
   | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const [header, payload, signature] = parts;
-    const expectedSig = base64url(
+    const computedSig = base64url(
       crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest()
     );
-    if (signature !== expectedSig) return null;
+    if (signature !== computedSig) return null;
     const decoded = JSON.parse(base64urldecode(payload));
     if (decoded.exp < Math.floor(Date.now() / 1000)) return null;
     return {
-      adminUserId: decoded.adminUserId,
+      admin_user_id: decoded.admin_user_id,
       email: decoded.email,
       role: decoded.role,
     };
@@ -59,11 +59,9 @@ export function verifyAdminToken(token: string):
   }
 }
 
-export const requireAdmin = requireAdminAuth;
-
 export function requireAdminAuth(
   request: NextRequest
-): { adminUserId: string; email: string; role: string } | NextResponse {
+): { admin_user_id: string; email: string; role: string } | NextResponse {
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) {
@@ -76,9 +74,11 @@ export function requireAdminAuth(
   return payload;
 }
 
+export const requireAdmin = requireAdminAuth;
+
 export function requireSuperAdmin(
   request: NextRequest
-): { adminUserId: string; email: string; role: string } | NextResponse {
+): { admin_user_id: string; email: string; role: string } | NextResponse {
   const result = requireAdminAuth(request);
   if (result instanceof NextResponse) return result;
   if (result.role !== 'super_admin') {
@@ -132,6 +132,17 @@ export async function adminFetch(url: string, options: AdminFetchOptions = {}): 
     ...fetchOptions,
     headers,
   });
+
+  // Auto-logout on auth failure
+  if (res.status === 401) {
+    try {
+      const json = await res.clone().json();
+      if (json?.error === 'invalid_token' || json?.error === 'unauthorized') {
+        removeAdminToken();
+        window.location.href = '/admin/login';
+      }
+    } catch {}
+  }
 
   return res;
 }

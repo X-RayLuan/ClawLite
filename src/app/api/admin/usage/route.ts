@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 // 返回：总请求数、总Token、总费用、按客户统计TOP10
 export async function GET(request: NextRequest) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
 
     // Total usage across all accounts

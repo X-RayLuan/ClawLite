@@ -7,7 +7,8 @@ export const runtime = "nodejs";
 // GET /api/admin/ezrouter-keys - 列出所有 Key
 export async function GET(request: NextRequest) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
     const { data, error } = await supabase
       .from("ezrouter_key_pool")
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/ezrouter-keys - 添加 Key 到池
 export async function POST(request: NextRequest) {
   try {
-    requireAdmin(request);
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
     const supabase = getSupabaseAdminClient();
     const body = await request.json();
 
