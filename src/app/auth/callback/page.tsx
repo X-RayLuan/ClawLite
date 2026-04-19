@@ -44,7 +44,15 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      if (code) {
+      // Magic link tokens come as ?token=...&type=magiclink, NOT as ?code=...
+      // exchangeCodeForSession only works for OAuth PKCE codes, NOT magic link tokens.
+      // For magic link flow, Supabase has already set session cookies via redirect_to,
+      // and tokens are in the URL hash. We skip exchangeCodeForSession entirely.
+      const magicLinkToken = url.searchParams.get("token");
+      const isMagicLinkFlow = !!magicLinkToken || url.searchParams.get("type") === "magiclink";
+
+      if (!isMagicLinkFlow && code) {
+        // OAuth PKCE flow (not used by our OTP, but handle it anyway)
         const { error } = await client.auth.exchangeCodeForSession(code);
         if (error) {
           const fallbackError = /expired/i.test(error.message || "") ? "expired" : "invalid";

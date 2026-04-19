@@ -50,28 +50,40 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", otpRecord.id);
 
-    // Create session directly — returns access_token + refresh_token
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
+    // Generate a magic link. Supabase will:
+    // 1. Accept the token
+    // 2. Set session cookies on our domain (via redirect_to)
+    // 3. Redirect to redirect_to with tokens in the URL hash
+    const returnTo = body.returnTo || "/clawrouter/dashboard";
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: "magiclink",
       email,
     });
 
-    if (sessionError || !sessionData?.session) {
-      console.error("[otp/verify] createSession error:", sessionError);
+    if (linkError || !linkData?.properties?.action_link) {
+      console.error("[otp/verify] generateLink error:", linkError);
       return NextResponse.json({ ok: false, error: "session_creation_failed" }, { status: 500 });
     }
 
-    const { access_token, refresh_token } = sessionData.session;
-    const returnTo = body.returnTo || "/clawrouter/dashboard";
+    // Parse the generated magic link URL and inject our callback + next as redirect_to
+    const actionUrl = new URL(linkData.properties.action_link);
+    const magicLinkToken = actionUrl.searchParams.get("token") || "";
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
 
-    // Return tokens directly in JSON — callback reads them and sets session
+    // Build the redirect_to: where Supabase should redirect after setting the session cookie.
+    // Include 'next' so the callback knows where to send the user.
+    const redirectToCallback = `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`;
+
+    // The final magic link URL — the browser will visit this, Supabase will set session
+    // cookies on our domain, then redirect to redirectToCallback with tokens in the hash.
+    // We return this as redirectUrl so the login page can navigate the browser to it.
+    const magicLinkUrl = `https://lryjqxoudbqpwugfseyg.supabase.co/auth/v1/verify?token=${encodeURIComponent(magicLinkToken)}&type=magiclink&redirect_to=${encodeURIComponent(redirectToCallback)}`;
+
     return NextResponse.json({
       ok: true,
       verified: true,
       email,
-      redirectUrl: `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`,
-      accessToken: access_token,
-      refreshToken: refresh_token,
+      redirectUrl: magicLinkUrl,
     });
   } catch (error: any) {
     console.error("[otp/verify] unexpected error:", error);
