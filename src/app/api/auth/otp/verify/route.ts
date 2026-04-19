@@ -68,19 +68,12 @@ export async function POST(request: NextRequest) {
 
     // Return the action_link directly — the browser will visit it, Supabase will
     // set session cookies on our domain and redirect to redirectTo with tokens in hash.
-    const actionLink = linkData.properties!.action_link!;
+    const actionLink = (linkData.properties as { action_link: string }).action_link;
     return NextResponse.json({
       ok: true,
       verified: true,
       email,
       redirectUrl: actionLink,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      verified: true,
-      email,
-      redirectUrl: linkData.properties.action_link,
     });
   } catch (error: any) {
     console.error("[otp/verify] unexpected error:", error);
