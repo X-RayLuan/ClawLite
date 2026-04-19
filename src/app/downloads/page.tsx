@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DownloadApiKeySection } from "@/components/ui/download-api-key-section";
 import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
@@ -155,7 +156,12 @@ export default function DownloadsPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
       <h1 className="font-display text-3xl font-semibold text-ink">Your ClawLite Access</h1>
-      <p className="mt-2 text-sm text-ink/65">Logged in as {email}</p>
+      <div className="mt-2 flex items-center gap-3">
+        <p className="text-sm text-ink/65">Logged in as {email}</p>
+        <Link href="/clawrouter/dashboard" className="text-sm font-medium text-sea underline underline-offset-2 hover:text-sea/80">
+          Go to Dashboard →
+        </Link>
+      </div>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
