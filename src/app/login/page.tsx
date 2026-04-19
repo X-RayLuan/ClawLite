@@ -278,9 +278,20 @@ export default function LoginPage() {
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Backspace" && !code[i] && i > 0) {
-                      const inputs = document.querySelectorAll<HTMLInputElement>(".otp-box");
-                      inputs[i - 1].focus();
+                    if (e.key === "Backspace") {
+                      e.preventDefault();
+                      const chars = code.split("");
+                      if (code[i]) {
+                        // Current box has content — clear it
+                        chars[i] = "";
+                        setCode(chars.join(""));
+                      } else if (i > 0) {
+                        // Current box is empty — go to previous and clear it
+                        chars[i - 1] = "";
+                        setCode(chars.join(""));
+                        const inputs = document.querySelectorAll<HTMLInputElement>(".otp-box");
+                        inputs[i - 1].focus();
+                      }
                     }
                   }}
                   onPaste={(e) => {
