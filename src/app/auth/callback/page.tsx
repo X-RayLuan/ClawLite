@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildLoginHref, getSafeExternal, getSafeReturnTo } from "@/lib/auth-flow";
-import { getPartnerCouponConfig, getPartnerFromCookieString, PARTNER_REFERRAL_COOKIE } from "@/lib/partner-referral";
+import { syncPostLoginClientState } from "@/lib/post-login-client";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function AuthCallbackPage() {
@@ -16,8 +16,6 @@ export default function AuthCallbackPage() {
       const params = new URLSearchParams(window.location.search);
       const returnTo = getSafeReturnTo(params.get("returnTo"));
       const external = getSafeExternal(params.get("external"));
-      const returnToUrl = new URL(returnTo, window.location.origin);
-      const returnToPartnerSlug = returnToUrl.searchParams.get("partner");
       const loginFallback = (authError?: string | null, authErrorDescription?: string | null) =>
         buildLoginHref({ returnTo, external, authError, authErrorDescription });
 
@@ -83,49 +81,11 @@ export default function AuthCallbackPage() {
       }
 
       if (settledUser) {
-        try {
-          window.localStorage.removeItem("clawlite-post-login-returnTo");
-        } catch {
-          // ignore storage failures
-        }
-
-        try {
-          const rpcClient = client as any;
-          await rpcClient.rpc("sync_auth_user_to_profile", {
-            p_user_id: settledUser.id,
-          });
-        } catch (profileSyncError) {
-          console.error("user profile sync failed", profileSyncError);
-        }
-
-        try {
-          const rpcClient = client as any;
-          await rpcClient.rpc("mark_waitlist_customer_converted", {
-            p_email: settledUser.email,
-            p_user_id: settledUser.id,
-            p_confirmed_at: settledUser.email_confirmed_at ?? null,
-            p_last_sign_in_at: settledUser.last_sign_in_at ?? null,
-            p_source: "auth_callback",
-          });
-        } catch (conversionError) {
-          console.error("waitlist conversion sync failed", conversionError);
-        }
-
-        try {
-          const partnerSlug = getPartnerFromCookieString(document.cookie) || returnToPartnerSlug;
-          const partner = getPartnerCouponConfig(partnerSlug);
-          if (partner) {
-            const rpcClient = client as any;
-            await rpcClient.rpc("apply_partner_referral", {
-              p_user_id: settledUser.id,
-              p_partner_slug: partner.slug,
-              p_partner_coupon_code: partner.couponCode,
-            });
-            document.cookie = `${PARTNER_REFERRAL_COOKIE}=; path=/; max-age=0; samesite=lax`;
-          }
-        } catch (partnerReferralError) {
-          console.error("partner referral sync failed", partnerReferralError);
-        }
+        await syncPostLoginClientState({
+          supabase: client as any,
+          user: settledUser,
+          returnTo,
+        });
 
         if (external) {
           window.location.replace(external);

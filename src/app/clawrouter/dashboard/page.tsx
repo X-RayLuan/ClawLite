@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { mapAssignedInventoryKeys, selectVisibleInventoryKeys } from "@/lib/clawrouter-dashboard";
 import { getSupabaseClient } from "@/lib/supabase";
 
 import { ApiKeyCard } from "./components/ApiKeyCard";
@@ -23,14 +22,14 @@ const navItems = [
   { label: "Profile", href: null },
 ];
 
-function buildSummaryCards(balanceUsd: number, deliveredKeyCount: number) {
+function buildSummaryCards(balanceUsd: number, activeApiKeyCount: number) {
   return [
     { label: "Balance", value: `$${balanceUsd.toFixed(2)}`, note: "Available credits for managed routing" },
     { label: "Total Spent", value: "$0.00", note: "All-time spend across ClawRouter" },
     { label: "Today", value: "$0.00", note: "Current-day cost" },
     { label: "Total Tokens", value: "0", note: "Input + output tokens so far" },
     { label: "Avg Cost / Req", value: "$0.00", note: "Cost efficiency will appear here" },
-    { label: "API Keys", value: String(deliveredKeyCount), note: "Delivered inventory keys currently active" },
+    { label: "API Keys", value: String(activeApiKeyCount), note: "Active ClawLite API keys on this account" },
   ];
 }
 
@@ -65,11 +64,10 @@ export default function ClawRouterDashboardPage() {
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [balanceUsd, setBalanceUsd] = useState(0);
+  const [activeApiKeys, setActiveApiKeys] = useState(0);
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
-  const [deliveredKeys, setDeliveredKeys] = useState<Array<{ id: string; deliveryMode: "managed_key" | "inventory_key"; displayName: string; provider: string; plaintextKey: string | null; keyPrefix: string | null; faceValueUsd: number | null; salePriceUsd: number | null; status: string; createdAt: string | null }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
-  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   const loadDashboardData = useCallback(async (accessToken: string, options?: { refreshBilling?: boolean }) => {
     const accountUrl = options?.refreshBilling
@@ -88,12 +86,7 @@ export default function ClawRouterDashboardPage() {
 
     if (accountResponse.ok && accountPayload?.ok) {
       setTopups(accountPayload.topups || []);
-      const currentAssignedInventory = mapAssignedInventoryKeys(accountPayload.assignedInventoryKeys || []);
-      setDeliveredKeys(
-        currentAssignedInventory.length
-          ? currentAssignedInventory
-          : selectVisibleInventoryKeys(accountPayload.deliveredKeys || [])
-      );
+      setActiveApiKeys(Number(accountPayload.account?.activeApiKeys || 0));
     }
 
     // Fetch balance from new usage summary API
@@ -185,18 +178,7 @@ export default function ClawRouterDashboardPage() {
     return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
   }
 
-  async function handleCopyKey(keyId: string, plaintextKey: string | null) {
-    if (!plaintextKey) return;
-    try {
-      await navigator.clipboard.writeText(plaintextKey);
-      setCopiedKeyId(keyId);
-      window.setTimeout(() => setCopiedKeyId((current) => (current === keyId ? null : current)), 1500);
-    } catch {
-      setCopiedKeyId(null);
-    }
-  }
-
-  const summaryCards = buildSummaryCards(balanceUsd, deliveredKeys.length);
+  const summaryCards = buildSummaryCards(balanceUsd, activeApiKeys);
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
@@ -242,7 +224,7 @@ export default function ClawRouterDashboardPage() {
             <div className="mt-3 space-y-2">
               <Button asChild className="w-full bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
               <div className="w-full rounded-2xl border border-stone-300 bg-white/80 px-4 py-3 text-center text-sm text-stone-600">
-                Inventory keys appear here automatically after a $5 access purchase.
+                Your ClawLite API key appears in the card below after your first eligible purchase.
               </div>
             </div>
           </div>
@@ -265,7 +247,7 @@ export default function ClawRouterDashboardPage() {
                 ClawRouter account workspace
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 sm:text-base">
-                This is the logged-in surface after “Get ClawRouter Access”: add credits, manage API keys, inspect available models, and track spend and usage in one place.
+                This is the logged-in surface after checkout: add credits, manage your ClawLite API key, inspect available models, and track spend and usage in one place.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -294,61 +276,6 @@ export default function ClawRouterDashboardPage() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">API Keys</p>
-                  <h2 className="mt-2 text-xl font-semibold text-stone-950">Assigned inventory access keys</h2>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Auto-delivered after purchase</span>
-              </div>
-              <div className="mt-5 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
-                {deliveredKeys.length ? (
-                  <div className="space-y-3">
-                    {deliveredKeys.map((key) => (
-                      <div key={key.id} className="rounded-2xl bg-white/75 px-4 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-stone-950">{key.displayName}</p>
-                            <p className="text-xs text-stone-500">
-                              {key.deliveryMode === "inventory_key" ? "Inventory delivery" : "Managed key"} · {key.provider}
-                            </p>
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{key.status}</span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-3">
-                          <p className="min-w-0 flex-1 truncate rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs text-stone-700">
-                            {key.keyPrefix || "key"}••••••••••••••••
-                          </p>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
-                            onClick={() => handleCopyKey(key.id, key.plaintextKey)}
-                          >
-                            {copiedKeyId === key.id ? "Copied" : "Copy"}
-                          </Button>
-                        </div>
-                        {key.faceValueUsd != null || key.salePriceUsd != null ? (
-                          <p className="mt-2 text-xs text-stone-500">
-                            {key.faceValueUsd != null ? `Face value $${key.faceValueUsd.toFixed(2)}` : ""}
-                            {key.salePriceUsd != null ? ` · Sold at $${key.salePriceUsd.toFixed(2)}` : ""}
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-stone-950">No delivered key yet</p>
-                    <p className="mt-2 text-sm leading-6 text-stone-600">
-                      After a successful $5 access purchase, your assigned upstream key will appear here automatically.
-                    </p>
-                  </>
-                )}
-              </div>
-            </Card>
-
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Models</p>
               <h2 className="mt-2 text-xl font-semibold text-stone-950">Available lanes</h2>

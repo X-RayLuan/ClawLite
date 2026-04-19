@@ -123,7 +123,7 @@ export default function AddCreditsPage() {
               Add Credits
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-stone-600 sm:text-base">
-              Buy ClawRouter access. The $5 option is live now and delivers one inventory API key worth $10 in upstream value. Higher amounts stay disabled until the next release.
+              The $5 option is live now. It adds ClawRouter credits and also provisions your ClawLite API key on first purchase, so you can start routing requests immediately. Higher amounts stay disabled until the next release.
             </p>
           </div>
 

@@ -3,7 +3,7 @@ import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { maybeReconcileClawRouterAccount, shouldForceClawRouterAccountReconcile } from "@/lib/clawrouter-account-reconcile";
 import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawrouter-topups";
-import { listDeliveredKeysForAccount, reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
+import { reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
@@ -60,18 +60,6 @@ export async function GET(request: NextRequest) {
       throw new Error(topups.error.message || "failed_to_load_topups");
     }
 
-    const deliveredKeys = await listDeliveredKeysForAccount(supabase, userId);
-    const assignedInventory = await supabase
-      .from("inventory_keys")
-      .select("id, provider, name, plaintext_key, key_prefix, face_value_usd, sale_price_usd, status, assigned_account_id, assigned_at")
-      .eq("assigned_account_id", userId)
-      .eq("status", "assigned")
-      .order("assigned_at", { ascending: false });
-
-    if (assignedInventory?.error) {
-      throw new Error(assignedInventory.error.message || "failed_to_load_assigned_inventory_keys");
-    }
-
     return NextResponse.json(
       {
         ok: true,
@@ -84,8 +72,6 @@ export async function GET(request: NextRequest) {
           activeApiKeys: keys.count || 0,
         },
         topups: topups.data || [],
-        deliveredKeys,
-        assignedInventoryKeys: assignedInventory.data || [],
       },
       {
         headers: {

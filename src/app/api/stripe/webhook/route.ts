@@ -6,6 +6,7 @@ import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
 import { assignInventoryKeyToAccount, ensureManagedKeyDelivery } from "@/lib/clawrouter-delivery";
+import { sendClawLiteApiKeyEmail } from "@/lib/email";
 import { addRechargeBalance } from "@/lib/recharge";
 
 export const runtime = "nodejs";
@@ -13,6 +14,58 @@ export const runtime = "nodejs";
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
+
+type MinimalSupabaseClient = {
+  from: (table: string) => any;
+};
+
+async function resolveAccountEmail(
+  supabase: MinimalSupabaseClient,
+  accountId: string,
+  fallbackEmail?: string | null,
+) {
+  if (fallbackEmail) {
+    return fallbackEmail;
+  }
+
+  const account = await supabase
+    .from("accounts")
+    .select("email")
+    .eq("id", accountId)
+    .maybeSingle();
+
+  if (account?.error && account.error.code !== "PGRST116") {
+    throw new Error(account.error.message || "failed_to_load_account_email");
+  }
+
+  return account.data?.email || null;
+}
+
+async function maybeSendApiKeyEmail(input: {
+  supabase: MinimalSupabaseClient;
+  accountId: string;
+  fallbackEmail?: string | null;
+  keyResult: Awaited<ReturnType<typeof ensureClawRouterApiKey>>;
+}) {
+  if (!input.keyResult.created || !input.keyResult.key.plaintextSecret) {
+    return;
+  }
+
+  const email = await resolveAccountEmail(input.supabase, input.accountId, input.fallbackEmail);
+  if (!email) {
+    console.warn(`[stripe webhook] Missing account email for api key delivery: ${input.accountId}`);
+    return;
+  }
+
+  try {
+    await sendClawLiteApiKeyEmail({
+      to: email,
+      apiKey: input.keyResult.key.plaintextSecret,
+    });
+  } catch (emailError) {
+    console.error("[stripe webhook] failed to send api key email", emailError);
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -83,6 +136,14 @@ export async function POST(req: Request) {
           if (assignment.soldOut) {
             throw new Error("inventory_key_sold_out");
           }
+
+          const keyResult = await ensureClawRouterApiKey(supabase, accountId);
+          await maybeSendApiKeyEmail({
+            supabase,
+            accountId,
+            fallbackEmail: session.customer_details?.email ?? session.customer_email ?? null,
+            keyResult,
+          });
           break;
         }
 
@@ -125,6 +186,12 @@ export async function POST(req: Request) {
               apiKey: keyResult.key,
             });
           }
+          await maybeSendApiKeyEmail({
+            supabase,
+            accountId,
+            fallbackEmail: session.customer_details?.email ?? session.customer_email ?? null,
+            keyResult,
+          });
           break;
         }
 
