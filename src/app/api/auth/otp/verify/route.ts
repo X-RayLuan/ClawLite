@@ -50,28 +50,34 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", otpRecord.id);
 
-    // Create a real session using admin API — returns access_token + refresh_token directly
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
+    // Generate a magic link — this gives us a URL like:
+    // https://xxx.supabase.co/auth/v1/verify?token=XXX&type=magiclink&...
+    // We'll redirect the browser to this URL, and the callback page will
+    // read the token from the hash to establish the session.
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: "magiclink",
       email,
     });
 
-    if (sessionError || !sessionData?.session) {
-      console.error("[otp/verify] createSession error:", sessionError);
+    if (linkError || !linkData?.properties?.action_link) {
+      console.error("[otp/verify] generateLink error:", linkError);
       return NextResponse.json({ ok: false, error: "session_creation_failed" }, { status: 500 });
     }
 
-    const { access_token, refresh_token } = sessionData.session;
+    const actionLink = linkData.properties.action_link;
 
-    // Redirect to callback with tokens in the hash (callback reads from URL hash)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
+    // Return the magic link URL — the browser will redirect to it.
+    // The callback page will be invoked with the token in the URL hash.
+    // We pass ?next= as a separate query param that the callback reads.
     const returnTo = body.returnTo || "/clawrouter/dashboard";
-    const callbackUrl = `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}#access_token=${access_token}&refresh_token=${refresh_token}`;
+    const magicLinkUrl = new URL(actionLink);
+    magicLinkUrl.searchParams.set("next", returnTo);
 
     return NextResponse.json({
       ok: true,
       verified: true,
       email,
-      redirectUrl: callbackUrl,
+      redirectUrl: magicLinkUrl.toString(),
     });
   } catch (error: any) {
     console.error("[otp/verify] unexpected error:", error);
