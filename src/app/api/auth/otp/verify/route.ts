@@ -50,34 +50,28 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", otpRecord.id);
 
-    // Generate a magic link — this gives us a URL like:
-    // https://xxx.supabase.co/auth/v1/verify?token=XXX&type=magiclink&...
-    // We'll redirect the browser to this URL, and the callback page will
-    // read the token from the hash to establish the session.
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
+    // Create session directly — returns access_token + refresh_token
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
       email,
     });
 
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error("[otp/verify] generateLink error:", linkError);
+    if (sessionError || !sessionData?.session) {
+      console.error("[otp/verify] createSession error:", sessionError);
       return NextResponse.json({ ok: false, error: "session_creation_failed" }, { status: 500 });
     }
 
-    const actionLink = linkData.properties.action_link;
-
-    // Return the magic link URL — the browser will redirect to it.
-    // The callback page will be invoked with the token in the URL hash.
-    // We pass ?next= as a separate query param that the callback reads.
+    const { access_token, refresh_token } = sessionData.session;
     const returnTo = body.returnTo || "/clawrouter/dashboard";
-    const magicLinkUrl = new URL(actionLink);
-    magicLinkUrl.searchParams.set("next", returnTo);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
 
+    // Return tokens directly in JSON — callback reads them and sets session
     return NextResponse.json({
       ok: true,
       verified: true,
       email,
-      redirectUrl: magicLinkUrl.toString(),
+      redirectUrl: `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`,
+      accessToken: access_token,
+      refreshToken: refresh_token,
     });
   } catch (error: any) {
     console.error("[otp/verify] unexpected error:", error);

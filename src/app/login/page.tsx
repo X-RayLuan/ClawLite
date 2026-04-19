@@ -198,15 +198,21 @@ export default function LoginPage() {
 
     const data = await res.json();
 
+    if (data.accessToken && data.refreshToken) {
+      // Pass tokens to callback via hash — callback reads them and sets session
+      const callbackUrl = new URL(data.redirectUrl || `${window.location.origin}/auth/callback`);
+      callbackUrl.hash = `access_token=${data.accessToken}&refresh_token=${data.refreshToken}`;
+      window.location.href = callbackUrl.toString();
+      return;
+    }
+
+    // Fallback: redirect without tokens (relies on callback reading hash from magic link)
     if (data.redirectUrl) {
-      // Redirect to the callback URL which will set the session cookie
       window.location.href = data.redirectUrl;
       return;
     }
 
-    // Fallback: redirect to callback
-    const siteUrl = window.location.origin;
-    window.location.href = `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`;
+    setError("Login failed. Please try again.");
   }
 
   return (
