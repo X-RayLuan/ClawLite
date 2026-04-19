@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     // Now we have a valid Supabase access token
     // Redirect to callback with this token to set the session cookie
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
-    const callbackUrl = `${siteUrl}/auth/callback?next=${encodeURIComponent(body.returnTo || "/clawrouter/dashboard")}&token=${accessToken}`;
+    const callbackUrl = `${siteUrl}/auth/callback?next=${encodeURIComponent(body.returnTo || "/clawrouter/dashboard")}&code=${accessToken}`;
 
     return NextResponse.json({
       ok: true,
