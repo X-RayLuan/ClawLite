@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { DownloadApiKeySection } from "@/components/ui/download-api-key-section";
 import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
 import {
   getCouponExperience,
@@ -25,6 +26,7 @@ export default function DownloadsPage() {
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [partnerSlug, setPartnerSlug] = useState<string | null>(null);
 
@@ -80,6 +82,7 @@ export default function DownloadsPage() {
         const user = data.session?.user;
         if (user) {
           setEmail(user.email || "");
+          setAccessToken(data.session?.access_token || null);
           try {
             const { data: profile } = await (client as any)
               .from("user_profiles")
@@ -109,6 +112,7 @@ export default function DownloadsPage() {
     const { data: authListener } = client.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setEmail(session.user.email || "");
+        setAccessToken(session.access_token || null);
         setLoading(false);
         return;
       }
@@ -153,7 +157,7 @@ export default function DownloadsPage() {
       <h1 className="font-display text-3xl font-semibold text-ink">Your ClawLite Access</h1>
       <p className="mt-2 text-sm text-ink/65">Logged in as {email}</p>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
+      <div className="mt-8 grid gap-5 md:grid-cols-2">
         <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">1</p>
           <h2 className="mt-2 text-lg font-semibold text-ink">Free Download Installer</h2>
@@ -175,8 +179,8 @@ export default function DownloadsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">3</p>
+        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">3</p>
           <h2 className="mt-2 text-lg font-semibold text-ink">{couponExperience.headline}</h2>
           <p className="mt-2 text-sm text-ink/70">{couponExperience.body}</p>
           {couponExperience.partner ? (
@@ -191,7 +195,7 @@ export default function DownloadsPage() {
           <div className="mt-4 space-y-2 text-sm text-ink/75">
             <p className="font-medium text-ink">How to redeem:</p>
             <p>1. Go to ClawLite.ai → Pricing</p>
-            <p>2. Click “Get Tokens via EZRouter”</p>
+            <p>2. Click "Get Tokens via EZRouter"</p>
             <p>3. Register/login at openrouter.ezsite.ai</p>
             <p>4. Select Add Credit</p>
             <p>5. {couponExperience.redeemStepText}</p>
@@ -199,6 +203,12 @@ export default function DownloadsPage() {
           </div>
         </section>
       </div>
+
+      {accessToken ? (
+        <div className="mt-5">
+          <DownloadApiKeySection accessToken={accessToken} />
+        </div>
+      ) : null}
     </main>
   );
 }
