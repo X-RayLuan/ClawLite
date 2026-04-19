@@ -231,24 +231,55 @@ export default function LoginPage() {
 
         {step === "code" ? (
           <>
-            <label htmlFor="code" className="mt-5 block text-sm font-medium text-ink">
+            <label className="mt-5 block text-sm font-medium text-ink">
               6-digit code
             </label>
-            <input
-              id="code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="123456"
-              className="mt-2 w-full rounded-xl border border-black/15 px-4 py-3 text-center text-lg tracking-[0.35em] outline-none focus:border-ink/30"
-            />
+            <p className="mt-1 text-xs text-ink/50">Enter the code sent to {sentEmail}</p>
 
-            <Button type="submit" className="mt-4 w-full" disabled={loading || code.length !== 6}>
+            {/* 6-box OTP input */}
+            <div className="mt-3 flex gap-2">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <input
+                  key={i}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]"
+                  maxLength={1}
+                  value={code[i] || ""}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/, "");
+                    if (val.length > 0) {
+                      const next = code.split("");
+                      next[i] = val[0];
+                      const newCode = next.join("");
+                      setCode(newCode);
+                      // Auto-focus next box
+                      const inputs = document.querySelectorAll<HTMLInputElement>(".otp-box");
+                      if (i < 5 && inputs[i + 1]) {
+                        inputs[i + 1].focus();
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && !code[i] && i > 0) {
+                      const inputs = document.querySelectorAll<HTMLInputElement>(".otp-box");
+                      inputs[i - 1].focus();
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                    setCode(pasted);
+                    const inputs = document.querySelectorAll<HTMLInputElement>(".otp-box");
+                    inputs[Math.min(pasted.length, 5)].focus();
+                  }}
+                  className="otp-box flex h-14 w-0 flex-1 items-center justify-center rounded-2xl border-2 border-black/15 bg-white text-center text-2xl font-semibold tracking-widest text-ink shadow-sm transition-all placeholder:text-3xl placeholder:font-normal placeholder:tracking-normal placeholder:text-black/20 focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/20"
+                  style={{ WebkitAppearance: "none", appearance: "none" }}
+                />
+              ))}
+            </div>
+
+            <Button type="submit" className="mt-5 w-full" disabled={loading || code.length !== 6}>
               {loading ? "Verifying..." : "Verify Code"}
             </Button>
 
