@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { mapAssignedInventoryKeys, selectVisibleInventoryKeys } from "@/lib/clawrouter-dashboard";
 import { getSupabaseClient } from "@/lib/supabase";
 
+import { ApiKeyCard } from "./components/ApiKeyCard";
+
 const navItems = [
   { label: "Dashboard", href: "/clawrouter/dashboard" },
   { label: "API Keys", href: null },
@@ -283,6 +285,8 @@ export default function ClawRouterDashboardPage() {
               </Card>
             ))}
           </div>
+
+          <ApiKeyCard />
 
           <div className="grid gap-4 xl:grid-cols-2">
             <ChartShell title="Usage by Model" subtitle="Breakdown appears here once requests start flowing through ClawRouter." />
