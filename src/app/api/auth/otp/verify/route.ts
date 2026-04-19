@@ -50,38 +50,22 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", otpRecord.id);
 
-    // Generate magic link (contains token) via admin API
-    // This doesn't send email - just generates the URL and token
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
+    // Create a real session using admin API — returns access_token + refresh_token directly
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
       email,
     });
 
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error("[otp/verify] generateLink error:", linkError);
+    if (sessionError || !sessionData?.session) {
+      console.error("[otp/verify] createSession error:", sessionError);
       return NextResponse.json({ ok: false, error: "session_creation_failed" }, { status: 500 });
     }
 
-    // Extract the token from the magic link URL
-    // action_link format: https://xxx.auth.supabase.co/auth/v1/verify?token=XXX&type=magiclink&...
-    const actionLink = linkData.properties.action_link;
-    let accessToken = "";
-    try {
-      const url = new URL(actionLink);
-      accessToken = url.searchParams.get("token") || "";
-    } catch {
-      // URL parsing failed, accessToken stays empty
-    }
+    const { access_token, refresh_token } = sessionData.session;
 
-    if (!accessToken) {
-      console.error("[otp/verify] could not extract token from action_link:", actionLink);
-      return NextResponse.json({ ok: false, error: "session_creation_failed" }, { status: 500 });
-    }
-
-    // Now we have a valid Supabase access token
-    // Redirect to callback with this token to set the session cookie
+    // Redirect to callback with tokens in the hash (callback reads from URL hash)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
-    const callbackUrl = `${siteUrl}/auth/callback?next=${encodeURIComponent(body.returnTo || "/clawrouter/dashboard")}&code=${accessToken}`;
+    const returnTo = body.returnTo || "/clawrouter/dashboard";
+    const callbackUrl = `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}#access_token=${access_token}&refresh_token=${refresh_token}`;
 
     return NextResponse.json({
       ok: true,
