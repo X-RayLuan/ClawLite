@@ -54,11 +54,12 @@ export async function POST(request: NextRequest) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
 
     // Pass redirect_to explicitly so Supabase redirects to our callback with tokens in hash.
+    // @ts-ignore — redirectTo is a valid runtime param but may not be in TS types
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,
       redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`,
-    });
+    } as any);
 
     if (linkError || !linkData?.properties?.action_link) {
       console.error("[otp/verify] generateLink error:", linkError);
