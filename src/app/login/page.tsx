@@ -109,12 +109,6 @@ export default function LoginPage() {
     setError("");
     setMessage("");
 
-    if (!supabase) {
-      setLoading(false);
-      setError("Supabase is not configured yet. Please set environment variables first.");
-      return;
-    }
-
     if (!emailValue || !emailValue.includes("@")) {
       setLoading(false);
       setError("Enter a valid email address.");
@@ -127,22 +121,22 @@ export default function LoginPage() {
 
     try {
       window.localStorage.setItem("clawlite-post-login-returnTo", returnTo);
+      if (external) window.localStorage.setItem("clawlite-post-login-external", external);
     } catch {
       // ignore storage failures
     }
-    const callbackParams = new URLSearchParams();
-    callbackParams.set("returnTo", returnTo);
-    if (external) callbackParams.set("external", external);
-    const redirectTo = `${window.location.origin}/auth/callback?${callbackParams.toString()}`;
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email: emailValue,
-      options: { emailRedirectTo: redirectTo, emailType: "otp" },
+
+    const res = await fetch("/api/auth/otp/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailValue, returnTo }),
     });
 
     setLoading(false);
 
-    if (signInError) {
-      setError(signInError.message || "Failed to send login code.");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Failed to send login code. Please try again.");
       return;
     }
 
@@ -150,7 +144,7 @@ export default function LoginPage() {
     setStep("code");
     setResendCooldown(60);
     setCode("");
-    setMessage(`Code sent to ${emailValue}. Enter the 6-digit code from your email to continue.`);
+    setMessage(`Code sent to ${emailValue}. Check your inbox (and spam folder).`);
   }
 
   async function onSubmitEmail(e: FormEvent) {
@@ -164,12 +158,6 @@ export default function LoginPage() {
     setError("");
     setMessage("");
 
-    if (!supabase) {
-      setLoading(false);
-      setError("Supabase is not configured yet. Please set environment variables first.");
-      return;
-    }
-
     const normalizedCode = code.replace(/\D/g, "").slice(0, 6);
     if (normalizedCode.length !== 6) {
       setLoading(false);
@@ -177,19 +165,48 @@ export default function LoginPage() {
       return;
     }
 
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email: sentEmail,
-      token: normalizedCode,
-      type: "email",
+    const returnTo = (() => {
+      try {
+        return window.localStorage.getItem("clawlite-post-login-returnTo") || "/clawrouter/dashboard";
+      } catch {
+        return "/clawrouter/dashboard";
+      }
+    })();
+    const external = (() => {
+      try {
+        return window.localStorage.getItem("clawlite-post-login-external") || undefined;
+      } catch {
+        return undefined;
+      }
+    })();
+
+    const res = await fetch("/api/auth/otp/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: sentEmail, code: normalizedCode, returnTo }),
     });
 
-    if (verifyError || !data.session?.user) {
-      setLoading(false);
-      setError(verifyError?.message || "The code is invalid or expired. Request a new code and try again.");
+    setLoading(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error === "invalid_or_expired_code"
+        ? "This code is invalid or expired. Request a new one."
+        : data.error || "Verification failed. Please try again.");
       return;
     }
 
-    setMessage("Code verified. Redirecting...");
+    const data = await res.json();
+
+    if (data.redirectUrl) {
+      // Redirect to the callback URL which will set the session cookie
+      window.location.href = data.redirectUrl;
+      return;
+    }
+
+    // Fallback: redirect to callback
+    const siteUrl = window.location.origin;
+    window.location.href = `${siteUrl}/auth/callback?next=${encodeURIComponent(returnTo)}`;
   }
 
   return (
