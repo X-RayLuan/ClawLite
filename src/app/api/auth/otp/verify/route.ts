@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       verified: true,
       email,
-      redirectUrl: magicLinkUrl,
+      redirectUrl: linkData.properties.action_link,
     });
   } catch (error: any) {
     console.error("[otp/verify] unexpected error:", error);
