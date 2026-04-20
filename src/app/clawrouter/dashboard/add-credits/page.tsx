@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
 
-const presetAmounts = [5, 10, 20, 50, 100];
-const enabledAmount = 5;
+const presetAmounts = [
+  { amount: 5, enabled: true, recommended: true, badge: null },
+  { amount: 10, enabled: false, recommended: false, badge: "Coming soon" },
+  { amount: 20, enabled: false, recommended: false, badge: "Coming soon" },
+  { amount: 50, enabled: false, recommended: false, badge: "Coming soon" },
+  { amount: 100, enabled: false, recommended: false, badge: "Coming soon" },
+];
 
 export default function AddCreditsPage() {
   const router = useRouter();
@@ -123,34 +128,41 @@ export default function AddCreditsPage() {
               Add Credits
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-stone-600 sm:text-base">
-              The $5 option is live now. It adds ClawRouter credits and also provisions your ClawLite API key on first purchase, so you can start routing requests immediately. Higher amounts stay disabled until the next release.
+              Select a top-up amount to add credits to your ClawRouter account. Credits never expire and can be used for API requests across all supported models.
             </p>
           </div>
 
           <div className="mt-8">
             <p className="text-sm font-medium text-stone-700">Select Amount</p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {presetAmounts.map((amount) => {
-                const active = selectedAmount === amount;
-                const enabled = amount === enabledAmount;
+              {presetAmounts.map((preset) => {
+                const active = selectedAmount === preset.amount;
                 return (
                   <button
-                    key={amount}
+                    key={preset.amount}
                     type="button"
                     onClick={() => {
-                      if (!enabled) return;
-                      setSelectedAmount(amount);
+                      if (!preset.enabled) return;
+                      setSelectedAmount(preset.amount);
                     }}
-                    disabled={!enabled}
-                    className={`rounded-2xl border px-4 py-4 text-base font-semibold transition ${
+                    disabled={!preset.enabled}
+                    className={`relative rounded-2xl border px-4 py-4 text-base font-semibold transition ${
                       active
                         ? "border-stone-900 bg-stone-900 text-white"
-                        : enabled
+                        : preset.enabled
                           ? "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
                           : "cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400"
                     }`}
                   >
-                    ${amount}{!enabled ? " · Soon" : ""}
+                    ${preset.amount}
+                    {preset.recommended && !active && (
+                      <span className="absolute -top-2 -right-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Best
+                      </span>
+                    )}
+                    {!preset.enabled && (
+                      <span className="mt-1 block text-xs font-normal">Coming soon</span>
+                    )}
                   </button>
                 );
               })}

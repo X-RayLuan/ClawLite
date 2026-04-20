@@ -22,27 +22,103 @@ const navItems = [
   { label: "Profile", href: null },
 ];
 
-function buildSummaryCards(balanceUsd: number, activeApiKeyCount: number) {
+type BalanceSummary = {
+  balanceUsd: number;
+  frozenBalanceUsd: number;
+  availableBalanceUsd: number;
+};
+
+type UsageSummary = {
+  totalRequests: number;
+  totalTokensIn: number;
+  totalTokensOut: number;
+  totalCost: number;
+  lastRequestAt: string | null;
+};
+
+type UsageEvent = {
+  id: string;
+  key_name: string | null;
+  model: string;
+  tokens_in: number;
+  tokens_out: number;
+  cost: number | null;
+  status: string;
+  created_at: string;
+};
+
+function BalanceBadge({ amount }: { amount: number }) {
+  if (amount < 0.1) {
+    return <span className="text-red-500 font-semibold">${amount.toFixed(2)}</span>;
+  }
+  if (amount < 1) {
+    return <span className="text-orange-500 font-semibold">${amount.toFixed(2)}</span>;
+  }
+  return <span className="text-stone-950">${amount.toFixed(2)}</span>;
+}
+
+function BalanceCard({ balance }: { balance: BalanceSummary }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <Card className="rounded-[24px] border border-emerald-300/60 bg-gradient-to-br from-emerald-50/80 to-white/90 p-5 shadow-none">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Available Balance</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">
+          <BalanceBadge amount={balance.availableBalanceUsd} />
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-stone-600">Spendable balance for API requests</p>
+      </Card>
+      <Card className="rounded-[24px] border border-amber-300/60 bg-gradient-to-br from-amber-50/80 to-white/90 p-5 shadow-none">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">Frozen</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-amber-700">
+          ${balance.frozenBalanceUsd.toFixed(2)}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-stone-600">Processing requests (will be deducted)</p>
+      </Card>
+      <Card className="rounded-[24px] border border-stone-300/60 bg-white/90 p-5 shadow-none">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Total Balance</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-stone-950">
+          ${balance.balanceUsd.toFixed(2)}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-stone-600">Account total before deductions</p>
+      </Card>
+    </div>
+  );
+}
+
+function buildSummaryCards(activeApiKeyCount: number, usage: UsageSummary) {
+  const avgCostPerReq = usage.totalRequests > 0 ? usage.totalCost / usage.totalRequests : 0;
   return [
-    { label: "Balance", value: `$${balanceUsd.toFixed(2)}`, note: "Available credits for managed routing" },
-    { label: "Total Spent", value: "$0.00", note: "All-time spend across ClawRouter" },
+    { label: "Total Spent", value: `$${usage.totalCost.toFixed(4)}`, note: "All-time spend across ClawRouter" },
     { label: "Today", value: "$0.00", note: "Current-day cost" },
-    { label: "Total Tokens", value: "0", note: "Input + output tokens so far" },
-    { label: "Avg Cost / Req", value: "$0.00", note: "Cost efficiency will appear here" },
+    { label: "Total Tokens", value: (usage.totalTokensIn + usage.totalTokensOut).toLocaleString(), note: "Input + output tokens so far" },
+    { label: "Avg Cost / Req", value: `$${avgCostPerReq.toFixed(4)}`, note: "Cost efficiency will appear here" },
     { label: "API Keys", value: String(activeApiKeyCount), note: "Active ClawLite API keys on this account" },
   ];
 }
 
-const modelRows = [
-  { model: "clawrouter/auto", provider: "Managed route", status: "Default" },
-  { model: "Claude / GPT / Gemini class", provider: "Provider-routed", status: "Available" },
-  { model: "BYOK fallback", provider: "Manual provider path", status: "Optional" },
-];
+function UsageRow({ event }: { event: UsageEvent }) {
+  return (
+    <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-3 text-sm text-stone-700">
+      <span>{new Date(event.created_at).toLocaleString()}</span>
+      <span className="font-medium">{event.model}</span>
+      <span>{event.key_name ? `${event.key_name.slice(0, 8)}…` : "—"}</span>
+      <span className={event.cost && event.cost > 0 ? "text-red-600" : "text-stone-600"}>
+        {event.cost != null ? `-$${event.cost.toFixed(4)}` : "$0.00"}
+      </span>
+    </div>
+  );
+}
 
-const requestRows = [
-  { time: "No requests yet", model: "—", provider: "—", cost: "$0.00" },
-  { time: "Top up first", model: "—", provider: "—", cost: "$0.00" },
-];
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-6 text-sm text-stone-500">
+      <span>{message}</span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  );
+}
 
 function ChartShell({ title, subtitle }: { title: string; subtitle: string }) {
   return (
@@ -63,7 +139,9 @@ export default function ClawRouterDashboardPage() {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
-  const [balanceUsd, setBalanceUsd] = useState(0);
+  const [balance, setBalance] = useState<BalanceSummary>({ balanceUsd: 0, frozenBalanceUsd: 0, availableBalanceUsd: 0 });
+  const [usageSummary, setUsageSummary] = useState<UsageSummary>({ totalRequests: 0, totalTokensIn: 0, totalTokensOut: 0, totalCost: 0, lastRequestAt: null });
+  const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
   const [activeApiKeys, setActiveApiKeys] = useState(0);
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
@@ -89,7 +167,7 @@ export default function ClawRouterDashboardPage() {
       setActiveApiKeys(Number(accountPayload.account?.activeApiKeys || 0));
     }
 
-    // Fetch balance from new usage summary API
+    // Fetch balance and usage from new usage summary API
     try {
       const summaryRes = await fetch("/api/usage/summary", {
         headers: {
@@ -99,16 +177,50 @@ export default function ClawRouterDashboardPage() {
         cache: "no-store",
       });
       if (summaryRes.ok) {
-        const summaryData: { balance?: { balanceUsd: number; availableBalanceUsd: number } } = await summaryRes.json().catch(() => null);
+        const summaryData = await summaryRes.json().catch(() => null);
         if (summaryData?.balance) {
-          // Use availableBalanceUsd (spendable balance) as the primary balance display
-          setBalanceUsd(Number(summaryData.balance.availableBalanceUsd ?? summaryData.balance.balanceUsd ?? 0));
+          setBalance({
+            balanceUsd: Number(summaryData.balance.balanceUsd ?? 0),
+            frozenBalanceUsd: Number(summaryData.balance.frozenBalanceUsd ?? 0),
+            availableBalanceUsd: Number(summaryData.balance.availableBalanceUsd ?? 0),
+          });
         }
+        if (summaryData?.summary) {
+          setUsageSummary({
+            totalRequests: Number(summaryData.summary.totalRequests ?? 0),
+            totalTokensIn: Number(summaryData.summary.totalTokensIn ?? 0),
+            totalTokensOut: Number(summaryData.summary.totalTokensOut ?? 0),
+            totalCost: Number(summaryData.summary.totalCost ?? 0),
+            lastRequestAt: summaryData.summary.lastRequestAt ?? null,
+          });
+        }
+      }
+
+      // Fetch real usage events for recent requests table
+      try {
+        const recordsRes = await fetch("/api/usage/records?limit=10", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Cache-Control": "no-store",
+          },
+          cache: "no-store",
+        });
+        if (recordsRes.ok) {
+          const recordsData = await recordsRes.json().catch(() => null);
+          if (recordsData?.usageEvents && Array.isArray(recordsData.usageEvents)) {
+            setUsageEvents(recordsData.usageEvents.slice(0, 10));
+          }
+        }
+      } catch {
+        // Silently fail for usage events
       }
     } catch {
       // Fall back to account balance if usage summary fails
       if (accountResponse.ok && accountPayload?.ok) {
-        setBalanceUsd(Number(accountPayload.account?.creditBalanceUsd || 0));
+        setBalance((prev) => ({
+          ...prev,
+          availableBalanceUsd: Number(accountPayload.account?.creditBalanceUsd || 0),
+        }));
       }
     }
   }, []);
@@ -178,7 +290,7 @@ export default function ClawRouterDashboardPage() {
     return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
   }
 
-  const summaryCards = buildSummaryCards(balanceUsd, activeApiKeys);
+  const summaryCards = buildSummaryCards(activeApiKeys, usageSummary);
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
@@ -235,7 +347,7 @@ export default function ClawRouterDashboardPage() {
             <Card className="rounded-[24px] border border-emerald-300/60 bg-emerald-50/90 p-5 shadow-none">
               <p className="text-sm font-semibold text-emerald-900">Credits added successfully</p>
               <p className="mt-2 text-sm text-emerald-800">
-                Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn’t updated yet, refresh once after the webhook settles.
+                Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn't updated yet, refresh once after the webhook settles.
               </p>
             </Card>
           ) : null}
@@ -257,6 +369,8 @@ export default function ClawRouterDashboardPage() {
               </Button>
             </div>
           </div>
+
+          <BalanceCard balance={balance} />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {summaryCards.map((card) => (
@@ -280,7 +394,7 @@ export default function ClawRouterDashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Models</p>
               <h2 className="mt-2 text-xl font-semibold text-stone-950">Available lanes</h2>
               <div className="mt-4 space-y-3">
-                {modelRows.map((row) => (
+                {[{ model: "clawrouter/auto", provider: "Managed route", status: "Default" }, { model: "Claude / GPT / Gemini class", provider: "Provider-routed", status: "Available" }, { model: "BYOK fallback", provider: "Manual provider path", status: "Optional" }].map((row) => (
                   <div key={row.model} className="rounded-[20px] border border-stone-200 bg-[rgba(248,244,237,0.7)] px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -319,17 +433,14 @@ export default function ClawRouterDashboardPage() {
                 <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
                   <span>Time</span>
                   <span>Model</span>
-                  <span>Provider</span>
+                  <span>Key</span>
                   <span>Cost</span>
                 </div>
-                {requestRows.map((row, index) => (
-                  <div key={index} className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-3 text-sm text-stone-700">
-                    <span>{row.time}</span>
-                    <span>{row.model}</span>
-                    <span>{row.provider}</span>
-                    <span>{row.cost}</span>
-                  </div>
-                ))}
+                {usageEvents.length > 0 ? (
+                  usageEvents.map((event) => <UsageRow key={event.id} event={event} />)
+                ) : (
+                  <EmptyState message="No requests yet" />
+                )}
               </div>
             </Card>
           </div>
