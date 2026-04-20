@@ -12,10 +12,9 @@ type PromoValidationResult = {
 
 type PromoCodeInputProps = {
   onValidChange?: (code: string, result: PromoValidationResult) => void;
-  onSubmit?: (code: string) => Promise<PromoValidationResult>;
 };
 
-export function PromoCodeInput({ onValidChange, onSubmit }: PromoCodeInputProps) {
+export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PromoValidationResult | null>(null);
@@ -28,49 +27,22 @@ export function PromoCodeInput({ onValidChange, onSubmit }: PromoCodeInputProps)
     setError("");
 
     try {
-      let validationResult: PromoValidationResult;
+      // Call the real promo validation API
+      const res = await fetch(`/api/promo/validate?code=${encodeURIComponent(code.trim())}`);
+      const data = await res.json();
 
-      if (onSubmit) {
-        validationResult = await onSubmit(code.trim());
-      } else {
-        // Default mock validation - in production, call /api/promo/validate
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const upperCode = code.trim().toUpperCase();
-        if (upperCode === "SAVE10") {
-          validationResult = {
-            valid: true,
-            code: upperCode,
-            discountType: "percentage",
-            discountValue: 10,
-            message: "10% off your purchase!",
-          };
-        } else if (upperCode === "BONUS20") {
-          validationResult = {
-            valid: true,
-            code: upperCode,
-            discountType: "bonus",
-            discountValue: 20,
-            message: "Get $20 bonus credits!",
-          };
-        } else if (upperCode === "FIVER") {
-          validationResult = {
-            valid: true,
-            code: upperCode,
-            discountType: "fixed",
-            discountValue: 5,
-            message: "$5 off instantly!",
-          };
-        } else {
-          validationResult = {
-            valid: false,
-            message: "Invalid promo code. Please try again.",
-          };
-        }
-      }
-
-      setResult(validationResult);
-      if (validationResult.valid) {
+      if (data.valid) {
+        const validationResult: PromoValidationResult = {
+          valid: true,
+          code: data.code,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          message: data.message,
+        };
+        setResult(validationResult);
         onValidChange?.(code.trim(), validationResult);
+      } else {
+        setResult({ valid: false, message: data.message || "Invalid promo code" });
       }
     } catch {
       setError("Failed to validate promo code. Please try again.");

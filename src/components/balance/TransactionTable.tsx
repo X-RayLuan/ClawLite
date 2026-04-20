@@ -31,9 +31,12 @@ type TransactionTableProps = {
   onLoadMore?: () => void;
   onTypeFilterChange?: (type: "all" | "recharge" | "charge" | "refund" | "freeze") => void;
   onDateRangeChange?: (range: DateRange, startDate?: string, endDate?: string) => void;
+  onKeyFilterChange?: (keyName: string) => void;
   typeFilter?: "all" | "recharge" | "charge" | "refund" | "freeze";
   dateRange?: DateRange;
   accessToken?: string;
+  apiKeys?: Array<{ id: string; key_prefix: string }>;
+  keyFilter?: string;
 };
 
 const txTypeConfig: Record<string, { label: string; color: string }> = {
@@ -89,9 +92,12 @@ export function TransactionTable({
   onLoadMore,
   onTypeFilterChange,
   onDateRangeChange,
+  onKeyFilterChange,
   typeFilter = "all",
   dateRange = "30d",
   accessToken,
+  apiKeys = [],
+  keyFilter = "",
 }: TransactionTableProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [customStartDate, setCustomStartDate] = useState("");
@@ -193,6 +199,22 @@ export function TransactionTable({
             </div>
           )}
 
+          {/* API Key Filter */}
+          {apiKeys.length > 0 && (
+            <select
+              value={keyFilter}
+              onChange={(e) => onKeyFilterChange?.(e.target.value)}
+              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs"
+            >
+              <option value="">All Keys</option>
+              {apiKeys.map((key) => (
+                <option key={key.id} value={key.key_prefix}>
+                  {key.key_prefix}…
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Type Filter */}
           <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-1">
             {(["all", "recharge", "charge", "refund"] as const).map((type) => (
@@ -212,7 +234,7 @@ export function TransactionTable({
 
           {/* Export Button */}
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleExport}
             disabled={exporting || !accessToken}

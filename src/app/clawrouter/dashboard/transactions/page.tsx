@@ -31,6 +31,8 @@ export default function TransactionsPage() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [pagination, setPagination] = useState({ limit: 20, offset: 0, totalTransactions: 0 });
+  const [apiKeys, setApiKeys] = useState<Array<{ id: string; key_prefix: string }>>([]);
+  const [keyFilter, setKeyFilter] = useState<string>("");
 
   const getDateRange = useCallback((range: DateRange): { startDate: string; endDate: string } => {
     const endDate = new Date();
@@ -79,6 +81,9 @@ export default function TransactionsPage() {
       if (typeFilter !== "all") {
         params.set("type", typeFilter);
       }
+      if (keyFilter) {
+        params.set("keyName", keyFilter);
+      }
 
       const res = await fetch(`/api/usage/records?${params}`, {
         headers: {
@@ -118,7 +123,21 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, pagination.limit, typeFilter, dateRange, getDateRange]);
+  }, [accessToken, pagination.limit, typeFilter, dateRange, keyFilter, getDateRange]);
+
+  const loadApiKeys = useCallback(async () => {
+    try {
+      const res = await fetch("/api/clawrouter/keys", {
+        headers: { Authorization: `Bearer ${accessToken}`, "Cache-Control": "no-store" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApiKeys(data.keys || []);
+      }
+    } catch (err) {
+      console.error("Failed to load API keys:", err);
+    }
+  }, [accessToken]);
 
   const loadBalance = useCallback(async () => {
     try {
@@ -165,6 +184,7 @@ export default function TransactionsPage() {
           if (token) {
             await Promise.all([
               loadBalance(),
+              loadApiKeys(),
               loadTransactions(0),
             ]);
           }
@@ -191,14 +211,14 @@ export default function TransactionsPage() {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [supabase, router, loadBalance, loadTransactions]);
+  }, [supabase, router, loadBalance, loadApiKeys, loadTransactions]);
 
   // Reload when filters change
   useEffect(() => {
     if (!checking && accessToken) {
       loadTransactions(0);
     }
-  }, [typeFilter, dateRange, checking, accessToken, loadTransactions]);
+  }, [typeFilter, dateRange, keyFilter, checking, accessToken, loadTransactions]);
 
   const handleLoadMore = () => {
     if (accessToken) {
@@ -262,9 +282,12 @@ export default function TransactionsPage() {
             onDateRangeChange={(range, start, end) => {
               setDateRange(range);
             }}
+            onKeyFilterChange={setKeyFilter}
             typeFilter={typeFilter}
             dateRange={dateRange}
             accessToken={accessToken || undefined}
+            apiKeys={apiKeys}
+            keyFilter={keyFilter}
           />
         </div>
       </div>
