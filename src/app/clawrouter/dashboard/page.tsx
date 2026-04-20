@@ -34,6 +34,7 @@ type UsageSummary = {
   totalTokensIn: number;
   totalTokensOut: number;
   totalCost: number;
+  todayCost: number;
   lastRequestAt: string | null;
 };
 
@@ -90,7 +91,7 @@ function buildSummaryCards(activeApiKeyCount: number, usage: UsageSummary) {
   const avgCostPerReq = usage.totalRequests > 0 ? usage.totalCost / usage.totalRequests : 0;
   return [
     { label: "Total Spent", value: `$${usage.totalCost.toFixed(4)}`, note: "All-time spend across ClawRouter" },
-    { label: "Today", value: "$0.00", note: "Current-day cost" },
+    { label: "Today", value: `$${usage.todayCost.toFixed(4)}`, note: "Current-day cost" },
     { label: "Total Tokens", value: (usage.totalTokensIn + usage.totalTokensOut).toLocaleString(), note: "Input + output tokens so far" },
     { label: "Avg Cost / Req", value: `$${avgCostPerReq.toFixed(4)}`, note: "Cost efficiency will appear here" },
     { label: "API Keys", value: String(activeApiKeyCount), note: "Active ClawLite API keys on this account" },
@@ -141,7 +142,7 @@ export default function ClawRouterDashboardPage() {
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [balance, setBalance] = useState<BalanceSummary>({ balanceUsd: 0, frozenBalanceUsd: 0, availableBalanceUsd: 0 });
-  const [usageSummary, setUsageSummary] = useState<UsageSummary>({ totalRequests: 0, totalTokensIn: 0, totalTokensOut: 0, totalCost: 0, lastRequestAt: null });
+  const [usageSummary, setUsageSummary] = useState<UsageSummary>({ totalRequests: 0, totalTokensIn: 0, totalTokensOut: 0, totalCost: 0, todayCost: 0, lastRequestAt: null });
   const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
   const [activeApiKeys, setActiveApiKeys] = useState(0);
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
@@ -192,6 +193,7 @@ export default function ClawRouterDashboardPage() {
             totalTokensIn: Number(summaryData.summary.totalTokensIn ?? 0),
             totalTokensOut: Number(summaryData.summary.totalTokensOut ?? 0),
             totalCost: Number(summaryData.summary.totalCost ?? 0),
+            todayCost: Number(summaryData.summary.todayCost ?? 0),
             lastRequestAt: summaryData.summary.lastRequestAt ?? null,
           });
         }

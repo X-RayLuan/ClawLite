@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TransactionTable, Transaction } from "@/components/balance/TransactionTable";
 
+type DateRange = "7d" | "30d" | "90d" | "custom";
+
 type BalanceSummary = {
   balanceUsd: number;
   frozenBalanceUsd: number;
@@ -20,18 +22,59 @@ export default function TransactionsPage() {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [balance, setBalance] = useState<BalanceSummary>({ balanceUsd: 0, frozenBalanceUsd: 0, availableBalanceUsd: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<"all" | "recharge" | "charge" | "refund" | "freeze">("all");
+  const [dateRange, setDateRange] = useState<DateRange>("30d");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [pagination, setPagination] = useState({ limit: 20, offset: 0, totalTransactions: 0 });
 
-  const loadTransactions = useCallback(async (accessToken: string, offset = 0) => {
+  const getDateRange = useCallback((range: DateRange): { startDate: string; endDate: string } => {
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+      case "7d":
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case "30d":
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+      case "90d":
+        startDate.setDate(startDate.getDate() - 90);
+        break;
+      case "custom":
+        if (customStartDate) {
+          startDate.setTime(new Date(customStartDate).getTime());
+        } else {
+          startDate.setDate(startDate.getDate() - 30);
+        }
+        if (customEndDate) {
+          endDate.setTime(new Date(customEndDate).getTime());
+        }
+        break;
+    }
+    
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+  }, [customStartDate, customEndDate]);
+
+  const loadTransactions = useCallback(async (offset = 0, range?: DateRange) => {
     setLoading(true);
     try {
+      const currentRange = range || dateRange;
+      const { startDate, endDate } = getDateRange(currentRange);
+      
       const params = new URLSearchParams({
         limit: String(pagination.limit),
         offset: String(offset),
+        startDate,
+        endDate,
       });
       if (typeFilter !== "all") {
         params.set("type", typeFilter);
@@ -75,9 +118,9 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, typeFilter]);
+  }, [accessToken, pagination.limit, typeFilter, dateRange, getDateRange]);
 
-  const loadBalance = useCallback(async (accessToken: string) => {
+  const loadBalance = useCallback(async () => {
     try {
       const res = await fetch("/api/usage/summary", {
         headers: {
@@ -99,7 +142,7 @@ export default function TransactionsPage() {
     } catch (err) {
       console.error("Failed to load balance:", err);
     }
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     if (!supabase) {
@@ -117,11 +160,12 @@ export default function TransactionsPage() {
 
         if (data.session?.user) {
           setEmail(data.session.user.email || null);
-          const accessToken = data.session.access_token;
-          if (accessToken) {
+          const token = data.session.access_token;
+          setAccessToken(token);
+          if (token) {
             await Promise.all([
-              loadBalance(accessToken),
-              loadTransactions(accessToken, 0),
+              loadBalance(),
+              loadTransactions(0),
             ]);
           }
           setChecking(false);
@@ -149,24 +193,16 @@ export default function TransactionsPage() {
     };
   }, [supabase, router, loadBalance, loadTransactions]);
 
-  // Reload when filter changes
+  // Reload when filters change
   useEffect(() => {
-    if (!checking && supabase) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session?.access_token) {
-          loadTransactions(data.session.access_token, 0);
-        }
-      });
+    if (!checking && accessToken) {
+      loadTransactions(0);
     }
-  }, [typeFilter, checking, supabase, loadTransactions]);
+  }, [typeFilter, dateRange, checking, accessToken, loadTransactions]);
 
   const handleLoadMore = () => {
-    if (!checking && supabase) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session?.access_token) {
-          loadTransactions(data.session.access_token, pagination.offset + pagination.limit);
-        }
-      });
+    if (accessToken) {
+      loadTransactions(pagination.offset + pagination.limit);
     }
   };
 
@@ -215,23 +251,21 @@ export default function TransactionsPage() {
           </Card>
         </div>
 
-        {/* Transaction Table */}
+        {/* Transaction Table with Filters */}
         <div className="mt-6">
           <TransactionTable
             transactions={transactions}
             loading={loading}
             pagination={pagination}
             onLoadMore={handleLoadMore}
-            typeFilter={typeFilter}
             onTypeFilterChange={setTypeFilter}
+            onDateRangeChange={(range, start, end) => {
+              setDateRange(range);
+            }}
+            typeFilter={typeFilter}
+            dateRange={dateRange}
+            accessToken={accessToken || undefined}
           />
-        </div>
-
-        {/* Export Button */}
-        <div className="mt-4 flex justify-end">
-          <Button variant="outline" className="border-stone-300">
-            Export CSV (Coming soon)
-          </Button>
         </div>
       </div>
     </main>

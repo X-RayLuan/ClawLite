@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const keyName = searchParams.get("keyName")?.trim() || null;
 
-    // Get usage events for this account
+    // Get all-time usage events for this account
     let query = supabase
       .from("usage_events")
       .select("created_at, tokens_in, tokens_out, cost", { count: "exact" })
@@ -37,6 +37,13 @@ export async function GET(request: NextRequest) {
     const totalCost = rows.reduce((sum: number, r: any) => sum + Number(r.cost || 0), 0);
     const lastRequestAt = rows[0]?.created_at || null;
 
+    // Calculate today's cost (from midnight today)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayCost = rows
+      .filter((r: any) => new Date(r.created_at) >= todayStart)
+      .reduce((sum: number, r: any) => sum + Number(r.cost || 0), 0);
+
     const balance = await checkBalance(userId);
 
     return NextResponse.json(
@@ -47,6 +54,7 @@ export async function GET(request: NextRequest) {
           totalTokensIn,
           totalTokensOut,
           totalCost,
+          todayCost,
           lastRequestAt,
           keyName,
         },
