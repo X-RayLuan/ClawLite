@@ -18,8 +18,11 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const intakeId = crypto.randomUUID();
 
+    let inserted = false;
+    let tableExists = true;
+
     try {
-      await supabase.from("resale_intakes").insert({
+      const { error } = await supabase.from("resale_intakes").insert({
         id: intakeId,
         installer_setup_token: setupToken,
         seller_email: sellerEmail,
@@ -28,15 +31,43 @@ export async function POST(request: NextRequest) {
         status: "submitted",
         created_at: new Date().toISOString(),
       });
-    } catch {
-      // Table may not exist yet — log and continue
-      console.log("resale_intakes insert skipped (table may not exist):", intakeId);
+
+      if (error) {
+        // Check if error is "table does not exist"
+        if (error.code === "42P01" || error.message?.includes("does not exist")) {
+          tableExists = false;
+        } else {
+          throw error;
+        }
+      } else {
+        inserted = true;
+      }
+    } catch (err: any) {
+      // Non-table-not-found errors
+      if (err.code !== "42P01" && !err.message?.includes("does not exist")) {
+        return NextResponse.json(
+          { error: err?.message || "resale_intake_failed" },
+          { status: 500 },
+        );
+      }
+      tableExists = false;
+    }
+
+    if (!tableExists) {
+      return NextResponse.json(
+        {
+          status: "unavailable",
+          intakeId: null,
+          error: "Resale intake is not available at this time. Please contact support.",
+        },
+        { status: 503 },
+      );
     }
 
     return NextResponse.json({
-      status: "submitted",
-      intakeId,
-      reviewUrl: `https://clawlite.ai/resale/${intakeId}`,
+      status: inserted ? "submitted" : "failed",
+      intakeId: inserted ? intakeId : null,
+      reviewUrl: inserted ? `https://clawlite.ai/resale/${intakeId}` : null,
     });
   } catch (error: any) {
     return NextResponse.json(

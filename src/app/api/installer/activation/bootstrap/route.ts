@@ -91,9 +91,9 @@ export async function POST(request: NextRequest) {
     }
 
     const allowedPaths = entitlementStatus === "active"
-      ? ["connect_existing_purchase", "buy_and_connect", "use_own_key"]
+      ? ["connect_now", "buy_and_connect", "use_own_key"]
       : ["buy_and_connect", "use_own_key"];
-    const recommendedPath = entitlementStatus === "active" ? "connect_existing_purchase" : "buy_and_connect";
+    const recommendedPath = entitlementStatus === "active" ? "connect_now" : "buy_and_connect";
 
     return NextResponse.json({
       setupToken,
