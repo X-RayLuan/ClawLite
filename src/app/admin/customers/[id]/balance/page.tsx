@@ -118,6 +118,11 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
       return;
     }
 
+    if (!supabase) {
+      setAdjustError("Not authenticated. Please login again.");
+      return;
+    }
+
     setAdjustLoading(true);
     setAdjustError("");
     setAdjustSuccess("");
