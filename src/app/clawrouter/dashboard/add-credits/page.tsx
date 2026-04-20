@@ -7,21 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
+import { PromoCodeInput } from "@/components/recharge/PromoCodeInput";
 
 const presetAmounts = [
-  { amount: 5, enabled: true, recommended: true, badge: null },
-  { amount: 10, enabled: false, recommended: false, badge: "Coming soon" },
-  { amount: 20, enabled: false, recommended: false, badge: "Coming soon" },
-  { amount: 50, enabled: false, recommended: false, badge: "Coming soon" },
-  { amount: 100, enabled: false, recommended: false, badge: "Coming soon" },
+  { amount: 5, enabled: true, recommended: true },
+  { amount: 10, enabled: false, recommended: false },
+  { amount: 20, enabled: false, recommended: false },
+  { amount: 50, enabled: false, recommended: false },
+  { amount: 100, enabled: false, recommended: false },
 ];
 
 export default function AddCreditsPage() {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [checking, setChecking] = useState(true);
-  const [selectedAmount, setSelectedAmount] = useState<number>(enabledAmount);
+  const [selectedAmount, setSelectedAmount] = useState(5);
   const [promoCode, setPromoCode] = useState("");
+  const [promoResult, setPromoResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,7 +59,6 @@ export default function AddCreditsPage() {
     const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         router.replace("/login?returnTo=%2Fclawrouter%2Fdashboard%2Fadd-credits");
-        return;
       }
 
       setChecking(false);
@@ -74,6 +75,17 @@ export default function AddCreditsPage() {
   }
 
   const resolvedAmount = selectedAmount;
+
+  // Calculate final amount with promo
+  const getFinalAmount = () => {
+    if (promoResult?.valid && promoResult?.discountType === "percentage") {
+      return resolvedAmount * (1 - (promoResult.discountValue || 0) / 100);
+    }
+    if (promoResult?.valid && promoResult?.discountType === "fixed") {
+      return Math.max(0, resolvedAmount - (promoResult.discountValue || 0));
+    }
+    return resolvedAmount;
+  };
 
   async function handleCheckout() {
     setLoading(true);
@@ -94,8 +106,8 @@ export default function AddCreditsPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          amount: resolvedAmount,
-          promoCode,
+          amount: getFinalAmount(),
+          promoCode: promoCode || undefined,
         }),
       });
 
@@ -169,25 +181,51 @@ export default function AddCreditsPage() {
             </div>
           </div>
 
-          <div className="mt-8">
-            <label htmlFor="promoCode" className="text-sm font-medium text-stone-700">
-              Promo Code (Optional)
-            </label>
-            <input
-              id="promoCode"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Enter promo code"
-              className="mt-3 w-full rounded-2xl border border-stone-300 bg-[rgba(248,244,237,0.72)] px-4 py-4 text-base text-stone-950 outline-none focus:border-stone-500"
-            />
-          </div>
+          <PromoCodeInput
+            onValidChange={(code, result) => {
+              setPromoCode(code);
+              setPromoResult(result);
+            }}
+          />
+
+          {/* Order Summary */}
+          {promoResult?.valid && (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-600">Original amount</span>
+                <span className="text-stone-500">${resolvedAmount.toFixed(2)}</span>
+              </div>
+              {promoResult.discountType === "percentage" && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-600">Discount ({promoResult.discountValue}%)</span>
+                  <span className="text-emerald-600">-${(resolvedAmount * (promoResult.discountValue / 100)).toFixed(2)}</span>
+                </div>
+              )}
+              {promoResult.discountType === "fixed" && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-600">Discount</span>
+                  <span className="text-emerald-600">-${promoResult.discountValue.toFixed(2)}</span>
+                </div>
+              )}
+              {promoResult.discountType === "bonus" && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-600">Bonus credits</span>
+                  <span className="text-emerald-600">+${promoResult.discountValue.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="mt-2 flex items-center justify-between border-t border-emerald-200 pt-2 text-base font-semibold">
+                <span>Final amount</span>
+                <span className="text-emerald-700">${getFinalAmount().toFixed(2)}</span>
+              </div>
+            </div>
+          )}
 
           <Button
             className="mt-8 h-14 w-full rounded-2xl bg-stone-900 text-base font-semibold hover:bg-stone-800"
             disabled={resolvedAmount <= 0 || loading}
             onClick={handleCheckout}
           >
-            {loading ? "Opening Stripe…" : `Pay $${resolvedAmount || 0} with Stripe`}
+            {loading ? "Opening Stripe…" : `Pay $${getFinalAmount().toFixed(2)} with Stripe`}
           </Button>
 
           {error ? <p className="mt-4 text-center text-sm text-red-600">{error}</p> : null}

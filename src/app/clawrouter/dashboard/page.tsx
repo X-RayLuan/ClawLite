@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
 
 import { ApiKeyCard } from "./components/ApiKeyCard";
+import { BalanceAlert } from "@/components/balance/BalanceAlert";
 
 const navItems = [
   { label: "Dashboard", href: "/clawrouter/dashboard" },
@@ -17,7 +18,7 @@ const navItems = [
   { label: "Quick Start", href: null },
   { label: "Models", href: null },
   { label: "Usage", href: "/dashboard/usage" },
-  { label: "Top-up History", href: null },
+  { label: "Transactions", href: "/clawrouter/dashboard/transactions" },
   { label: "Affiliate", href: null },
   { label: "Profile", href: null },
 ];
@@ -351,6 +352,11 @@ export default function ClawRouterDashboardPage() {
               </p>
             </Card>
           ) : null}
+
+          <BalanceAlert
+            availableBalanceUsd={balance.availableBalanceUsd}
+            frozenBalanceUsd={balance.frozenBalanceUsd}
+          />
 
           <div className="flex flex-col gap-4 rounded-[32px] border border-stone-300/60 bg-white/88 p-6 sm:flex-row sm:items-end sm:justify-between">
             <div>

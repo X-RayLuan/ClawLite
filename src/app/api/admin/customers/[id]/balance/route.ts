@@ -1,10 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
+import { checkBalance } from "@/lib/balance";
 
 export const runtime = "nodejs";
 
 type RouteContext = { params: Promise<{ id: string }> };
+
+// GET /api/admin/customers/:id/balance - 获取账户余额
+export async function GET(request: NextRequest, { params }: RouteContext) {
+  try {
+    const authResult = requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
+    const { id } = await params;
+    const supabase = getSupabaseAdminClient();
+
+    // Get account details
+    const { data: account, error: accountError } = await supabase
+      .from("accounts")
+      .select("id, email, plan, billing_status, credit_balance_usd, created_at")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (accountError) throw new Error(accountError.message);
+    if (!account) return NextResponse.json({ ok: false, error: "customer_not_found" }, { status: 404 });
+
+    // Get balance details
+    const balance = await checkBalance(id);
+
+    return NextResponse.json({
+      ok: true,
+      account,
+      balance,
+    });
+  } catch (error: any) {
+    const status = error?.message === "unauthorized" ? 401 : 500;
+    return NextResponse.json({ ok: false, error: error?.message || "failed_to_get_balance" }, { status });
+  }
+}
 
 // PATCH /api/admin/customers/:id/balance - 手动调整余额
 // body: { amount: number, reason: string }
