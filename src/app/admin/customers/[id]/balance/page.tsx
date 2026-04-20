@@ -85,25 +85,14 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
         console.error("Failed to load balance:", err);
       }
 
-      // Load transactions
+      // Load transactions for this customer (not admin's own)
       try {
-        const res = await fetch(`/api/usage/records?limit=50`, {
+        const res = await fetch(`/api/admin/customers/${customerId}/transactions?limit=50`, {
           headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}` },
         });
         if (res.ok) {
           const data = await res.json();
-          const mapped: Transaction[] = (data.transactions || []).map((tx: any) => ({
-            id: tx.id,
-            txType: tx.txType,
-            amount: tx.amount,
-            balanceBefore: tx.balanceBefore,
-            balanceAfter: tx.balanceAfter,
-            status: tx.status,
-            description: tx.description,
-            eventId: tx.eventId,
-            createdAt: tx.createdAt,
-          }));
-          setTransactions(mapped);
+          setTransactions(data.transactions || []);
         }
       } catch (err) {
         console.error("Failed to load transactions:", err);
