@@ -148,9 +148,11 @@ export async function POST(req: Request) {
           });
 
           // 新余额系统：插入 recharge_orders + balance_transactions
-          await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
+          console.log(`[stripe webhook] clawrouter_topup: calling addRechargeBalance for account ${accountId}, amount ${amountUsd}, session ${session.id}`);
+          const balanceResult = await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
             promoCode: promoCode ?? undefined,
           });
+          console.log(`[stripe webhook] addRechargeBalance result:`, balanceResult);
 
           // 创建或更新 entitlement（安装器 activation 需要检查 entitlement）
           const now = new Date().toISOString();
