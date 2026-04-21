@@ -6,10 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DownloadApiKeySection } from "@/components/ui/download-api-key-section";
 import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
-import {
-  normalizePartnerSlug,
-  PARTNER_REFERRAL_COOKIE,
-} from "@/lib/partner-referral";
 import { getSupabaseClient } from "@/lib/supabase";
 
 function getDownloadLink(base: string, platform: "mac" | "win", email: string) {
@@ -26,7 +22,7 @@ export default function DownloadsPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+
 
   const backupUrl = process.env.NEXT_PUBLIC_BACKUP_SKILLS_URL || "https://github.com/X-RayLuan/soul-backup-skill";
 
@@ -35,30 +31,6 @@ export default function DownloadsPage() {
       ? `${pathname || "/downloads"}${window.location.search || ""}`
       : (pathname || "/downloads");
     setLoginHref(`/login?returnTo=${encodeURIComponent(currentReturnTo)}`);
-
-    const queryPartner = normalizePartnerSlug(
-      typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("partner") : null
-    );
-    if (queryPartner && getPartnerCouponConfig(queryPartner)) {
-      document.cookie = `${PARTNER_REFERRAL_COOKIE}=${queryPartner}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
-      setPartnerSlug(queryPartner);
-      return;
-    }
-
-    const cookiePartner = normalizePartnerSlug(
-      document.cookie
-        .split("; ")
-        .find((entry) => entry.startsWith(`${PARTNER_REFERRAL_COOKIE}=`))
-        ?.split("=")
-        .slice(1)
-        .join("=")
-    );
-    if (cookiePartner && getPartnerCouponConfig(cookiePartner)) {
-      setPartnerSlug(cookiePartner);
-      return;
-    }
-
-    setPartnerSlug(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -79,18 +51,6 @@ export default function DownloadsPage() {
         if (user) {
           setEmail(user.email || "");
           setAccessToken(data.session?.access_token || null);
-          try {
-            const { data: profile } = await (client as any)
-              .from("user_profiles")
-              .select("partner_slug")
-              .eq("user_id", user.id)
-              .maybeSingle();
-            if (mounted && profile?.partner_slug && getPartnerCouponConfig(profile.partner_slug)) {
-              setPartnerSlug(normalizePartnerSlug(profile.partner_slug));
-            }
-          } catch {
-            // ignore profile lookup failures; cookie/query fallback still works
-          }
           setLoading(false);
           return;
         }
