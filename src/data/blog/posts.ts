@@ -16,27 +16,6 @@ export type BlogPost = {
 
 export const blogStaticParams = () => {
   return [
-    { slug: 'this-article-provides-a-comprehensive-guide-to-ai-agent-secu' },
-    { slug: 'the-ultimate-list-of-ai-tools-with-bring-your-own-key-byok-d' },
-    { slug: 'the-risks-of-ai-agents-or-receptionists-answering-my-busines' },
-    { slug: 'the-rise-and-risks-of-agentic-ai-even-as-adoption-increases-' },
-    { slug: 'search-for-topics-or-resources-enter-your-search-below-and-h' },
-    { slug: 'i-built-a-byok-ai-agent-platform-to-kill-the-20x-markup-on-a' },
-    { slug: 'geekflare-connect-is-a-byok-platform-that-allows-you-to-conn' },
-    { slug: 'byok-ai-platforms-allow-users-to-bring-their-own-api-keys-en' },
-    { slug: 'bring-your-own-key-byok-is-now-live-in-jetbrains-ides-bring-' },
-    { slug: 'ai-security-ai-security-featured-solutions-ai-agent-security' },
-    { slug: 'ai-agents-pose-risks-like-data-breaches-operational-disrupti' },
-    { slug: 'cost-per-successful-workflow-beats-cheap-ai-tokens' },
-    { slug: 'openclaw-alternative-for-builders-who-want-reliability' },
-    { slug: 'why-trust-matters-more-than-features-in-ai-assistants' },
-    { slug: 'traditional-authentication-is-incapable-of-securing-ai-agent' },
-    { slug: 'tiktok-has-expanded-its-symphony-suite-to-offer-ai-video-gen' },
-    { slug: 'hermes-international-is-not-directly-mentioned-in-relation-t' },
-    { slug: 'curity-announced-access-intelligence-an-extension-to-its-iam' },
-    { slug: 'cloudflare-and-openai-launch-agent-cloud-for-enterprises-clo' },
-    { slug: 'anthropics-ai-assistant-claude-is-now-available-in-microsoft' },
-    { slug: 'andrew-carr-and-jonathan-jarvis-two-veterans-with-roots-at-o' },
     { slug: '2026-03-21-why-ai-teams-quit-after-the-demo' },
     { slug: '2026-03-21-openclaw-vs-clawlite-installation-guide' },
     { slug: '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows' },
@@ -75,18 +54,6 @@ export const blogStaticParams = () => {
     { slug: 'openclaw-tutorial-complete-beginner-walkthrough' },
     { slug: 'ai-agent-control-plane-overload' },
     { slug: 'anthropic-lockout-agent-cost-control' },
-    { slug: 'this-weeks-ai-agent-news-highlights-significant-advancements' },
-    { slug: 'this-matters-for-enterprise-buyers-who-have-watched-model-pe' },
-    { slug: 'recommended-articles' },
-    { slug: 'openclaw-security-posture-after-cve-2026-33579' },
-    { slug: 'ai-agents-orchestrate-humans-as-on-demand-workforce-ai-agent' },
-    { slug: 'alibabas-happyhorse-1-0-has-topped-global-rankings-in-ai-vid' },
-    { slug: 'based-on-the-data-provided-the-pricing-for-anthropics-claude' },
-    { slug: 'buzzy-vibe-coding-startup-emergent-is-launching-an-ai-agent-' },
-    { slug: 'cramer-s-stop-trading-hermes-international-cnbc-s-jim-cramer' },
-    { slug: 'hermes-international-has-been-noted-by-cnbcs-jim-cramer-as-a' },
-    { slug: 'subscribe-today-to-gain-access-to-every-research-intelligenc' },
-    { slug: 'this-week-ai-agents-are-making-significant-strides-across-va' },
   ];
 }
 
@@ -1352,7 +1319,7 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: batch_fill_generated`
   },
   'ai-agents-pose-risks-like-data-breaches-operational-disrupti': {
-    title: "AI agents pose risks like data breaches, operational disruptions, and reputational damage; mitigation starts with visibility",
+    title: "AI agents pose risks like data breaches, operational disruptions, and reputational damage; mitiga...",
     date: "2026-04-21",
     content: `# AI agents pose risks like data breaches, operational disruptions, and reputational damage; mitiga...
 
