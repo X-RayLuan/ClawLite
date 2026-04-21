@@ -45,3 +45,10 @@ body {
 .command-code {
   @apply rounded-xl bg-stone-900 text-stone-100 px-4 py-3 font-mono text-sm;
 }
+
+/* Hide NewOaks AI chat widget — keep config, hide UI */
+#newoaks-widget,
+.newoaks-widget,
+iframe[src*="newoaks"] {
+  display: none !important;
+}
