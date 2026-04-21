@@ -131,28 +131,24 @@ export async function POST(req: Request) {
             throw new Error("invalid_topup_metadata");
           }
 
-          // 记录 topup_transactions（旧系统兼容）
-          await settleTopupCheckoutSession({
-            supabase,
-            accountId,
-            stripeSessionId: session.id,
-            stripeEventId: event.id,
-            amountUsd,
-            promoCode,
-            metadata: {
-              stripe_payment_status: session.payment_status,
-              stripe_customer_email: session.customer_details?.email ?? null,
-              stripe_status: session.status,
-              settled_at: new Date().toISOString(),
-            },
-          });
-
-          // 新余额系统：插入 recharge_orders + balance_transactions
+          // settleTopupCheckoutSession 已更新 accounts.credit_balance_usd（旧系统兼容）
+          // 新余额系统：插入 recharge_orders（幂等）+ balance_transactions
+          // 注意：余额更新已在 settleTopupCheckoutSession 中完成，这里只做记录
           console.log(`[stripe webhook] clawrouter_topup: calling addRechargeBalance for account ${accountId}, amount ${amountUsd}, session ${session.id}`);
-          const balanceResult = await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
-            promoCode: promoCode ?? undefined,
-          });
-          console.log(`[stripe webhook] addRechargeBalance result:`, balanceResult);
+          try {
+            const balanceResult = await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
+              promoCode: promoCode ?? undefined,
+            });
+            console.log(`[stripe webhook] addRechargeBalance result:`, balanceResult);
+          } catch (balanceError: any) {
+            // 如果是唯一约束冲突，说明已经处理过，跳过即可
+            if (balanceError?.code === "23505") {
+              console.log(`[stripe webhook] addRechargeBalance already processed (duplicate), continuing...`);
+            } else {
+              console.error(`[stripe webhook] addRechargeBalance failed:`, balanceError);
+              throw balanceError; // 其他错误继续抛出
+            }
+          }
 
           // 创建或更新 entitlement（安装器 activation 需要检查 entitlement）
           const now = new Date().toISOString();
