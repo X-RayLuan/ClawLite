@@ -109,7 +109,7 @@ export default function DownloadsPage() {
       <h1 className="font-display text-3xl font-semibold text-ink">Your ClawLite Access</h1>
       <div className="mt-2 flex items-center gap-3">
         <p className="text-sm text-ink/65">Logged in as {email}</p>
-        <Link href="/clawrouter/dashboard" className="text-sm font-medium text-sea underline underline-offset-2 hover:text-sea/80">
+        <Link href="/clawrouter/dashboard" className="rounded-full bg-sea px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-sea/90 hover:shadow-lg">
           Go to Dashboard →
         </Link>
       </div>
