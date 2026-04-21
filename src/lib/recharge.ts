@@ -56,7 +56,7 @@ export async function addRechargeBalance(
         .select("id")
         .eq("stripe_session_id", stripeSessionId)
         .maybeSingle();
-      if (existing?.data) {
+      if (existing.data) {
         return {
           rechargeOrderId: existing.data.id,
           balanceTransactionId: "",
