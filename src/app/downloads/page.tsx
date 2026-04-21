@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { DownloadApiKeySection } from "@/components/ui/download-api-key-section";
 import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
 import {
-  getCouponExperience,
-  getPartnerCouponConfig,
   normalizePartnerSlug,
   PARTNER_REFERRAL_COOKIE,
 } from "@/lib/partner-referral";
@@ -29,11 +27,8 @@ export default function DownloadsPage() {
   const [email, setEmail] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [partnerSlug, setPartnerSlug] = useState<string | null>(null);
 
   const backupUrl = process.env.NEXT_PUBLIC_BACKUP_SKILLS_URL || "https://github.com/X-RayLuan/soul-backup-skill";
-  const couponExperience = useMemo(() => getCouponExperience(partnerSlug), [partnerSlug]);
-  const couponCode = couponExperience.couponCode;
 
   useEffect(() => {
     const currentReturnTo = typeof window !== "undefined"
@@ -135,11 +130,7 @@ export default function DownloadsPage() {
     };
   }, [loginHref, router, supabase]);
 
-  async function copyCoupon() {
-    await navigator.clipboard.writeText(couponCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+
 
   function handleDownload(platform: "mac" | "win") {
     if (email) {
@@ -185,29 +176,7 @@ export default function DownloadsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-soft">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sea">3</p>
-          <h2 className="mt-2 text-lg font-semibold text-ink">{couponExperience.headline}</h2>
-          <p className="mt-2 text-sm text-ink/70">{couponExperience.body}</p>
-          {couponExperience.partner ? (
-            <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-coral/80">
-              Referred by {couponExperience.partner.displayName}
-            </p>
-          ) : null}
-          <div className="mt-4 rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm text-ink">{couponCode}</div>
-          <Button className="mt-3" variant="secondary" onClick={copyCoupon}>
-            {copied ? "Copied" : "Copy Promo Code"}
-          </Button>
-          <div className="mt-4 space-y-2 text-sm text-ink/75">
-            <p className="font-medium text-ink">How to redeem:</p>
-            <p>1. Go to ClawLite.ai → Pricing</p>
-            <p>2. Click "Get Tokens via EZRouter"</p>
-            <p>3. Register/login at openrouter.ezsite.ai</p>
-            <p>4. Select Add Credit</p>
-            <p>5. {couponExperience.redeemStepText}</p>
-            <p>6. Checkout</p>
-          </div>
-        </section>
+
       </div>
 
       {accessToken ? (
