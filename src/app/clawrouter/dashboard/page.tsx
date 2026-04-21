@@ -197,6 +197,12 @@ export default function ClawRouterDashboardPage() {
             lastRequestAt: summaryData.summary.lastRequestAt ?? null,
           });
         }
+      } else if (accountResponse.ok && accountPayload?.ok) {
+        setBalance((prev) => ({
+          ...prev,
+          balanceUsd: Number(accountPayload.account?.creditBalanceUsd || 0),
+          availableBalanceUsd: Number(accountPayload.account?.creditBalanceUsd || 0),
+        }));
       }
 
       // Fetch real usage events for recent requests table
@@ -222,6 +228,7 @@ export default function ClawRouterDashboardPage() {
       if (accountResponse.ok && accountPayload?.ok) {
         setBalance((prev) => ({
           ...prev,
+          balanceUsd: Number(accountPayload.account?.creditBalanceUsd || 0),
           availableBalanceUsd: Number(accountPayload.account?.creditBalanceUsd || 0),
         }));
       }
