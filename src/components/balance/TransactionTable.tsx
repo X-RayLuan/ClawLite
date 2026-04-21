@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useLang } from "@/components/lang-provider";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getContentForLang, getIntlLocale } from "@/lib/content";
 
 export type Transaction = {
   id: string;
@@ -38,27 +40,6 @@ type TransactionTableProps = {
   apiKeys?: Array<{ id: string; key_prefix: string }>;
   keyFilter?: string;
 };
-
-const txTypeConfig: Record<string, { label: string; color: string }> = {
-  recharge: { label: "Recharge", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  charge: { label: "Usage", color: "bg-stone-100 text-stone-700 border-stone-200" },
-  freeze: { label: "Freeze", color: "bg-amber-100 text-amber-700 border-amber-200" },
-  refund: { label: "Refund", color: "bg-blue-100 text-blue-700 border-blue-200" },
-};
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  frozen: { label: "Processing", color: "bg-amber-100 text-amber-700" },
-  completed: { label: "Completed", color: "bg-emerald-100 text-emerald-700" },
-  released: { label: "Released", color: "bg-stone-100 text-stone-500" },
-  pending: { label: "Pending", color: "bg-orange-100 text-orange-700" },
-};
-
-const dateRangeOptions: { value: DateRange; label: string }[] = [
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
-  { value: "custom", label: "Custom" },
-];
 
 function getDateRange(range: DateRange): { startDate: string; endDate: string } {
   const endDate = new Date();
@@ -99,10 +80,62 @@ export function TransactionTable({
   apiKeys = [],
   keyFilter = "",
 }: TransactionTableProps) {
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const { lang } = useLang();
+  const locale = getIntlLocale(lang);
+  const t = getContentForLang(lang).dashboard;
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [exporting, setExporting] = useState(false);
+  const txTypeConfig = useMemo(
+    () => ({
+      recharge: { label: t.transactionTable.filters.recharge, color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+      charge: { label: t.transactionTable.filters.charge, color: "bg-stone-100 text-stone-700 border-stone-200" },
+      freeze: { label: t.transactionTable.filters.freeze, color: "bg-amber-100 text-amber-700 border-amber-200" },
+      refund: { label: t.transactionTable.filters.refund, color: "bg-blue-100 text-blue-700 border-blue-200" }
+    }),
+    [t]
+  );
+  const statusConfig = useMemo(
+    () => ({
+      frozen: { label: t.transactionTable.statuses.frozen, color: "bg-amber-100 text-amber-700" },
+      completed: { label: t.transactionTable.statuses.completed, color: "bg-emerald-100 text-emerald-700" },
+      released: { label: t.transactionTable.statuses.released, color: "bg-stone-100 text-stone-500" },
+      pending: { label: t.transactionTable.statuses.pending, color: "bg-orange-100 text-orange-700" },
+      failed: { label: t.transactionTable.statuses.failed, color: "bg-red-100 text-red-700" }
+    }),
+    [t]
+  );
+  const dateRangeOptions = useMemo(
+    () => [
+      { value: "7d" as const, label: t.transactionTable.dateRange7d },
+      { value: "30d" as const, label: t.transactionTable.dateRange30d },
+      { value: "90d" as const, label: t.transactionTable.dateRange90d },
+      { value: "custom" as const, label: t.transactionTable.dateRangeCustom }
+    ],
+    [t]
+  );
+  const amountFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      }),
+    [locale]
+  );
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      }),
+    [locale]
+  );
+  const dateTimeFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
+    [locale]
+  );
 
   const handleDateRangeChange = (range: DateRange) => {
     if (range === "custom") {
@@ -154,7 +187,7 @@ export function TransactionTable({
   return (
     <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Transaction History</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.transactionTable.title}</p>
         
         <div className="flex flex-wrap items-center gap-2">
           {/* Date Range Filter */}
@@ -182,6 +215,7 @@ export function TransactionTable({
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
                 className="rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                aria-label={t.common.dateFrom}
               />
               <span className="text-stone-400">-</span>
               <input
@@ -189,12 +223,13 @@ export function TransactionTable({
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 className="rounded-lg border border-stone-300 px-2 py-1 text-xs"
+                aria-label={t.common.dateTo}
               />
               <button
                 onClick={() => handleDateRangeChange("custom")}
                 className="rounded-lg bg-stone-900 px-3 py-1 text-xs font-medium text-white"
               >
-                Apply
+                {t.common.apply}
               </button>
             </div>
           )}
@@ -206,7 +241,7 @@ export function TransactionTable({
               onChange={(e) => onKeyFilterChange?.(e.target.value)}
               className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs"
             >
-              <option value="">All Keys</option>
+              <option value="">{t.transactionTable.allKeys}</option>
               {apiKeys.map((key) => (
                 <option key={key.id} value={key.key_prefix}>
                   {key.key_prefix}…
@@ -227,7 +262,7 @@ export function TransactionTable({
                     : "text-stone-600 hover:text-stone-900"
                 }`}
               >
-                {type === "all" ? "All" : txTypeConfig[type]?.label}
+                {type === "all" ? t.transactionTable.allTypes : txTypeConfig[type]?.label}
               </button>
             ))}
           </div>
@@ -240,7 +275,7 @@ export function TransactionTable({
             disabled={exporting || !accessToken}
             className="border-stone-300 text-xs"
           >
-            {exporting ? "Exporting..." : "Export CSV"}
+            {exporting ? t.transactionTable.exporting : t.transactionTable.exportCsv}
           </Button>
         </div>
       </div>
@@ -248,21 +283,21 @@ export function TransactionTable({
       <div className="mt-4 overflow-hidden rounded-[22px] border border-stone-200">
         {/* Table Header */}
         <div className="grid grid-cols-[1fr_80px_100px_100px_80px] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
-          <span>Time</span>
-          <span>Type</span>
-          <span className="text-right">Amount</span>
-          <span className="text-right">Balance</span>
-          <span className="text-center">Status</span>
+          <span>{t.transactionTable.time}</span>
+          <span>{t.transactionTable.type}</span>
+          <span className="text-right">{t.transactionTable.amount}</span>
+          <span className="text-right">{t.transactionTable.balance}</span>
+          <span className="text-center">{t.transactionTable.status}</span>
         </div>
 
         {/* Table Body */}
         {loading ? (
           <div className="grid grid-cols-[1fr_80px_100px_100px_80px] px-4 py-8 text-center text-sm text-stone-400">
-            Loading transactions...
+            {t.common.loadingTransactionsTable}
           </div>
         ) : transactions.length === 0 ? (
           <div className="grid grid-cols-[1fr_80px_100px_100px_80px] px-4 py-8 text-center text-sm text-stone-400">
-            No transactions found
+            {t.transactionTable.noTransactionsFound}
           </div>
         ) : (
           transactions.map((tx) => (
@@ -271,7 +306,7 @@ export function TransactionTable({
               className="grid grid-cols-[1fr_80px_100px_100px_80px] items-center border-t border-stone-200 px-4 py-3 text-sm transition hover:bg-stone-50"
             >
               <span className="text-stone-600">
-                {new Date(tx.createdAt).toLocaleString()}
+                {dateTimeFormatter.format(new Date(tx.createdAt))}
               </span>
               <span>
                 <Badge className={`${txTypeConfig[tx.txType]?.color} text-xs border`}>
@@ -281,14 +316,14 @@ export function TransactionTable({
               <span className={`text-right font-medium ${
                 tx.amount > 0 ? "text-emerald-600" : "text-stone-700"
               }`}>
-                {tx.amount > 0 ? "+" : ""}{tx.amount.toFixed(4)}
+                {tx.amount > 0 ? "+" : ""}{amountFormatter.format(tx.amount)}
               </span>
               <span className="text-right text-stone-500">
-                ${tx.balanceAfter.toFixed(4)}
+                {currencyFormatter.format(tx.balanceAfter)}
               </span>
               <span className="text-center">
-                <Badge className={`${statusConfig[tx.status]?.color} text-xs`}>
-                  {statusConfig[tx.status]?.label}
+                <Badge className={`${statusConfig[tx.status]?.color ?? "bg-stone-100 text-stone-600"} text-xs`}>
+                  {statusConfig[tx.status]?.label ?? tx.status}
                 </Badge>
               </span>
             </div>
@@ -300,7 +335,10 @@ export function TransactionTable({
       {pagination && pagination.totalTransactions > pagination.limit && (
         <div className="mt-4 flex items-center justify-between">
           <p className="text-xs text-stone-500">
-            Showing {pagination.offset + 1} - {Math.min(pagination.offset + pagination.limit, pagination.totalTransactions)} of {pagination.totalTransactions}
+            {t.transactionTable.showing
+              .replace("{start}", String(pagination.offset + 1))
+              .replace("{end}", String(Math.min(pagination.offset + pagination.limit, pagination.totalTransactions)))
+              .replace("{total}", String(pagination.totalTransactions))}
           </p>
           {onLoadMore && (
             <button
@@ -308,7 +346,7 @@ export function TransactionTable({
               disabled={loading}
               className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-50"
             >
-              Load More
+              {t.transactionTable.loadMore}
             </button>
           )}
         </div>

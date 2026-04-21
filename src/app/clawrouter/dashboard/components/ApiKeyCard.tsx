@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useLang } from "@/components/lang-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getContentForLang, getIntlLocale } from "@/lib/content";
 import { getSupabaseClient } from "@/lib/supabase";
 
 type ApiKey = {
@@ -19,6 +21,9 @@ type ApiKey = {
 };
 
 export function ApiKeyCard() {
+  const { lang } = useLang();
+  const locale = getIntlLocale(lang);
+  const t = getContentForLang(lang).dashboard;
   const supabase = getSupabaseClient();
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,6 +39,27 @@ export function ApiKeyCard() {
   const [justCreated, setJustCreated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  const formatDate = useCallback(
+    (value: string) =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium"
+      }).format(new Date(value)),
+    [locale]
+  );
+
+  const formatStatus = useCallback(
+    (status: string) => {
+      if (status === "active") {
+        return t.apiKey.statusActive;
+      }
+      if (status === "disabled") {
+        return t.apiKey.statusDisabled;
+      }
+      return status;
+    },
+    [t]
+  );
 
   useEffect(() => {
     apiKeyRef.current = apiKey;
@@ -70,7 +96,7 @@ export function ApiKeyCard() {
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
-      setLoadError("Unable to connect to authentication.");
+      setLoadError(t.apiKey.connectError);
       return;
     }
 
@@ -92,7 +118,7 @@ export function ApiKeyCard() {
 
       if (mounted) {
         setLoading(false);
-        setLoadError("Unable to load your session.");
+        setLoadError(t.apiKey.sessionError);
       }
     }
 
@@ -101,7 +127,7 @@ export function ApiKeyCard() {
     return () => {
       mounted = false;
     };
-  }, [supabase]);
+  }, [supabase, t]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -128,10 +154,10 @@ export function ApiKeyCard() {
           return;
         }
 
-        setLoadError("Failed to load API key.");
+        setLoadError(t.apiKey.loadError);
       } catch {
         if (mounted) {
-          setLoadError("Failed to load API key.");
+          setLoadError(t.apiKey.loadError);
         }
       } finally {
         if (mounted) {
@@ -145,7 +171,7 @@ export function ApiKeyCard() {
     return () => {
       mounted = false;
     };
-  }, [accessToken, syncApiKey]);
+  }, [accessToken, syncApiKey, t]);
 
   useEffect(() => {
     return () => {
@@ -182,21 +208,21 @@ export function ApiKeyCard() {
         return;
       }
 
-      showErrorToast("Failed to generate key. Please try again.");
+      showErrorToast(t.apiKey.generateError);
     } catch {
-      showErrorToast("Failed to generate key. Please try again.");
+      showErrorToast(t.apiKey.generateError);
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, showErrorToast, syncApiKey]);
+  }, [accessToken, showErrorToast, syncApiKey, t]);
 
   const handleRegenerate = useCallback(async () => {
-    if (!window.confirm("This will deactivate your current key and create a new one. Continue?")) {
+    if (!window.confirm(t.apiKey.confirmRegenerate)) {
       return;
     }
 
     await handleCreateOrRefresh();
-  }, [handleCreateOrRefresh]);
+  }, [handleCreateOrRefresh, t]);
 
   const handleCopy = useCallback(async () => {
     if (!fullKey) return;
@@ -214,9 +240,9 @@ export function ApiKeyCard() {
         copiedTimeoutRef.current = null;
       }, 1500);
     } catch {
-      showErrorToast("Failed to copy key.");
+      showErrorToast(t.apiKey.copyError);
     }
-  }, [fullKey, showErrorToast]);
+  }, [fullKey, showErrorToast, t]);
 
   if (loading) {
     return (
@@ -248,9 +274,9 @@ export function ApiKeyCard() {
             {toastError}
           </div>
         ) : null}
-        <p className="text-sm text-stone-600">You don&apos;t have an API key yet.</p>
+        <p className="text-sm text-stone-600">{t.apiKey.empty}</p>
         <Button onClick={handleCreateOrRefresh} className="mt-4" disabled={submitting || !accessToken}>
-          {submitting ? "Generating..." : "Generate Key"}
+          {submitting ? t.apiKey.generating : t.apiKey.generate}
         </Button>
       </Card>
     );
@@ -268,16 +294,16 @@ export function ApiKeyCard() {
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">My API Key</p>
-          <h2 className="mt-2 text-xl font-semibold text-stone-950">ClawRouter API Key</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.apiKey.label}</p>
+          <h2 className="mt-2 text-xl font-semibold text-stone-950">{t.apiKey.title}</h2>
         </div>
-        <Badge className="border-stone-300 bg-emerald-50/90 text-emerald-700">{apiKey.status}</Badge>
+        <Badge className="border-stone-300 bg-emerald-50/90 text-emerald-700">{formatStatus(apiKey.status)}</Badge>
       </div>
 
       {justCreated && fullKey ? (
         <div className="mt-5 rounded-xl border border-emerald-300/60 bg-emerald-50/90 px-4 py-3">
           <p className="break-all font-mono text-sm text-emerald-900">{fullKey}</p>
-          <p className="mt-2 text-xs text-emerald-700">Save this key. The full value is only shown when it is first issued.</p>
+          <p className="mt-2 text-xs text-emerald-700">{t.apiKey.saveOnce}</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Button
               variant="secondary"
@@ -285,7 +311,7 @@ export function ApiKeyCard() {
               className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
               disabled={!canCopy}
             >
-              {copied ? "Copied" : "Copy Key"}
+              {copied ? t.apiKey.copied : t.apiKey.copyKey}
             </Button>
             <Button
               variant="secondary"
@@ -293,7 +319,7 @@ export function ApiKeyCard() {
               className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
               disabled={submitting}
             >
-              {submitting ? "Regenerating..." : "Regenerate"}
+              {submitting ? t.apiKey.regenerating : t.apiKey.regenerate}
             </Button>
           </div>
         </div>
@@ -309,7 +335,7 @@ export function ApiKeyCard() {
               className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
               disabled={!canCopy}
             >
-              {copied ? "Copied" : "Copy"}
+              {copied ? t.apiKey.copied : t.apiKey.copy}
             </Button>
             <Button
               variant="secondary"
@@ -317,19 +343,21 @@ export function ApiKeyCard() {
               className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
               disabled={submitting}
             >
-              {submitting ? "Regenerating..." : "Regenerate"}
+              {submitting ? t.apiKey.regenerating : t.apiKey.regenerate}
             </Button>
           </div>
           {!canCopy ? (
             <p className="mt-2 text-xs text-stone-500">
-              The full key is no longer available in this session. Regenerate to reveal a new key and copy it again.
+              {t.apiKey.noFullKey}
             </p>
           ) : null}
         </div>
       )}
 
       {apiKey.createdAt && (
-        <p className="mt-4 text-xs text-stone-500">Created {new Date(apiKey.createdAt).toLocaleDateString()}</p>
+        <p className="mt-4 text-xs text-stone-500">
+          {t.apiKey.created.replace("{date}", formatDate(apiKey.createdAt))}
+        </p>
       )}
     </Card>
   );

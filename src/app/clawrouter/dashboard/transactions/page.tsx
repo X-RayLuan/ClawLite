@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLang } from "@/components/lang-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { getContentForLang, getIntlLocale } from "@/lib/content";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TransactionTable, Transaction } from "@/components/balance/TransactionTable";
 
@@ -18,8 +20,21 @@ type BalanceSummary = {
 };
 
 export default function TransactionsPage() {
+  const { lang } = useLang();
+  const locale = getIntlLocale(lang);
+  const t = getContentForLang(lang).dashboard;
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }),
+    [locale]
+  );
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -229,7 +244,7 @@ export default function TransactionsPage() {
   if (checking) {
     return (
       <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">
-        Loading transactions...
+        {t.common.loadingTransactions}
       </main>
     );
   }
@@ -241,33 +256,33 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between">
           <div>
             <Button variant="ghost" asChild className="px-0 text-stone-700 hover:bg-transparent hover:text-stone-950">
-              <Link href="/clawrouter/dashboard">← Back to Dashboard</Link>
+              <Link href="/clawrouter/dashboard">← {t.common.backToDashboard}</Link>
             </Button>
             <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-stone-950">
-              Transaction History
+              {t.transactionsPage.title}
             </h1>
             <p className="mt-2 text-sm text-stone-600">
-              View all your account balance transactions including recharges, charges, and refunds.
+              {t.transactionsPage.subtitle}
             </p>
           </div>
           <Badge className="border-stone-300 bg-white/80 text-stone-700">
-            Balance: ${balance.availableBalanceUsd.toFixed(2)}
+            {t.transactionsPage.balance.replace("{amount}", currencyFormatter.format(balance.availableBalanceUsd))}
           </Badge>
         </div>
 
         {/* Balance Cards */}
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <Card className="rounded-[24px] border border-emerald-300/60 bg-gradient-to-br from-emerald-50/80 to-white/90 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Available</p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-700">${balance.availableBalanceUsd.toFixed(2)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">{t.balance.available}</p>
+            <p className="mt-2 text-2xl font-semibold text-emerald-700">{currencyFormatter.format(balance.availableBalanceUsd)}</p>
           </Card>
           <Card className="rounded-[24px] border border-amber-300/60 bg-gradient-to-br from-amber-50/80 to-white/90 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">Frozen</p>
-            <p className="mt-2 text-2xl font-semibold text-amber-700">${balance.frozenBalanceUsd.toFixed(2)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">{t.balance.frozen}</p>
+            <p className="mt-2 text-2xl font-semibold text-amber-700">{currencyFormatter.format(balance.frozenBalanceUsd)}</p>
           </Card>
           <Card className="rounded-[24px] border border-stone-300/60 bg-white/90 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Total</p>
-            <p className="mt-2 text-2xl font-semibold text-stone-950">${balance.balanceUsd.toFixed(2)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.balance.total}</p>
+            <p className="mt-2 text-2xl font-semibold text-stone-950">{currencyFormatter.format(balance.balanceUsd)}</p>
           </Card>
         </div>
 

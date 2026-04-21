@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useLang } from "@/components/lang-provider";
+import { getContentForLang } from "@/lib/content";
 
 type PromoValidationResult = {
   valid: boolean;
@@ -15,6 +17,8 @@ type PromoCodeInputProps = {
 };
 
 export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
+  const { lang } = useLang();
+  const t = getContentForLang(lang).dashboard;
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PromoValidationResult | null>(null);
@@ -42,10 +46,10 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
         setResult(validationResult);
         onValidChange?.(code.trim(), validationResult);
       } else {
-        setResult({ valid: false, message: data.message || "Invalid promo code" });
+        setResult({ valid: false, message: data.message || t.addCreditsPage.invalidPromoCode });
       }
     } catch {
-      setError("Failed to validate promo code. Please try again.");
+      setError(t.addCreditsPage.validateError);
       setResult(null);
     } finally {
       setLoading(false);
@@ -61,7 +65,7 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
   return (
     <div className="mt-6">
       <label htmlFor="promoCode" className="text-sm font-medium text-stone-700">
-        Promo Code (Optional)
+        {t.addCreditsPage.promoCodeOptional}
       </label>
       <div className="mt-2 flex gap-2">
         <div className="relative flex-1">
@@ -75,7 +79,7 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
               setError("");
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Enter promo code"
+            placeholder={t.addCreditsPage.enterPromoCode}
             disabled={loading}
             className={`w-full rounded-2xl border bg-[rgba(248,244,237,0.72)] px-4 py-4 text-base text-stone-950 outline-none transition focus:border-stone-500 disabled:cursor-not-allowed disabled:opacity-50 ${
               result?.valid === true
@@ -95,7 +99,7 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
           disabled={!code.trim() || loading}
           className="rounded-2xl border border-stone-300 bg-white px-5 py-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? "Validating..." : "Apply"}
+          {loading ? t.addCreditsPage.validating : t.common.apply}
         </button>
       </div>
 
@@ -108,10 +112,10 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
             <span className="font-semibold">(-{result.discountValue}%)</span>
           )}
           {result.discountType === "bonus" && result.discountValue && (
-            <span className="font-semibold">(+${result.discountValue} bonus)</span>
+            <span className="font-semibold">{`(+${result.discountValue} ${t.addCreditsPage.bonusCredits})`}</span>
           )}
           {result.discountType === "fixed" && result.discountValue && (
-            <span className="font-semibold">( -${result.discountValue})</span>
+            <span className="font-semibold">{`(-$${result.discountValue})`}</span>
           )}
         </div>
       )}

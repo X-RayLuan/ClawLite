@@ -4,24 +4,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
+import { useLang } from "@/components/lang-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getContentForLang, getIntlLocale } from "@/lib/content";
 import { getSupabaseClient } from "@/lib/supabase";
 
 import { ApiKeyCard } from "./components/ApiKeyCard";
 import { BalanceAlert } from "@/components/balance/BalanceAlert";
-
-const navItems = [
-  { label: "Dashboard", href: "/clawrouter/dashboard" },
-  { label: "API Keys", href: null },
-  { label: "Quick Start", href: null },
-  { label: "Models", href: null },
-  { label: "Usage", href: "/dashboard/usage" },
-  { label: "Transactions", href: "/clawrouter/dashboard/transactions" },
-  { label: "Affiliate", href: null },
-  { label: "Profile", href: null },
-];
 
 type BalanceSummary = {
   balanceUsd: number;
@@ -49,63 +40,117 @@ type UsageEvent = {
   created_at: string;
 };
 
-function BalanceBadge({ amount }: { amount: number }) {
-  if (amount < 0.1) {
-    return <span className="text-red-500 font-semibold">${amount.toFixed(2)}</span>;
+type DashboardContent = ReturnType<typeof getContentForLang>["dashboard"];
+
+function interpolate(template: string, values: Record<string, string | number>) {
+  let result = template;
+  for (const [key, value] of Object.entries(values)) {
+    result = result.replace(`{${key}}`, String(value));
   }
-  if (amount < 1) {
-    return <span className="text-orange-500 font-semibold">${amount.toFixed(2)}</span>;
-  }
-  return <span className="text-stone-950">${amount.toFixed(2)}</span>;
+  return result;
 }
 
-function BalanceCard({ balance }: { balance: BalanceSummary }) {
+function formatTopupStatus(status: string, t: DashboardContent) {
+  if (status === "completed") {
+    return t.common.statusCompleted;
+  }
+  if (status === "pending") {
+    return t.common.statusPending;
+  }
+  if (status === "failed") {
+    return t.common.statusFailed;
+  }
+  if (status === "frozen") {
+    return t.common.statusFrozen;
+  }
+  return status;
+}
+
+function BalanceBadge({
+  amount,
+  formatCurrency
+}: {
+  amount: number;
+  formatCurrency: (value: number) => string;
+}) {
+  if (amount < 0.1) {
+    return <span className="text-red-500 font-semibold">{formatCurrency(amount)}</span>;
+  }
+  if (amount < 1) {
+    return <span className="text-orange-500 font-semibold">{formatCurrency(amount)}</span>;
+  }
+  return <span className="text-stone-950">{formatCurrency(amount)}</span>;
+}
+
+function BalanceCard({
+  balance,
+  t,
+  formatCurrency
+}: {
+  balance: BalanceSummary;
+  t: DashboardContent;
+  formatCurrency: (value: number) => string;
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Card className="rounded-[24px] border border-emerald-300/60 bg-gradient-to-br from-emerald-50/80 to-white/90 p-5 shadow-none">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Available Balance</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">{t.balance.available}</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">
-          <BalanceBadge amount={balance.availableBalanceUsd} />
+          <BalanceBadge amount={balance.availableBalanceUsd} formatCurrency={formatCurrency} />
         </h2>
-        <p className="mt-2 text-sm leading-6 text-stone-600">Spendable balance for API requests</p>
+        <p className="mt-2 text-sm leading-6 text-stone-600">{t.balance.availableDescription}</p>
       </Card>
       <Card className="rounded-[24px] border border-amber-300/60 bg-gradient-to-br from-amber-50/80 to-white/90 p-5 shadow-none">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">Frozen</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">{t.balance.frozen}</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-amber-700">
-          ${balance.frozenBalanceUsd.toFixed(2)}
+          {formatCurrency(balance.frozenBalanceUsd)}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-stone-600">Processing requests (will be deducted)</p>
+        <p className="mt-2 text-sm leading-6 text-stone-600">{t.balance.frozenDescription}</p>
       </Card>
       <Card className="rounded-[24px] border border-stone-300/60 bg-white/90 p-5 shadow-none">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Total Balance</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.balance.totalBalance}</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-stone-950">
-          ${balance.balanceUsd.toFixed(2)}
+          {formatCurrency(balance.balanceUsd)}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-stone-600">Account total before deductions</p>
+        <p className="mt-2 text-sm leading-6 text-stone-600">{t.balance.totalBalanceDescription}</p>
       </Card>
     </div>
   );
 }
 
-function buildSummaryCards(activeApiKeyCount: number, usage: UsageSummary) {
+function buildSummaryCards(
+  activeApiKeyCount: number,
+  usage: UsageSummary,
+  t: DashboardContent,
+  formatCurrencyPrecise: (value: number) => string,
+  formatNumber: (value: number) => string
+) {
   const avgCostPerReq = usage.totalRequests > 0 ? usage.totalCost / usage.totalRequests : 0;
   return [
-    { label: "Total Spent", value: `$${usage.totalCost.toFixed(4)}`, note: "All-time spend across ClawRouter" },
-    { label: "Today", value: `$${usage.todayCost.toFixed(4)}`, note: "Current-day cost" },
-    { label: "Total Tokens", value: (usage.totalTokensIn + usage.totalTokensOut).toLocaleString(), note: "Input + output tokens so far" },
-    { label: "Avg Cost / Req", value: `$${avgCostPerReq.toFixed(4)}`, note: "Cost efficiency will appear here" },
-    { label: "API Keys", value: String(activeApiKeyCount), note: "Active ClawLite API keys on this account" },
+    { label: t.summary.totalSpent, value: formatCurrencyPrecise(usage.totalCost), note: t.summary.totalSpentNote },
+    { label: t.summary.today, value: formatCurrencyPrecise(usage.todayCost), note: t.summary.todayNote },
+    { label: t.summary.totalTokens, value: formatNumber(usage.totalTokensIn + usage.totalTokensOut), note: t.summary.totalTokensNote },
+    { label: t.summary.avgCostPerRequest, value: formatCurrencyPrecise(avgCostPerReq), note: t.summary.avgCostPerRequestNote },
+    { label: t.summary.apiKeys, value: formatNumber(activeApiKeyCount), note: t.summary.apiKeysNote },
   ];
 }
 
-function UsageRow({ event }: { event: UsageEvent }) {
+function UsageRow({
+  event,
+  formatDateTime,
+  formatCurrencyPrecise
+}: {
+  event: UsageEvent;
+  formatDateTime: (value: string) => string;
+  formatCurrencyPrecise: (value: number) => string;
+}) {
   return (
     <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] border-t border-stone-200 px-4 py-3 text-sm text-stone-700">
-      <span>{new Date(event.created_at).toLocaleString()}</span>
+      <span>{formatDateTime(event.created_at)}</span>
       <span className="font-medium">{event.model}</span>
       <span>{event.key_name ? `${event.key_name.slice(0, 8)}…` : "—"}</span>
       <span className={event.cost && event.cost > 0 ? "text-red-600" : "text-stone-600"}>
-        {event.cost != null ? `-$${event.cost.toFixed(4)}` : "$0.00"}
+        {event.cost != null ? `-${formatCurrencyPrecise(event.cost)}` : formatCurrencyPrecise(0)}
       </span>
     </div>
   );
@@ -137,8 +182,49 @@ function ChartShell({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 export default function ClawRouterDashboardPage() {
+  const { lang } = useLang();
+  const locale = getIntlLocale(lang);
+  const t = getContentForLang(lang).dashboard;
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseClient(), []);
+  const navItems = useMemo(
+    () => [
+      { label: t.nav.dashboard, href: "/clawrouter/dashboard" },
+      { label: t.nav.apiKeys, href: null },
+      { label: t.nav.quickStart, href: null },
+      { label: t.nav.models, href: null },
+      { label: t.nav.usage, href: "/dashboard/usage" },
+      { label: t.nav.transactions, href: "/clawrouter/dashboard/transactions" },
+      { label: t.nav.affiliate, href: null },
+      { label: t.nav.profile, href: null }
+    ],
+    [t]
+  );
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }),
+    [locale]
+  );
+  const preciseCurrencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      }),
+    [locale]
+  );
+  const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const dateTimeFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
+    [locale]
+  );
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [balance, setBalance] = useState<BalanceSummary>({ balanceUsd: 0, frozenBalanceUsd: 0, availableBalanceUsd: 0 });
@@ -297,10 +383,21 @@ export default function ClawRouterDashboardPage() {
   }, [loadDashboardData, router, supabase]);
 
   if (checking) {
-    return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">Loading ClawRouter dashboard…</main>;
+    return <main className="mx-auto min-h-[60vh] max-w-6xl px-6 py-16 text-stone-600">{t.common.loadingDashboard}</main>;
   }
 
-  const summaryCards = buildSummaryCards(activeApiKeys, usageSummary);
+  const summaryCards = buildSummaryCards(
+    activeApiKeys,
+    usageSummary,
+    t,
+    (value) => preciseCurrencyFormatter.format(value),
+    (value) => numberFormatter.format(value)
+  );
+  const formattedTopupAmount =
+    topupAmount && Number.isFinite(Number(topupAmount)) ? currencyFormatter.format(Number(topupAmount)) : topupAmount;
+  const successAmount = formattedTopupAmount
+    ? interpolate(t.page.topupSuccessAmount, { amount: formattedTopupAmount })
+    : "";
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
@@ -311,8 +408,8 @@ export default function ClawRouterDashboardPage() {
               CR
             </div>
             <div>
-              <p className="text-sm font-semibold text-stone-950">ClawRouter</p>
-              <p className="text-xs text-stone-500">{email || "account"}</p>
+              <p className="text-sm font-semibold text-stone-950">{t.common.clawRouter}</p>
+              <p className="text-xs text-stone-500">{email || t.common.accountFallback}</p>
             </div>
           </div>
 
@@ -342,11 +439,13 @@ export default function ClawRouterDashboardPage() {
           </nav>
 
           <div className="mt-6 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.7)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Quick actions</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.common.quickActions}</p>
             <div className="mt-3 space-y-2">
-              <Button asChild className="w-full bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
+              <Button asChild className="w-full bg-stone-900 hover:bg-stone-800">
+                <Link href="/clawrouter/dashboard/add-credits">{t.common.addCredits}</Link>
+              </Button>
               <div className="w-full rounded-2xl border border-stone-300 bg-white/80 px-4 py-3 text-center text-sm text-stone-600">
-                Your ClawLite API key appears in the card below after your first eligible purchase.
+                {t.page.quickActionsHint}
               </div>
             </div>
           </div>
@@ -355,9 +454,9 @@ export default function ClawRouterDashboardPage() {
         <section className="space-y-6">
           {topupState === "success" ? (
             <Card className="rounded-[24px] border border-emerald-300/60 bg-emerald-50/90 p-5 shadow-none">
-              <p className="text-sm font-semibold text-emerald-900">Credits added successfully</p>
+              <p className="text-sm font-semibold text-emerald-900">{t.page.topupSuccessTitle}</p>
               <p className="mt-2 text-sm text-emerald-800">
-                Stripe checkout returned successfully{topupAmount ? ` for $${topupAmount}` : ""}. If the balance below hasn't updated yet, refresh once after the webhook settles.
+                {interpolate(t.page.topupSuccessBody, { amount: successAmount })}
               </p>
             </Card>
           ) : null}
@@ -369,23 +468,25 @@ export default function ClawRouterDashboardPage() {
 
           <div className="flex flex-col gap-4 rounded-[32px] border border-stone-300/60 bg-white/88 p-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <Badge className="border-stone-300 bg-[rgba(248,244,237,0.9)] text-stone-700">Dashboard</Badge>
+              <Badge className="border-stone-300 bg-[rgba(248,244,237,0.9)] text-stone-700">{t.common.dashboard}</Badge>
               <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-stone-950">
-                ClawRouter account workspace
+                {t.page.title}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 sm:text-base">
-                This is the logged-in surface after checkout: add credits, manage your ClawLite API key, inspect available models, and track spend and usage in one place.
+                {t.page.subtitle}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button asChild className="bg-stone-900 hover:bg-stone-800"><Link href="/clawrouter/dashboard/add-credits">Add Credits</Link></Button>
+              <Button asChild className="bg-stone-900 hover:bg-stone-800">
+                <Link href="/clawrouter/dashboard/add-credits">{t.common.addCredits}</Link>
+              </Button>
               <Button variant="secondary" asChild className="border-stone-300 bg-white/80 text-stone-900 hover:bg-white">
-                <Link href="/clawrouter">Back to sales page</Link>
+                <Link href="/clawrouter">{t.common.backToSalesPage}</Link>
               </Button>
             </div>
           </div>
 
-          <BalanceCard balance={balance} />
+          <BalanceCard balance={balance} t={t} formatCurrency={(value) => currencyFormatter.format(value)} />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {summaryCards.map((card) => (
@@ -400,16 +501,16 @@ export default function ClawRouterDashboardPage() {
           <ApiKeyCard />
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <ChartShell title="Usage by Model" subtitle="Breakdown appears here once requests start flowing through ClawRouter." />
-            <ChartShell title="Usage by Provider" subtitle="Provider mix, spend share, and routing distribution will render here." />
+            <ChartShell title={t.page.usageByModelTitle} subtitle={t.page.usageByModelSubtitle} />
+            <ChartShell title={t.page.usageByProviderTitle} subtitle={t.page.usageByProviderSubtitle} />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Models</p>
-              <h2 className="mt-2 text-xl font-semibold text-stone-950">Available lanes</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.page.modelsLabel}</p>
+              <h2 className="mt-2 text-xl font-semibold text-stone-950">{t.page.modelsTitle}</h2>
               <div className="mt-4 space-y-3">
-                {[{ model: "clawrouter/auto", provider: "Managed route", status: "Default" }, { model: "Claude / GPT / Gemini class", provider: "Provider-routed", status: "Available" }, { model: "BYOK fallback", provider: "Manual provider path", status: "Optional" }].map((row) => (
+                {t.page.modelRows.map((row) => (
                   <div key={row.model} className="rounded-[20px] border border-stone-200 bg-[rgba(248,244,237,0.7)] px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -426,35 +527,44 @@ export default function ClawRouterDashboardPage() {
 
           <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Top-up History</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.page.topupHistoryTitle}</p>
               <div className="mt-5 space-y-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.72)] p-4">
                 {topups.length ? topups.map((row) => (
                   <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-4 py-3 text-sm text-stone-800">
                     <div>
-                      <p className="font-medium text-stone-950">${Number(row.amount_usd || 0).toFixed(2)} top-up</p>
-                      <p className="text-xs text-stone-500">{new Date(row.created_at).toLocaleString()}</p>
+                      <p className="font-medium text-stone-950">{`${currencyFormatter.format(Number(row.amount_usd || 0))} ${t.common.topUp}`}</p>
+                      <p className="text-xs text-stone-500">{dateTimeFormatter.format(new Date(row.created_at))}</p>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">{row.status}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-600">
+                      {formatTopupStatus(row.status, t)}
+                    </span>
                   </div>
                 )) : (
-                  <p className="text-sm text-stone-600">No completed top-ups yet.</p>
+                  <p className="text-sm text-stone-600">{t.page.noTopupsYet}</p>
                 )}
               </div>
             </Card>
 
             <Card className="rounded-[28px] border border-stone-300/60 bg-white/90 p-6 shadow-none">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Recent requests</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.page.recentRequestsTitle}</p>
               <div className="mt-4 overflow-hidden rounded-[22px] border border-stone-200">
                 <div className="grid grid-cols-[1.2fr_1fr_1fr_0.7fr] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
-                  <span>Time</span>
-                  <span>Model</span>
-                  <span>Key</span>
-                  <span>Cost</span>
+                  <span>{t.page.recentRequestsHeaders.time}</span>
+                  <span>{t.page.recentRequestsHeaders.model}</span>
+                  <span>{t.page.recentRequestsHeaders.key}</span>
+                  <span>{t.page.recentRequestsHeaders.cost}</span>
                 </div>
                 {usageEvents.length > 0 ? (
-                  usageEvents.map((event) => <UsageRow key={event.id} event={event} />)
+                  usageEvents.map((event) => (
+                    <UsageRow
+                      key={event.id}
+                      event={event}
+                      formatDateTime={(value) => dateTimeFormatter.format(new Date(value))}
+                      formatCurrencyPrecise={(value) => preciseCurrencyFormatter.format(value)}
+                    />
+                  ))
                 ) : (
-                  <EmptyState message="No requests yet" />
+                  <EmptyState message={t.page.recentRequestsEmpty} />
                 )}
               </div>
             </Card>
