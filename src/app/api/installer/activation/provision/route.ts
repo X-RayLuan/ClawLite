@@ -4,8 +4,8 @@ import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import {
   listDeliveredKeysForAccount,
   ensureManagedKeyDelivery,
-  assignInventoryKeyToAccount,
 } from "@/lib/clawrouter-delivery";
+import { getActiveEntitlementForAccount } from "@/lib/clawrouter-checkout";
 
 export const runtime = "nodejs";
 
@@ -44,53 +44,38 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdminClient();
 
-    // Verify account is active (by key delivery / credit balance)
+    // Verify account is active by checking entitlement status
+    const entitlement = await getActiveEntitlementForAccount(supabase, accountId);
+    if (!entitlement) {
+      return NextResponse.json({
+        provisioningState: "failed",
+        bindingId: null,
+        credentialRef: null,
+        provider: "clawrouter",
+        model: "clawrouter/auto",
+        error: "Account is not active (no entitlement found)",
+      }, { status: 400 });
+    }
+
+    // Look for an existing active managed_key delivery
     const deliveredKeys = await listDeliveredKeysForAccount(supabase, accountId);
-    // Prefer inventory_key over managed_key (inventory has real upstream keys)
-    const inventoryDelivered = deliveredKeys.find(
-      (k: any) => k.status === "active" && k.plaintextKey && k.deliveryMode === "inventory_key"
-    );
     const managedDelivered = deliveredKeys.find(
-      (k: any) => k.status === "active" && k.plaintextKey && k.deliveryMode === "managed_key"
+      (k: any) =>
+        k.status === "active" &&
+        k.deliveryMode === "managed_key" &&
+        k.plaintextKey,
     );
 
-    let plaintextKey: string | null = inventoryDelivered?.plaintextKey || null;
+    let plaintextKey: string | null = managedDelivered?.plaintextKey || null;
 
     if (!plaintextKey) {
-      const account = await supabase
-        .from("accounts")
-        .select("credit_balance_usd")
-        .eq("id", accountId)
-        .maybeSingle();
-
-      const hasCredit = account?.data && Number(account.data.credit_balance_usd || 0) > 0;
-      if (!hasCredit) {
-        return NextResponse.json({
-          provisioningState: "failed",
-          bindingId: null,
-          credentialRef: null,
-          provider: "clawrouter",
-          model: "clawrouter/auto",
-          error: "Account is not active (no delivered key or credit balance)",
-        }, { status: 400 });
-      }
-
-      // User has paid — try assigning a real inventory key first
-      const inventoryAssignment = await assignInventoryKeyToAccount({ supabase, accountId });
-      if (inventoryAssignment.delivery?.plaintextKey) {
-        plaintextKey = inventoryAssignment.delivery.plaintextKey;
-      } else if (managedDelivered?.plaintextKey) {
-        // No inventory available, but there's an existing managed key
-        plaintextKey = managedDelivered.plaintextKey;
+      // No existing managed delivery — create one
+      const keyResult = await ensureClawRouterApiKey(supabase, accountId);
+      if (keyResult.key.plaintextSecret) {
+        plaintextKey = keyResult.key.plaintextSecret;
+        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
       } else {
-        // No inventory and no existing managed delivery — create managed
-        const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-        if (keyResult.key.plaintextSecret) {
-          plaintextKey = keyResult.key.plaintextSecret;
-          await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
-        } else {
-          plaintextKey = await rotateAndCreateKey(supabase, accountId);
-        }
+        plaintextKey = await rotateAndCreateKey(supabase, accountId);
       }
     }
 

@@ -27,40 +27,45 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const amount = Number(body.amount || 0);
+    const priceId = typeof body.priceId === "string" ? body.priceId.trim() : "";
     const promoCode = typeof body.promoCode === "string" ? body.promoCode.trim() : "";
 
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ ok: false, error: "invalid_amount" }, { status: 400 });
     }
 
-    const unitAmount = Math.round(amount * 100);
-    if (unitAmount < 100) {
-      return NextResponse.json({ ok: false, error: "minimum_amount_is_1_usd" }, { status: 400 });
-    }
-
-    const isInventoryAccessPurchase = amount === 5;
+    const isInventoryAccessPurchase = false; // 已移除 inventory key 系统，所有充值统一使用 managed key
     const kind = isInventoryAccessPurchase ? "clawrouter_access" : "clawrouter_topup";
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    const lineItems: Record<string, string> = priceId
+      ? { "line_items[0][price]": priceId, "line_items[0][quantity]": "1" }
+      : (() => {
+          const unitAmount = Math.round(amount * 100);
+          if (unitAmount < 100) {
+            throw Object.assign(new Error("minimum_amount_is_1_usd"), { statusCode: 400 });
+          }
+          return {
+            "line_items[0][price_data][currency]": "usd",
+            "line_items[0][price_data][product_data][name]": `ClawRouter Credits – $${amount}`,
+            "line_items[0][price_data][product_data][description]": promoCode
+              ? `Promo code entered: ${promoCode}`
+              : "Top up your ClawRouter account balance.",
+            "line_items[0][price_data][unit_amount]": String(unitAmount),
+            "line_items[0][quantity]": "1",
+          };
+        })();
+
     const stripeSession = await createStripeCheckoutSessionViaFetch({
       secretKey: process.env.STRIPE_SECRET_KEY,
       fields: {
         mode: "payment",
         billing_address_collection: "auto",
         allow_promotion_codes: true,
-        "line_items[0][price_data][currency]": "usd",
-        "line_items[0][price_data][product_data][name]": isInventoryAccessPurchase
-          ? "ClawRouter Access – Inventory Key"
-          : `ClawRouter Credits – $${amount}`,
-        "line_items[0][price_data][product_data][description]": isInventoryAccessPurchase
-          ? "Purchase one inventory API key with $10 upstream value."
-          : promoCode
-            ? `Promo code entered: ${promoCode}`
-            : "Top up your ClawRouter account balance.",
-        "line_items[0][price_data][unit_amount]": unitAmount,
-        "line_items[0][quantity]": 1,
+        ...lineItems,
         customer_email: email || undefined,
-        "metadata[kind]": kind,
-        "metadata[delivery_mode]": isInventoryAccessPurchase ? "inventory_key" : "managed_topup",
+        "metadata[kind]": "clawrouter_topup",
+        "metadata[delivery_mode]": "managed_topup",
         "metadata[account_id]": userId,
         "metadata[amount_usd]": String(amount),
         "metadata[promo_code]": promoCode,

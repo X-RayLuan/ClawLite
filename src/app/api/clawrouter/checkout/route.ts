@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const deliveryMode = typeof body.deliveryMode === "string" ? body.deliveryMode : "inventory_key";
+    const deliveryMode = typeof body.deliveryMode === "string" ? body.deliveryMode : "managed_topup";
 
     const stripeSession = await createStripeCheckoutSessionViaFetch({
       secretKey: process.env.STRIPE_SECRET_KEY,

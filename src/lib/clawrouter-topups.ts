@@ -141,7 +141,7 @@ export async function reconcileTopupsFromStripe(input: {
     if (session?.metadata?.account_id !== input.accountId) continue;
 
     const paidAmountUsd = Number(session?.metadata?.amount_usd || 0);
-    const amountUsd = session?.metadata?.kind === "clawrouter_access" && paidAmountUsd === 5 ? 10 : paidAmountUsd;
+    const amountUsd = paidAmountUsd;
     if (!Number.isFinite(amountUsd) || amountUsd <= 0) continue;
 
     const result = await settleTopupCheckoutSession({

@@ -3,7 +3,6 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import {
   listDeliveredKeysForAccount,
   ensureManagedKeyDelivery,
-  assignInventoryKeyToAccount,
 } from "@/lib/clawrouter-delivery";
 import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 
@@ -37,29 +36,24 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdminClient();
 
+    // Look for an existing active managed_key delivery
     const deliveredKeys = await listDeliveredKeysForAccount(supabase, accountId);
-    // Prefer inventory_key (real upstream) over managed_key
-    const inventoryKey = deliveredKeys.find(
-      (k: any) => k.status === "active" && k.plaintextKey && k.deliveryMode === "inventory_key"
-    );
     const managedKey = deliveredKeys.find(
-      (k: any) => k.status === "active" && k.plaintextKey && k.deliveryMode === "managed_key"
+      (k: any) =>
+        k.status === "active" &&
+        k.deliveryMode === "managed_key" &&
+        k.plaintextKey,
     );
-    let credentialRef: string | null = inventoryKey?.plaintextKey || managedKey?.plaintextKey || null;
+    let credentialRef: string | null = managedKey?.plaintextKey || null;
 
     if (!credentialRef) {
-      // Try assigning a real inventory key first
-      const inventoryAssignment = await assignInventoryKeyToAccount({ supabase, accountId });
-      if (inventoryAssignment.delivery?.plaintextKey) {
-        credentialRef = inventoryAssignment.delivery.plaintextKey;
+      // No existing managed delivery — create one
+      const keyResult = await ensureClawRouterApiKey(supabase, accountId);
+      if (keyResult.key.plaintextSecret) {
+        credentialRef = keyResult.key.plaintextSecret;
+        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
       } else {
-        const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-        if (keyResult.key.plaintextSecret) {
-          credentialRef = keyResult.key.plaintextSecret;
-          await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
-        } else {
-          credentialRef = await rotateAndCreateKey(supabase, accountId);
-        }
+        credentialRef = await rotateAndCreateKey(supabase, accountId);
       }
     }
 

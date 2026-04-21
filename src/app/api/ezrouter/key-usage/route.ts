@@ -34,18 +34,19 @@ export async function GET(request: NextRequest) {
     }
 
     const deliveredKeys = await listDeliveredKeysForAccount(supabase, userId);
-    const inventoryKeys = deliveredKeys.filter((key: (typeof deliveredKeys)[number]) => key.deliveryMode === "inventory_key");
+    // 统一使用 managed_key，inventory_key 已移除
+    const managedKeys = deliveredKeys.filter((key: (typeof deliveredKeys)[number]) => key.deliveryMode === "managed_key");
 
     let resolvedKeyName = requestedKeyName;
     if (!resolvedKeyName) {
-      resolvedKeyName = inventoryKeys[0]?.displayName || null;
+      resolvedKeyName = managedKeys[0]?.displayName || null;
     }
 
     if (!resolvedKeyName) {
-      throw new Error("missing_key_name_and_no_inventory_key_found");
+      throw new Error("missing_key_name_and_no_managed_key_found");
     }
 
-    const ownedKey = inventoryKeys.find((key: (typeof inventoryKeys)[number]) => key.displayName === resolvedKeyName) || null;
+    const ownedKey = managedKeys.find((key: (typeof managedKeys)[number]) => key.displayName === resolvedKeyName) || null;
     if (!ownedKey) {
       throw new Error("key_not_owned_by_account");
     }

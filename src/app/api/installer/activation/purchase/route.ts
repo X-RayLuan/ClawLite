@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             "metadata[account_id]": session.accountId,
             "metadata[installer_setup_token]": setupToken,
             "metadata[product]": "clawrouter",
-            "metadata[delivery_mode]": "inventory_key",
+            "metadata[delivery_mode]": "managed_topup",
           },
         });
 

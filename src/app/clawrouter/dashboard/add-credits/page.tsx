@@ -9,13 +9,13 @@ import { Card } from "@/components/ui/card";
 import { getSupabaseClient } from "@/lib/supabase";
 import { PromoCodeInput } from "@/components/recharge/PromoCodeInput";
 
-const presetAmounts = [
-  { amount: 5, enabled: true, recommended: true },
-  { amount: 10, enabled: false, recommended: false },
-  { amount: 20, enabled: false, recommended: false },
-  { amount: 50, enabled: false, recommended: false },
-  { amount: 100, enabled: false, recommended: false },
-];
+const PRICE_IDS: Record<number, string> = {
+  5: "price_1TK04kLnt527OBZbk7XVPEK5",
+  10: "price_1TOIkpLnt527OBZb4upTT9X2",
+  20: "price_1TOIlsLnt527OBZbSRb1ZhbT",
+  50: "price_1TOIpTLnt527OBZbAxPozkF5",
+  100: "price_1TOIpyLnt527OBZbk3oeb51n",
+};
 
 export default function AddCreditsPage() {
   const router = useRouter();
@@ -106,7 +106,8 @@ export default function AddCreditsPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          amount: getFinalAmount(),
+          amount: selectedAmount,
+          priceId: PRICE_IDS[selectedAmount],
           promoCode: promoCode || undefined,
         }),
       });
@@ -147,33 +148,26 @@ export default function AddCreditsPage() {
           <div className="mt-8">
             <p className="text-sm font-medium text-stone-700">Select Amount</p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {presetAmounts.map((preset) => {
-                const active = selectedAmount === preset.amount;
+              {Object.entries(PRICE_IDS).map(([amount, priceId]) => {
+                const amountNum = Number(amount);
+                const active = selectedAmount === amountNum;
+                const isRecommended = amountNum === 5;
                 return (
                   <button
-                    key={preset.amount}
+                    key={amount}
                     type="button"
-                    onClick={() => {
-                      if (!preset.enabled) return;
-                      setSelectedAmount(preset.amount);
-                    }}
-                    disabled={!preset.enabled}
+                    onClick={() => setSelectedAmount(amountNum)}
                     className={`relative rounded-2xl border px-4 py-4 text-base font-semibold transition ${
                       active
                         ? "border-stone-900 bg-stone-900 text-white"
-                        : preset.enabled
-                          ? "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
-                          : "cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400"
+                        : "border-stone-300 bg-[rgba(248,244,237,0.72)] text-stone-900 hover:border-stone-400"
                     }`}
                   >
-                    ${preset.amount}
-                    {preset.recommended && !active && (
+                    ${amount}
+                    {isRecommended && !active && (
                       <span className="absolute -top-2 -right-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                         Best
                       </span>
-                    )}
-                    {!preset.enabled && (
-                      <span className="mt-1 block text-xs font-normal">Coming soon</span>
                     )}
                   </button>
                 );

@@ -98,44 +98,19 @@ export async function POST(req: Request) {
         const kind = session.metadata?.kind;
         const localSessionId = session.metadata?.checkout_session_id;
 
+        // clawrouter_access 已移除，$5 充值现在和其他金额一样走 clawrouter_topup 流程
+        // 保留此分支仅用于兼容已存在的 session
         if (kind === "clawrouter_access") {
           const accountId = session.metadata?.account_id;
           const paidAmountUsd = Number(session.metadata?.amount_usd || 0);
-          const creditedAmountUsd = paidAmountUsd === 5 ? 10 : paidAmountUsd;
-          const promoCode = session.metadata?.promo_code || null;
 
-          if (!accountId || !Number.isFinite(creditedAmountUsd) || creditedAmountUsd <= 0) {
+          if (!accountId || !Number.isFinite(paidAmountUsd) || paidAmountUsd <= 0) {
             throw new Error("invalid_access_metadata");
           }
 
-          await settleTopupCheckoutSession({
-            supabase,
-            accountId,
-            stripeSessionId: session.id,
-            stripeEventId: event.id,
-            amountUsd: creditedAmountUsd,
-            promoCode,
-            metadata: {
-              kind: "clawrouter_access",
-              paid_amount_usd: paidAmountUsd,
-              bonus_amount_usd: Math.max(creditedAmountUsd - paidAmountUsd, 0),
-              credited_amount_usd: creditedAmountUsd,
-              stripe_payment_status: session.payment_status,
-              stripe_customer_email: session.customer_details?.email ?? null,
-              stripe_status: session.status,
-              settled_at: new Date().toISOString(),
-            },
+          await addRechargeBalance(supabase, accountId, paidAmountUsd, session.id, {
+            promoCode: session.metadata?.promo_code || undefined,
           });
-
-          const assignment = await assignInventoryKeyToAccount({
-            supabase,
-            accountId,
-            stripeSessionId: session.id,
-          });
-
-          if (assignment.soldOut) {
-            throw new Error("inventory_key_sold_out");
-          }
 
           const keyResult = await ensureClawRouterApiKey(supabase, accountId);
           await maybeSendApiKeyEmail({
@@ -177,6 +152,23 @@ export async function POST(req: Request) {
             promoCode: promoCode ?? undefined,
           });
 
+          // 创建或更新 entitlement（安装器 activation 需要检查 entitlement）
+          const now = new Date().toISOString();
+          await supabase
+            .from("entitlements")
+            .upsert(
+              {
+                account_id: accountId,
+                product: "clawrouter",
+                plan: "clawrouter",
+                status: "active",
+                starts_at: now,
+                ends_at: null,
+                updated_at: now,
+              },
+              { onConflict: "account_id,product" },
+            );
+
           // 保留原有 managed key 发放逻辑
           const keyResult = await ensureClawRouterApiKey(supabase, accountId);
           if (keyResult.key.plaintextSecret) {
@@ -212,17 +204,9 @@ export async function POST(req: Request) {
             },
           });
 
-          const deliveryMode = session.metadata?.delivery_mode || "inventory_key";
-          if (deliveryMode === "inventory_key") {
-            const assignment = await assignInventoryKeyToAccount({
-              supabase,
-              accountId: settled.accountId,
-              stripeSessionId: session.id,
-            });
-            if (assignment.soldOut) {
-              throw new Error("inventory_key_sold_out");
-            }
-          } else {
+          const deliveryMode = session.metadata?.delivery_mode || "managed_topup";
+          // delivery_mode 为 inventory_key 时不再分配 inventory key，统一使用 managed key
+          if (deliveryMode !== "inventory_key") {
             await ensureClawRouterApiKey(supabase, settled.accountId);
           }
         }
