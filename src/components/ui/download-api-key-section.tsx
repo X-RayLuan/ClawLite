@@ -109,16 +109,30 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
   const handleCopy = useCallback(async () => {
     if (!fullKey) return;
     try {
+      // Try modern clipboard API first
       await navigator.clipboard.writeText(fullKey);
-      setCopied(true);
-      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
-      copiedTimeoutRef.current = setTimeout(() => {
-        setCopied(false);
-        copiedTimeoutRef.current = null;
-      }, 1500);
     } catch {
-      setError("Failed to copy key.");
+      // Fallback for environments where clipboard API fails silently
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = fullKey;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      } catch {
+        setError("Failed to copy key. Please try selecting the text manually.");
+        return;
+      }
     }
+    setCopied(true);
+    if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+    copiedTimeoutRef.current = setTimeout(() => {
+      setCopied(false);
+      copiedTimeoutRef.current = null;
+    }, 1500);
   }, [fullKey]);
 
   if (loading) {
