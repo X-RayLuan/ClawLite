@@ -12,6 +12,10 @@ type ApiKey = {
   plaintextSecret?: string | null;
 };
 
+// Refs to preserve fullKey across re-fetch (avoids it being clobbered when API returns null plaintextSecret)
+const fullKeyRef = { current: null as string | null };
+const apiKeyRef = { current: null as ApiKey | null };
+
 export function DownloadApiKeySection({ accessToken }: { accessToken: string }) {
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,8 +48,13 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
         if (res.ok && payload?.ok) {
           const nextKey: ApiKey | null = payload.keys?.[0] ?? null;
+          // Preserve fullKey if the key ID hasn't changed (plaintextSecret is null on GET after creation)
+          const isSameKey = apiKeyRef.current?.id && nextKey?.id && apiKeyRef.current.id === nextKey.id;
+          const newFullKey = nextKey?.plaintextSecret ?? (isSameKey ? fullKeyRef.current : null);
+          apiKeyRef.current = nextKey;
+          fullKeyRef.current = newFullKey;
           setApiKey(nextKey);
-          setFullKey(nextKey?.plaintextSecret ?? null);
+          setFullKey(newFullKey);
           setJustCreated(Boolean(nextKey?.plaintextSecret));
           setError(null);
         } else {
@@ -87,6 +96,8 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
       if (res.ok && payload?.ok && payload.key) {
         const k: ApiKey = payload.key;
+        fullKeyRef.current = k.plaintextSecret ?? null;
+        apiKeyRef.current = k;
         setApiKey(k);
         setFullKey(k.plaintextSecret ?? null);
         setJustCreated(true);
