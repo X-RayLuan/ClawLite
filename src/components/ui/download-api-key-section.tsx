@@ -12,12 +12,10 @@ type ApiKey = {
   plaintextSecret?: string | null;
 };
 
-// Refs to preserve fullKey across re-fetch (avoids it being clobbered when API returns null plaintextSecret)
-const fullKeyRef = { current: null as string | null };
-const apiKeyRef = { current: null as ApiKey | null };
-
 export function DownloadApiKeySection({ accessToken }: { accessToken: string }) {
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const apiKeyRef = useRef<ApiKey | null>(null);
+  const fullKeyRef = useRef<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +24,26 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
   const [justCreated, setJustCreated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiKeyRef.current = apiKey;
+  }, [apiKey]);
+
+  useEffect(() => {
+    fullKeyRef.current = fullKey;
+  }, [fullKey]);
+
+  const syncApiKey = useCallback((nextKey: ApiKey | null, options?: { revealFullKey?: boolean }) => {
+    const previousApiKey = apiKeyRef.current;
+    const previousFullKey = fullKeyRef.current;
+    const isSameKey = !!previousApiKey?.id && !!nextKey?.id && previousApiKey.id === nextKey.id;
+    const nextFullKey = nextKey?.plaintextSecret ?? (isSameKey ? previousFullKey : null);
+
+    setApiKey(nextKey);
+    setFullKey(nextFullKey);
+    setJustCreated(Boolean(options?.revealFullKey && nextFullKey));
+    setError(null);
+  }, []);
 
   // Fetch existing key
   useEffect(() => {
@@ -48,15 +66,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
         if (res.ok && payload?.ok) {
           const nextKey: ApiKey | null = payload.keys?.[0] ?? null;
-          // Preserve fullKey if the key ID hasn't changed (plaintextSecret is null on GET after creation)
-          const isSameKey = apiKeyRef.current?.id && nextKey?.id && apiKeyRef.current.id === nextKey.id;
-          const newFullKey = nextKey?.plaintextSecret ?? (isSameKey ? fullKeyRef.current : null);
-          apiKeyRef.current = nextKey;
-          fullKeyRef.current = newFullKey;
-          setApiKey(nextKey);
-          setFullKey(newFullKey);
-          setJustCreated(Boolean(nextKey?.plaintextSecret));
-          setError(null);
+          syncApiKey(nextKey, { revealFullKey: Boolean(nextKey?.plaintextSecret) });
         } else {
           setError("Failed to load API key.");
         }
@@ -69,7 +79,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
     fetchKey();
     return () => { mounted = false; };
-  }, [accessToken]);
+  }, [accessToken, syncApiKey]);
 
   // Cleanup timeout
   useEffect(() => {
@@ -95,13 +105,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
       const payload = await res.json().catch(() => null);
 
       if (res.ok && payload?.ok && payload.key) {
-        const k: ApiKey = payload.key;
-        fullKeyRef.current = k.plaintextSecret ?? null;
-        apiKeyRef.current = k;
-        setApiKey(k);
-        setFullKey(k.plaintextSecret ?? null);
-        setJustCreated(true);
-        setError(null);
+        syncApiKey(payload.key, { revealFullKey: true });
         return;
       }
       setError("Failed to generate key. Please try again.");
@@ -110,7 +114,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken]);
+  }, [accessToken, syncApiKey]);
 
   const handleRegenerate = useCallback(async () => {
     if (!window.confirm("This will deactivate your current key and create a new one. Continue?")) return;
@@ -118,15 +122,16 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
   }, [handleGenerate]);
 
   const handleCopy = useCallback(async () => {
-    if (!fullKey) return;
+    const keyToCopy = fullKeyRef.current ?? fullKey;
+    if (!keyToCopy) return;
     try {
       // Try modern clipboard API first
-      await navigator.clipboard.writeText(fullKey);
+      await navigator.clipboard.writeText(keyToCopy);
     } catch {
       // Fallback for environments where clipboard API fails silently
       try {
         const textarea = document.createElement("textarea");
-        textarea.value = fullKey;
+        textarea.value = keyToCopy;
         textarea.style.position = "fixed";
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
