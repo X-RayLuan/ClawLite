@@ -3,11 +3,20 @@ import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 
-// Model pricing (Claude 3.5 Sonnet) – USD per 1M tokens
+// Model pricing – USD per 1M tokens
+// Note: ezrouter uses different model IDs. Map OpenAI-style names to ezrouter names.
 const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
+  // Claude Sonnet 4.6 (aliases: claude-3-5-sonnet-20241022, claude-3-5-sonnet-20250320)
+  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
   "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
   "claude-3-5-sonnet-20250320": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
+  // Claude Haiku 4.5 (alias: claude-3-5-haiku-20241022)
+  "claude-haiku-4-5": { inputPer1M: 1, outputPer1M: 5 },
+  "claude-3-5-haiku-20241022": { inputPer1M: 1, outputPer1M: 5 },
+  // Claude Opus 4.7
+  "claude-opus-4-7": { inputPer1M: 5, outputPer1M: 25 },
+  // Claude Sonnet 4.5
+  "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
 };
 
 // Default pricing for unknown models
@@ -173,11 +182,11 @@ export async function POST(request: NextRequest) {
   let streamed = false;
 
   try {
-    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/claude`, {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/claude/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${ezrouterToken}`,
+        Authorization: ezrouterToken,
         "X-Request-ID": requestId,
       },
       body: JSON.stringify(body),
