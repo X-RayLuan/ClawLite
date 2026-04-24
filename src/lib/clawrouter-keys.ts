@@ -1,7 +1,10 @@
 import crypto from "node:crypto";
 
-const CIPHER_SECRET = process.env.API_KEY_CIPHER_SECRET;
-if (!CIPHER_SECRET) throw new Error("API_KEY_CIPHER_SECRET env var is not set");
+function getCipherSecret(): Buffer {
+  const secret = process.env.API_KEY_CIPHER_SECRET;
+  if (!secret) throw new Error("API_KEY_CIPHER_SECRET env var is not set");
+  return Buffer.from(secret, "hex");
+}
 
 type MinimalSupabaseClient = {
   from: (table: string) => any;
@@ -40,7 +43,7 @@ function makeKeyPrefix(secret: string) {
 
 // AES-256-GCM encryption: returns "iv:authTag:ciphertext" as hex string
 function encryptSecret(plaintext: string): string {
-  const key = Buffer.from(CIPHER_SECRET!, "hex"); // 32 bytes for AES-256
+  const key = getCipherSecret();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
@@ -50,7 +53,7 @@ function encryptSecret(plaintext: string): string {
 
 function decryptSecret(encrypted: string): string {
   const [ivHex, authTagHex, ciphertextHex] = encrypted.split(":");
-  const key = Buffer.from(CIPHER_SECRET!, "hex");
+  const key = getCipherSecret();
   const iv = Buffer.from(ivHex, "hex");
   const authTag = Buffer.from(authTagHex, "hex");
   const ciphertext = Buffer.from(ciphertextHex, "hex");
