@@ -70,7 +70,11 @@ export async function GET(request: NextRequest) {
     );
   } catch (error: any) {
     const errorMessage = error?.message || "failed_to_load_usage_summary";
-    if (errorMessage === "missing_access_token" || errorMessage === "invalid_access_token") {
+    if (
+      errorMessage === "missing_access_token" ||
+      errorMessage === "invalid_access_token" ||
+      errorMessage.includes("JWT")
+    ) {
       return NextResponse.json(
         { ok: false, error: errorMessage },
         { status: 401 },
