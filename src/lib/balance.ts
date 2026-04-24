@@ -3,7 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export type BalanceTransaction = {
   id: string;
   accountId: string;
-  eventId: string | null;
+  referenceId: string | null;
   txType: string;
   amount: number;
   balanceBefore: number;
@@ -25,13 +25,13 @@ function mapTx(row: any): BalanceTransaction {
   return {
     id: row.id,
     accountId: row.account_id,
-    eventId: row.event_id || null,
+    referenceId: row.reference_id || null,
     txType: row.tx_type,
-    amount: Number(row.amount),
-    balanceBefore: Number(row.balance_before),
-    balanceAfter: Number(row.balance_after),
-    status: row.status,
-    description: row.description || null,
+    amount: Number(row.amount_usd || 0),
+    balanceBefore: Number(row.balance_before_usd || 0),
+    balanceAfter: Number(row.balance_after_usd || 0),
+    status: row.tx_type, // derived from tx_type
+    description: row.metadata?.description || null,
     metadata: row.metadata || {},
     createdAt: row.created_at,
   };
@@ -53,35 +53,22 @@ export async function checkBalance(accountId: string): Promise<AccountBalance> {
 
   const balance = Number(account.credit_balance_usd || 0);
 
-  // Sum frozen amounts from pending freeze transactions
-  const { data: frozenRows } = await supabase
-    .from("balance_transactions")
-    .select("amount")
-    .eq("account_id", accountId)
-    .eq("tx_type", "freeze")
-    .eq("status", "frozen");
-
-  const frozenBalance = (frozenRows || []).reduce(
-    (sum: number, r: any) => sum + Math.abs(Number(r.amount)),
-    0,
-  );
-
   return {
     accountId,
     balanceUsd: balance,
-    frozenBalanceUsd: frozenBalance,
-    availableBalanceUsd: Math.max(0, balance - frozenBalance),
+    frozenBalanceUsd: 0,
+    availableBalanceUsd: balance,
   };
 }
 
 /**
- * Freeze (reserve) a portion of the account balance.
- * Returns the transaction record.
+ * Freeze (reserve) a portion of the account balance for a request.
+ * For now, we skip actual freezing and just check available balance.
  */
 export async function freezeBalance(
   accountId: string,
   amount: number,
-  eventId?: string,
+  referenceId?: string,
   description?: string,
 ): Promise<BalanceTransaction> {
   if (amount <= 0) throw new Error("freeze_amount_must_be_positive");
@@ -89,8 +76,7 @@ export async function freezeBalance(
   const supabase = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
-  // Use a transaction-like pattern with two queries + locking via RPC if available
-  // First get current balance
+  // Get current balance
   const { data: account, error: accError } = await supabase
     .from("accounts")
     .select("id, credit_balance_usd")
@@ -100,43 +86,37 @@ export async function freezeBalance(
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
 
-  // Check available balance
-  const frozen = await checkBalance(accountId);
-  if (frozen.availableBalanceUsd < amount) {
+  // Check available balance (for now, no actual freezing)
+  if (currentBalance < amount) {
     throw new Error("insufficient_balance");
   }
 
-  const txType = "freeze";
-  const balanceBefore = currentBalance;
-  const balanceAfter = currentBalance; // freeze doesn't change total
-
+  // Insert a freeze transaction record
   const { data: tx, error: txError } = await supabase
     .from("balance_transactions")
     .insert({
       account_id: accountId,
-      event_id: eventId || null,
-      tx_type: txType,
-      amount: -Math.abs(amount),
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      status: "frozen",
-      description: description || null,
+      tx_type: "freeze",
+      amount_usd: -Math.abs(amount),
+      balance_before_usd: currentBalance,
+      balance_after_usd: currentBalance,
+      reference_id: referenceId || null,
+      metadata: { description: description || null },
     })
     .select("*")
     .single();
 
-  if (txError) throw new Error(txError.message || "failed_to_freeze_balance");
+  if (txError) throw new Error(txError.message || "freeze_failed");
   return mapTx(tx);
 }
 
 /**
- * Confirm a charge against a previously frozen amount (or direct deduction).
- * eventId ties this to the originating freeze transaction.
+ * Confirm a charge against the account balance.
  */
 export async function chargeBalance(
   accountId: string,
   amount: number,
-  eventId?: string,
+  referenceId?: string,
   description?: string,
 ): Promise<BalanceTransaction> {
   if (amount <= 0) throw new Error("charge_amount_must_be_positive");
@@ -144,6 +124,7 @@ export async function chargeBalance(
   const supabase = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
+  // Get current balance
   const { data: account, error: accError } = await supabase
     .from("accounts")
     .select("id, credit_balance_usd")
@@ -152,15 +133,12 @@ export async function chargeBalance(
 
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
-
-  const txType = "charge";
-  const balanceBefore = currentBalance;
-  const balanceAfter = Math.max(0, currentBalance - amount);
+  const newBalance = Math.max(0, currentBalance - amount);
 
   // Update account balance
   const { error: updateError } = await supabase
     .from("accounts")
-    .update({ credit_balance_usd: balanceAfter, updated_at: now })
+    .update({ credit_balance_usd: newBalance, updated_at: now })
     .eq("id", accountId);
 
   if (updateError) throw new Error(updateError.message || "failed_to_charge_balance");
@@ -170,30 +148,17 @@ export async function chargeBalance(
     .from("balance_transactions")
     .insert({
       account_id: accountId,
-      event_id: eventId || null,
-      tx_type: txType,
-      amount: -Math.abs(amount),
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      status: "completed",
-      description: description || null,
+      tx_type: "charge",
+      amount_usd: -Math.abs(amount),
+      balance_before_usd: currentBalance,
+      balance_after_usd: newBalance,
+      reference_id: referenceId || null,
+      metadata: { description: description || null },
     })
     .select("*")
     .single();
 
   if (txError) throw new Error(txError.message || "failed_to_record_charge");
-
-  // Mark any matching freeze transactions as released
-  if (eventId) {
-    await supabase
-      .from("balance_transactions")
-      .update({ status: "released" })
-      .eq("account_id", accountId)
-      .eq("event_id", eventId)
-      .eq("tx_type", "freeze")
-      .eq("status", "frozen");
-  }
-
   return mapTx(tx);
 }
 
@@ -203,7 +168,7 @@ export async function chargeBalance(
 export async function refundBalance(
   accountId: string,
   amount: number,
-  eventId?: string,
+  referenceId?: string,
   description?: string,
 ): Promise<BalanceTransaction> {
   if (amount <= 0) throw new Error("refund_amount_must_be_positive");
@@ -211,6 +176,7 @@ export async function refundBalance(
   const supabase = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
+  // Get current balance
   const { data: account, error: accError } = await supabase
     .from("accounts")
     .select("id, credit_balance_usd")
@@ -219,15 +185,12 @@ export async function refundBalance(
 
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
-
-  const txType = "refund";
-  const balanceBefore = currentBalance;
-  const balanceAfter = Number((currentBalance + amount).toFixed(2));
+  const newBalance = Number((currentBalance + amount).toFixed(8));
 
   // Update account balance
   const { error: updateError } = await supabase
     .from("accounts")
-    .update({ credit_balance_usd: balanceAfter, updated_at: now })
+    .update({ credit_balance_usd: newBalance, updated_at: now })
     .eq("id", accountId);
 
   if (updateError) throw new Error(updateError.message || "failed_to_refund_balance");
@@ -237,13 +200,12 @@ export async function refundBalance(
     .from("balance_transactions")
     .insert({
       account_id: accountId,
-      event_id: eventId || null,
-      tx_type: txType,
-      amount: Math.abs(amount),
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      status: "completed",
-      description: description || null,
+      tx_type: "refund",
+      amount_usd: Math.abs(amount),
+      balance_before_usd: currentBalance,
+      balance_after_usd: newBalance,
+      reference_id: referenceId || null,
+      metadata: { description: description || null },
     })
     .select("*")
     .single();
