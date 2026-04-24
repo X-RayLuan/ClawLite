@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("usage_events")
-      .select("model, tokens_in, tokens_out, cost, created_at", { count: "exact" })
+      .select("model, tokens_in, tokens_out, cost_estimate, created_at", { count: "exact" })
       .eq("account_id", userId)
       .gte("created_at", since)
       .order("created_at", { ascending: false });
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       existing.totalRequests += 1;
       existing.totalTokensIn += Number(event.tokens_in || 0);
       existing.totalTokensOut += Number(event.tokens_out || 0);
-      existing.totalCost += Number(event.cost || 0);
+      existing.totalCost += Number(event.cost_estimate || 0);
       if (!existing.lastUsedAt || event.created_at > existing.lastUsedAt) {
         existing.lastUsedAt = event.created_at;
       }

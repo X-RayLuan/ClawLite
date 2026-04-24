@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     // Build usage_events query with filters
     let eventsQuery = supabase
       .from("usage_events")
-      .select("id, key_name, model, tokens_in, tokens_out, cost, duration_ms, status, created_at", { count: "exact" })
+      .select("id, key_name, model, tokens_in, tokens_out, cost_estimate, duration_ms, status, created_at", { count: "exact" })
       .eq("account_id", userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       {
         ok: true,
         transactions,
-        usageEvents: events || [],
+        usageEvents: (events || []).map((e: any) => ({ ...e, cost: e.cost_estimate })),
         pagination: {
           limit,
           offset,
