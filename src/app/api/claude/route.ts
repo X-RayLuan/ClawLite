@@ -205,7 +205,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Stream response to client
-    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -248,6 +247,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Return stream immediately — finally block runs after stream finishes
     return new Response(stream, {
       status: ezrouterStatus,
       headers: {
@@ -271,41 +271,40 @@ export async function POST(request: NextRequest) {
       },
     );
   } finally {
-    // 7. Record usage (async, non-blocking) and settle balance
+    // 7. Settle balance and record usage synchronously
+    // (finally runs after stream finishes, so actualTokensIn/Out are final)
     const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
 
-    // Fire-and-forget: record usage and settle frozen amount
-    (async () => {
-      try {
-        // Charge the actual (or estimated) cost
-        await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_proxy:${model}`);
+    try {
+      // Charge the actual (or estimated) cost — awaited synchronously
+      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_proxy:${model}`);
 
-        // Release any remaining frozen amount (between estimated and actual)
-        const frozenRemaining = estimatedCost - finalCost;
-        if (frozenRemaining > 0.01) {
-          // Only release if > 1 cent difference
-          try {
-            const { refundBalance } = await import("@/lib/balance");
-            await refundBalance(keyInfo.accountId, frozenRemaining, freezeTxId, `claude_proxy_refund:${model}`);
-          } catch {
-            // ignore refund errors
-          }
+      // Release any remaining frozen amount (between estimated and actual)
+      const frozenRemaining = estimatedCost - finalCost;
+      if (frozenRemaining > 0.01) {
+        // Only release if > 1 cent difference
+        try {
+          const { refundBalance } = await import("@/lib/balance");
+          await refundBalance(keyInfo.accountId, frozenRemaining, freezeTxId, `claude_proxy_refund:${model}`);
+        } catch {
+          // ignore refund errors
         }
-      } catch (err) {
-        console.error("[claude/proxy] chargeBalance failed:", err);
       }
+    } catch (err) {
+      console.error("[claude/proxy] chargeBalance failed:", err);
+      // Error is logged but does not block the response
+    }
 
-      await recordUsageAsync({
-        supabase,
-        accountId: keyInfo.accountId,
-        apiKeyId: keyInfo.keyId,
-        model,
-        tokensIn: actualTokensIn,
-        tokensOut: actualTokensOut,
-        costEstimate: finalCost,
-        status: ezrouterError ? "error" : "success",
-        requestId,
-      });
-    })();
+    await recordUsageAsync({
+      supabase,
+      accountId: keyInfo.accountId,
+      apiKeyId: keyInfo.keyId,
+      model,
+      tokensIn: actualTokensIn,
+      tokensOut: actualTokensOut,
+      costEstimate: finalCost,
+      status: ezrouterError ? "error" : "success",
+      requestId,
+    });
   }
 }
