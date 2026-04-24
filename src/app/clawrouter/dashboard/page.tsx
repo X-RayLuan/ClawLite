@@ -190,13 +190,13 @@ export default function ClawRouterDashboardPage() {
   const navItems = useMemo(
     () => [
       { label: t.nav.dashboard, href: "/clawrouter/dashboard" },
-      { label: t.nav.apiKeys, href: null },
-      { label: t.nav.quickStart, href: null },
-      { label: t.nav.models, href: null },
+      { label: t.nav.apiKeys, href: "/clawrouter/dashboard/api-keys" },
+      { label: t.nav.quickStart, href: "/clawrouter/dashboard/quick-start" },
+      { label: t.nav.models, href: "/clawrouter/dashboard/models" },
       { label: t.nav.usage, href: "/dashboard/usage" },
       { label: t.nav.transactions, href: "/clawrouter/dashboard/transactions" },
-      { label: t.nav.affiliate, href: null },
-      { label: t.nav.profile, href: null }
+      { label: t.nav.affiliate, href: "/clawrouter/dashboard/affiliate" },
+      { label: t.nav.profile, href: "/clawrouter/dashboard/profile" }
     ],
     [t]
   );
