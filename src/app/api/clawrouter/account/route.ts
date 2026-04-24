@@ -7,6 +7,15 @@ import { reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
 
+async function getUserAccount(userId: string, email: string | null, supabase: ReturnType<typeof getSupabaseAdminClient>) {
+  await ensureClawRouterAccount({ supabase, accountId: userId, email });
+  return supabase
+    .from("accounts")
+    .select("id, email, plan, billing_status, credit_balance_usd")
+    .eq("id", userId)
+    .maybeSingle();
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authorization = request.headers.get("authorization");
@@ -84,5 +93,33 @@ export async function GET(request: NextRequest) {
       { ok: false, error: error?.message || "failed_to_load_clawrouter_account" },
       { status: 400 },
     );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const authorization = request.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+    const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
+    const supabase = getSupabaseAdminClient();
+    const body = await request.json();
+    const { display_name } = body;
+
+    if (typeof display_name !== "string" || display_name.length > 255) {
+      return NextResponse.json({ ok: false, error: "invalid_display_name" }, { status: 400 });
+    }
+
+    const { error: updateError } = await supabase
+      .from("accounts")
+      .update({ display_name, updated_at: new Date().toISOString() })
+      .eq("id", userId);
+
+    if (updateError) {
+      return NextResponse.json({ ok: false, error: updateError.message || "failed_to_update_account" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error?.message || "failed_to_update_account" }, { status: 500 });
   }
 }
