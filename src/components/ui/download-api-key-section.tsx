@@ -10,6 +10,7 @@ type ApiKey = {
   status: string;
   createdAt: string | null;
   plaintextSecret?: string | null;
+  hasEncryptedSecret?: boolean;
 };
 
 const LOCAL_STORAGE_KEY = "clawrouter_api_key_full";
@@ -21,6 +22,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const [apiKey, setApiKey] = useState<ApiKey | null>(null);
   const [fullKey, setFullKey] = useState<string | null>(null);
   const [justCreated, setJustCreated] = useState(false);
@@ -149,14 +151,52 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
     await handleGenerate();
   }, [handleGenerate]);
 
+  const handleReveal = useCallback(async () => {
+    if (!accessToken || !apiKeyRef.current?.id) return;
+    setRevealing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/clawrouter/keys/${apiKeyRef.current.id}/reveal`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      });
+      const payload = await res.json().catch(() => null);
+
+      if (res.ok && payload?.ok && payload.plaintextSecret) {
+        setFullKey(payload.plaintextSecret);
+        setJustCreated(false);
+        // Persist to localStorage for next load
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+            id: apiKeyRef.current!.id,
+            fullKey: payload.plaintextSecret,
+          }));
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      if (res.status === 410) {
+        setError("This key was created before the reveal feature was enabled. Please regenerate the key.");
+      } else {
+        setError("Failed to reveal key. Please try again.");
+      }
+    } catch {
+      setError("Failed to reveal key. Please try again.");
+    } finally {
+      setRevealing(false);
+    }
+  }, [accessToken]);
+
   const handleCopy = useCallback(async () => {
     const keyToCopy = fullKeyRef.current ?? fullKey;
     if (!keyToCopy) return;
     try {
-      // Try modern clipboard API first
       await navigator.clipboard.writeText(keyToCopy);
     } catch {
-      // Fallback for environments where clipboard API fails silently
       try {
         const textarea = document.createElement("textarea");
         textarea.value = keyToCopy;
@@ -224,21 +264,41 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
             </Button>
           </div>
         </div>
+      ) : fullKey ? (
+        <div className="mt-4 rounded-xl border border-black/10 bg-white px-4 py-3">
+          <p className="break-all font-mono text-sm text-ink">{fullKey}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={handleCopy}>
+              {copied ? "Copied" : "Copy Key"}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleRegenerate} disabled={submitting}>
+              Regenerate
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="mt-4">
           <div className="flex items-center gap-2">
             <p className="min-w-0 flex-1 truncate rounded-xl border border-black/10 bg-white px-3 py-2.5 font-mono text-sm text-ink">
               {apiKey.keyPrefix}••••••••••••••••
             </p>
-            <Button variant="secondary" size="sm" onClick={handleCopy} disabled={!fullKey}>
-              {copied ? "Copied" : "Copy"}
-            </Button>
+            {apiKey.hasEncryptedSecret ? (
+              <Button variant="secondary" size="sm" onClick={handleReveal} disabled={revealing}>
+                {revealing ? "Revealing..." : "Show"}
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" disabled>
+                Copy
+              </Button>
+            )}
             <Button variant="secondary" size="sm" onClick={handleRegenerate} disabled={submitting}>
               Regenerate
             </Button>
           </div>
           <p className="mt-2 text-xs text-ink/60">
-            Full key only shown on first creation. Regenerate to get a new key.
+            {apiKey.hasEncryptedSecret
+              ? "Click Show to reveal your full key."
+              : "Full key only shown on first creation. Regenerate to get a new key."}
           </p>
         </div>
       )}
