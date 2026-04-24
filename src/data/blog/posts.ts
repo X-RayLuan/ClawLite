@@ -193,9 +193,9 @@ ClawLite lobster note: the goal is serious workflow reliability with a product p
 - ASSET_CHECK status: safe_template_generated`
   },
   'understanding-ai-agents-risk-management-understanding-risk-m': {
-    title: "Understanding AI Agents’ Risk Management. Understanding Risk Management for AI Agents | Galileo. ...",
+    title: "AI Agent Risk Management: What Builders Should Do Before Workflows Break",
     date: "2026-04-24",
-    content: `# Understanding AI Agents’ Risk Management. Understanding Risk Management for AI Agents | Galileo. ...
+    content: `# AI Agent Risk Management: What Builders Should Do Before Workflows Break
 
 PDF AI agents: Opportunities, risks, and mitigations - IBM — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -317,9 +317,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'the-ultimate-list-of-ai-tools-with-bring-your-own-key-byok-c': {
-    title: "The ultimate list of AI tools with bring-your-own-key (BYOK). Chatbot platform with zero AI marku...",
+    title: "BYOK AI Tools: How to Choose Platforms Without Hidden Markup",
     date: "2026-04-24",
-    content: `# The ultimate list of AI tools with bring-your-own-key (BYOK). Chatbot platform with zero AI marku...
+    content: `# BYOK AI Tools: How to Choose Platforms Without Hidden Markup
 
 BYOK AI platforms work differently from normal AI tools. ... — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -441,9 +441,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'siliconflow-vast-ai-runpod-together-ai-and-gmi-cloud-are-top': {
-    title: "SiliconFlow, Vast.ai, RunPod, Together AI, and GMI Cloud are top affordable AI hosting services, ...",
+    title: "Affordable AI Hosting for Agent Teams: SiliconFlow, Vast.ai, RunPod, Together AI, and GMI Cloud",
     date: "2026-04-24",
-    content: `# SiliconFlow, Vast.ai, RunPod, Together AI, and GMI Cloud are top affordable AI hosting services, ...
+    content: `# Affordable AI Hosting for Agent Teams: SiliconFlow, Vast.ai, RunPod, Together AI, and GMI Cloud
 
 6 Best AI Agent Hosting Providers in (Apr 2026) - HostAdvice — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -565,9 +565,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'provider-risk-for-ai-agents-includes-prompt-injection-attack': {
-    title: "Provider risk for AI agents includes prompt injection attacks, data leakage, model manipulation, ...",
+    title: "AI Agent Provider Risk: Prompt Injection, Data Leakage, and Model Manipulation",
     date: "2026-04-24",
-    content: `# Provider risk for AI agents includes prompt injection attacks, data leakage, model manipulation, ...
+    content: `# AI Agent Provider Risk: Prompt Injection, Data Leakage, and Model Manipulation
 
 Understanding Risk Management for AI Agents | Galileo — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -689,9 +689,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'powered-by-gemini-2-5-a-productivity-suite-that-connects-dir': {
-    title: "Powered by Gemini 2.5. A productivity suite that connects directly to your Google Drive and Gemin...",
+    title: "Gemini 2.5 BYOK Workflow Builders: What Teams Should Check Before Connecting Drive",
     date: "2026-04-24",
-    content: `# Powered by Gemini 2.5. A productivity suite that connects directly to your Google Drive and Gemin...
+    content: `# Gemini 2.5 BYOK Workflow Builders: What Teams Should Check Before Connecting Drive
 
 BYOK AI Workflow Builder — Bring Your Own API Key | AI-Flow — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -813,9 +813,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'increasing-autonomy-to-take-action-select-and-consult-resour': {
-    title: "Increasing autonomy (to take action, select, and consult resources/tools) of AI agents and the po...",
+    title: "AI Agent Autonomy Risk: How Tool Use and Resource Access Change Security",
     date: "2026-04-24",
-    content: `# Increasing autonomy (to take action, select, and consult resources/tools) of AI agents and the po...
+    content: `# AI Agent Autonomy Risk: How Tool Use and Resource Access Change Security
 
 AI agent security risks: what every developer needs to know | MintMCP Blog — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -2302,9 +2302,9 @@ ClawLite lobster note: the goal is serious workflow reliability with a product p
 - ASSET_CHECK status: safe_template_generated`
   },
   'byok-ai-platforms-allow-users-to-bring-their-own-api-keys-to': {
-    title: "BYOK AI platforms allow users to bring their own API keys to access AI services directly, avoidin...",
+    title: "BYOK AI Platforms: Use Your Own API Keys Without Losing Cost Control",
     date: "2026-04-24",
-    content: `# BYOK AI platforms allow users to bring their own API keys to access AI services directly, avoidin...
+    content: `# BYOK AI Platforms: Use Your Own API Keys Without Losing Cost Control
 
 BYOKList - AI Tools with Bring-Your-Own-Key (BYOK) | BYOKList — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -2426,9 +2426,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'bring-your-own-key-byok-lets-you-use-your-own-api-keys-to-ac': {
-    title: "Bring Your Own Key (BYOK) lets you use your own API Keys to access AI services, giving you comple...",
+    title: "Bring Your Own Key for AI Tools: Control API Access Without Vendor Markups",
     date: "2026-04-24",
-    content: `# Bring Your Own Key (BYOK) lets you use your own API Keys to access AI services, giving you comple...
+    content: `# Bring Your Own Key for AI Tools: Control API Access Without Vendor Markups
 
 BYOK-AI - Pay for the interface, own the usage — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -2550,9 +2550,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'as-more-companies-adopt-ai-agents-new-challenges-for-maintai': {
-    title: "As more companies adopt AI agents, new challenges for maintaining the confidentiality and integri...",
+    title: "AI Agent Security for Growing Teams: Confidentiality, Integrity, and Control",
     date: "2026-04-24",
-    content: `# As more companies adopt AI agents, new challenges for maintaining the confidentiality and integri...
+    content: `# AI Agent Security for Growing Teams: Confidentiality, Integrity, and Control
 
 AI Agent Risk Management: A Practical Guide — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -2674,9 +2674,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: safe_template_generated`
   },
   'this-article-provides-a-comprehensive-guide-to-ai-agent-secu': {
-    title: "This article provides a comprehensive guide to AI agent security risks, covering the evolving thr...",
+    title: "AI Agent Security Risks: A Practical Guide for Builders and Operators",
     date: "2026-04-21",
-    content: `# This article provides a comprehensive guide to AI agent security risks, covering the evolving thr...
+    content: `# AI Agent Security Risks: A Practical Guide for Builders and Operators
 
 Top AI Agent Security Risks and How to Mitigate Them — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
@@ -3430,9 +3430,9 @@ If you want a simpler way to run OpenClaw with cheaper tokens and less setup fri
 - ASSET_CHECK status: batch_fill_generated`
   },
   'geekflare-connect-is-a-byok-platform-that-allows-you-to-conn': {
-    title: "Geekflare Connect is a BYOK platform that allows you to connect multiple AI models in one workspa...",
+    title: "Geekflare Connect BYOK Review: Multi-Model Workspaces Without AI Markup",
     date: "2026-04-21",
-    content: `# Geekflare Connect is a BYOK platform that allows you to connect multiple AI models in one workspa...
+    content: `# Geekflare Connect BYOK Review: Multi-Model Workspaces Without AI Markup
 
 Bring Your Own Key (BYOK) Is Now Live in JetBrains IDEs | The JetBrains AI Blog — and what it means for teams choosing their AI stack. The practical takeaway: optimize for day-two reliability and cost control, not just first-run impressions. The best approach is to evaluate any new tool or trend by its day-two behavior, not its launch-day demo. Teams that do this consistently spend less, recover faster, and ship more reliably than teams that chase features.
 
