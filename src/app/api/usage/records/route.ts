@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     // Note: usage_events has api_key_id (FK to api_keys.id), not key_name directly
     let eventsQuery = supabase
       .from("usage_events")
-      .select("id, api_key_id, model, tokens_in, tokens_out, cost_estimate, duration_ms, status, created_at", { count: "exact" })
+      .select("id, api_key_id, model, tokens_in, tokens_out, cost_estimate, status, error_code, created_at", { count: "exact" })
       .eq("account_id", userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
