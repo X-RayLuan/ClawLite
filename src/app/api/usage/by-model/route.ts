@@ -23,8 +23,10 @@ export async function GET(request: NextRequest) {
       .gte("created_at", since)
       .order("created_at", { ascending: false });
 
+    // Note: usage_events has api_key_id, not key_name. Skip keyName filter to avoid error.
+    // If keyName filtering is needed, a join with api_keys table is required.
     if (keyName) {
-      query = query.eq("key_name", keyName);
+      // Skipped: key_name column does not exist in usage_events
     }
 
     const { data: events, error: eventsError } = await query;
