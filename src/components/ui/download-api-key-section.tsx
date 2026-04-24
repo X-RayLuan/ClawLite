@@ -12,6 +12,8 @@ type ApiKey = {
   plaintextSecret?: string | null;
 };
 
+const LOCAL_STORAGE_KEY = "clawrouter_api_key_full";
+
 export function DownloadApiKeySection({ accessToken }: { accessToken: string }) {
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const apiKeyRef = useRef<ApiKey | null>(null);
@@ -37,7 +39,22 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
     const previousApiKey = apiKeyRef.current;
     const previousFullKey = fullKeyRef.current;
     const isSameKey = !!previousApiKey?.id && !!nextKey?.id && previousApiKey.id === nextKey.id;
-    const nextFullKey = nextKey?.plaintextSecret ?? (isSameKey ? previousFullKey : null);
+    let nextFullKey = nextKey?.plaintextSecret ?? (isSameKey ? previousFullKey : null);
+
+    // Fallback: try to read from localStorage if we have an apiKey but no fullKey
+    if (!nextFullKey && nextKey?.id) {
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          const storedData = JSON.parse(stored);
+          if (storedData.id === nextKey.id) {
+            nextFullKey = storedData.fullKey;
+          }
+        }
+      } catch {
+        // ignore localStorage errors
+      }
+    }
 
     setApiKey(nextKey);
     setFullKey(nextFullKey);
@@ -106,6 +123,17 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
       if (res.ok && payload?.ok && payload.key) {
         syncApiKey(payload.key, { revealFullKey: true });
+        // Persist full key to localStorage for subsequent loads
+        if (payload.key?.plaintextSecret) {
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+              id: payload.key.id,
+              fullKey: payload.key.plaintextSecret,
+            }));
+          } catch {
+            // ignore localStorage errors
+          }
+        }
         return;
       }
       setError("Failed to generate key. Please try again.");
