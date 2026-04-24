@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: ezrouterToken,
+        Authorization: `Bearer ${ezrouterToken}`,
         "X-Request-ID": requestId,
       },
       body: JSON.stringify(body),
