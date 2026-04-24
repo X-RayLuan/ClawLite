@@ -193,7 +193,7 @@ export default function ClawRouterDashboardPage() {
       { label: t.nav.apiKeys, href: "/clawrouter/dashboard/api-keys" },
       { label: t.nav.quickStart, href: "/clawrouter/dashboard/quick-start" },
       { label: t.nav.models, href: "/clawrouter/dashboard/models" },
-      { label: t.nav.usage, href: "/clawrouter/dashboard/transactions" },
+      { label: t.nav.usage, href: "/clawrouter/dashboard/usage" },
       { label: t.nav.transactions, href: "/clawrouter/dashboard/transactions" },
       { label: t.nav.affiliate, href: "/clawrouter/dashboard/affiliate" },
       { label: t.nav.profile, href: "/clawrouter/dashboard/profile" }
