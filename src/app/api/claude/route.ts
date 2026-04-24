@@ -27,7 +27,7 @@ function hashSecret(secret: string) {
 }
 
 function getKeyPrefix(key: string): string {
-  return key.slice(0, 16);
+  return key.slice(0, 15);
 }
 
 async function validateApiKey(supabase: ReturnType<typeof import("@/lib/supabase-admin").getSupabaseAdminClient>, key: string) {
