@@ -95,8 +95,15 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (error: any) {
+    const errorMessage = error?.message || "failed_to_load_usage_records";
+    if (errorMessage === "missing_access_token" || errorMessage === "invalid_access_token") {
+      return NextResponse.json(
+        { ok: false, error: errorMessage },
+        { status: 401 },
+      );
+    }
     return NextResponse.json(
-      { ok: false, error: error?.message || "failed_to_load_usage_records" },
+      { ok: false, error: errorMessage },
       { status: 400 },
     );
   }
