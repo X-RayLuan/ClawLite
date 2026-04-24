@@ -141,7 +141,7 @@ export default function AddCreditsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[rgba(247,243,236,0.92)] px-4 py-10 text-stone-950 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[rgba(247,243,236,0.92)] px-4 py-10 text-stone-950 sm:px-6 lg:px-8 pt-16 lg:pt-10">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center justify-between gap-4">
           <Button variant="ghost" asChild className="px-0 text-stone-700 hover:bg-transparent hover:text-stone-950">

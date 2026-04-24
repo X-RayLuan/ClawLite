@@ -203,7 +203,7 @@ export default function ClawRouterUsagePage() {
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pt-16 lg:pt-8">
         {/* Header */}
         <div className="mb-8">
           <Button

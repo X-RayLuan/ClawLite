@@ -234,6 +234,7 @@ export default function ClawRouterDashboardPage() {
   const [topups, setTopups] = useState<Array<{ id: string; amount_usd: number; status: string; created_at: string }>>([]);
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const loadDashboardData = useCallback(async (accessToken: string, options?: { refreshBilling?: boolean }) => {
     const accountUrl = options?.refreshBilling
@@ -401,8 +402,75 @@ export default function ClawRouterDashboardPage() {
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8">
-        <aside className="rounded-[28px] border border-stone-300/60 bg-white/85 p-5 shadow-none">
+      {/* Mobile: Top navigation bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 border-b border-stone-200/60 bg-white/90 px-4 py-3">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="rounded-xl border border-stone-300 bg-white/80 p-2 text-stone-700 hover:bg-white"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="font-semibold text-stone-900">{t.nav.dashboard}</span>
+      </div>
+
+      {/* Mobile: Sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+          <div className="relative z-10 w-64 h-full bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center gap-3 border-b border-stone-200 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold text-white">
+                CR
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-stone-950">{t.common.clawRouter}</p>
+                <p className="text-xs text-stone-500">{email || t.common.accountFallback}</p>
+              </div>
+            </div>
+            <nav className="mt-5 space-y-1.5 px-3">
+              {navItems.map((item, index) => {
+                const isActive = index === 0;
+                if (item.href) {
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`block rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <div
+                    key={item.label}
+                    className={`rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                  >
+                    {item.label}
+                  </div>
+                );
+              })}
+            </nav>
+            <div className="mt-6 mx-3 rounded-[22px] border border-stone-200 bg-[rgba(248,244,237,0.7)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t.common.quickActions}</p>
+              <div className="mt-3 space-y-2">
+                <Button asChild className="w-full bg-stone-900 hover:bg-stone-800">
+                  <Link href="/clawrouter/dashboard/add-credits" onClick={() => setSidebarOpen(false)}>{t.common.addCredits}</Link>
+                </Button>
+                <div className="w-full rounded-2xl border border-stone-300 bg-white/80 px-4 py-3 text-center text-sm text-stone-600">
+                  {t.page.quickActionsHint}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8 lg:pt-0 pt-16">
+        <aside className="hidden lg:block rounded-[28px] border border-stone-300/60 bg-white/85 p-5 shadow-none">
           <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold text-white">
               CR
