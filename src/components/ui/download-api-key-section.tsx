@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLang } from "@/components/lang-provider";
+import { getContentForLang } from "@/lib/content";
 
 type ApiKey = {
   id: string;
@@ -16,6 +18,8 @@ type ApiKey = {
 const LOCAL_STORAGE_KEY = "clawrouter_api_key_full";
 
 export function DownloadApiKeySection({ accessToken }: { accessToken: string }) {
+  const { lang } = useLang();
+  const t = getContentForLang(lang).downloads.apiKey;
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const apiKeyRef = useRef<ApiKey | null>(null);
   const fullKeyRef = useRef<string | null>(null);
@@ -87,10 +91,10 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
           const nextKey: ApiKey | null = payload.keys?.[0] ?? null;
           syncApiKey(nextKey, { revealFullKey: Boolean(nextKey?.plaintextSecret) });
         } else {
-          setError("Failed to load API key.");
+          setError(t.loadError);
         }
       } catch {
-        if (mounted) setError("Failed to load API key.");
+        if (mounted) setError(t.loadError);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -98,7 +102,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
     fetchKey();
     return () => { mounted = false; };
-  }, [accessToken, syncApiKey]);
+  }, [accessToken, syncApiKey, t.loadError]);
 
   // Cleanup timeout
   useEffect(() => {
@@ -138,18 +142,18 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
         }
         return;
       }
-      setError("Failed to generate key. Please try again.");
+      setError(t.generateError);
     } catch {
-      setError("Failed to generate key. Please try again.");
+      setError(t.generateError);
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, syncApiKey]);
+  }, [accessToken, syncApiKey, t.generateError]);
 
   const handleRegenerate = useCallback(async () => {
-    if (!window.confirm("This will deactivate your current key and create a new one. Continue?")) return;
+    if (!window.confirm(t.confirmRegenerate)) return;
     await handleGenerate();
-  }, [handleGenerate]);
+  }, [handleGenerate, t.confirmRegenerate]);
 
   const handleReveal = useCallback(async () => {
     if (!accessToken || !apiKeyRef.current?.id) return;
@@ -180,16 +184,16 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
         return;
       }
       if (res.status === 410) {
-        setError("This key was created before the reveal feature was enabled. Please regenerate the key.");
+        setError(t.oldKeyError);
       } else {
-        setError("Failed to reveal key. Please try again.");
+        setError(t.revealError);
       }
     } catch {
-      setError("Failed to reveal key. Please try again.");
+      setError(t.revealError);
     } finally {
       setRevealing(false);
     }
-  }, [accessToken]);
+  }, [accessToken, t.revealError, t.oldKeyError]);
 
   const handleCopy = useCallback(async () => {
     const keyToCopy = fullKeyRef.current ?? fullKey;
@@ -207,7 +211,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
         document.execCommand("copy");
         document.body.removeChild(textarea);
       } catch {
-        setError("Failed to copy key. Please try selecting the text manually.");
+        setError(t.copyError);
         return;
       }
     }
@@ -217,7 +221,7 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
       setCopied(false);
       copiedTimeoutRef.current = null;
     }, 1500);
-  }, [fullKey]);
+  }, [fullKey, t.copyError]);
 
   if (loading) {
     return (
@@ -229,6 +233,8 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
     );
   }
 
+  const pageT = getContentForLang(lang).downloads;
+
   return (
     <div className="rounded-2xl border border-coral/20 bg-coral/5 p-6 shadow-soft">
       {error ? (
@@ -239,28 +245,26 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">3</p>
       <h2 className="mt-2 text-lg font-semibold text-ink">
-        {apiKey ? "Your ClawLite API Key" : "Get Your ClawLite API Key"}
+        {apiKey ? t.titleWithKey : t.titleWithoutKey}
       </h2>
       <p className="mt-2 text-sm text-ink/70">
-        {apiKey
-          ? "Use this key to authenticate your installer and route AI requests through ClawRouter."
-          : "Generate your personal API key to activate the installer after purchase."}
+        {apiKey ? t.descWithKey : t.descWithoutKey}
       </p>
 
       {!apiKey ? (
         <Button className="mt-4" onClick={handleGenerate} disabled={submitting}>
-          {submitting ? "Generating..." : "Generate API Key"}
+          {submitting ? t.generating : t.generate}
         </Button>
       ) : justCreated && fullKey ? (
         <div className="mt-4 rounded-xl border border-emerald-300/60 bg-emerald-50/90 px-4 py-3">
           <p className="break-all font-mono text-sm text-emerald-900">{fullKey}</p>
-          <p className="mt-2 text-xs text-emerald-700">Save this key — it is only shown once.</p>
+          <p className="mt-2 text-xs text-emerald-700">{t.saveOnce}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={handleCopy}>
-              {copied ? "Copied" : "Copy Key"}
+              {copied ? t.copied : t.copyKey}
             </Button>
             <Button variant="secondary" size="sm" onClick={handleRegenerate} disabled={submitting}>
-              Regenerate
+              {submitting ? t.regenerating : t.regenerate}
             </Button>
           </div>
         </div>
@@ -269,10 +273,10 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
           <p className="break-all font-mono text-sm text-ink">{fullKey}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={handleCopy}>
-              {copied ? "Copied" : "Copy Key"}
+              {copied ? t.copied : t.copyKey}
             </Button>
             <Button variant="secondary" size="sm" onClick={handleRegenerate} disabled={submitting}>
-              Regenerate
+              {submitting ? t.regenerating : t.regenerate}
             </Button>
           </div>
         </div>
@@ -284,27 +288,29 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
             </p>
             {apiKey.hasEncryptedSecret ? (
               <Button variant="secondary" size="sm" onClick={handleReveal} disabled={revealing}>
-                {revealing ? "Revealing..." : "Show"}
+                {revealing ? t.revealing : t.show}
               </Button>
             ) : (
               <Button variant="secondary" size="sm" disabled>
-                Copy
+                {t.copy}
               </Button>
             )}
             <Button variant="secondary" size="sm" onClick={handleRegenerate} disabled={submitting}>
-              Regenerate
+              {submitting ? t.regenerating : t.regenerate}
             </Button>
           </div>
           <p className="mt-2 text-xs text-ink/60">
             {apiKey.hasEncryptedSecret
-              ? "Click Show to reveal your full key."
-              : "Full key only shown on first creation. Regenerate to get a new key."}
+              ? t.hintHasEncrypted
+              : t.hintNoEncrypted}
           </p>
         </div>
       )}
 
       {apiKey?.createdAt && (
-        <p className="mt-4 text-xs text-ink/50">Created {new Date(apiKey.createdAt).toLocaleDateString()}</p>
+        <p className="mt-4 text-xs text-ink/50">
+          {t.created.replace("{date}", new Date(apiKey.createdAt).toLocaleDateString())}
+        </p>
       )}
     </div>
   );
