@@ -197,46 +197,7 @@ The next winner will not only be the agent that can do the most. It will be the 
 
 ## CTA
 If your priority is dependable, understandable, cost-sane coding-agent operation instead of demo theater, ClawLite is a practical next option to evaluate.
-Start here: https://clawlite.ai
-
-## Source / Proof Notes
-- Same-day Hunter intel pack: \`/Users/m1/.openclaw/workspace/mission-control/data/social-intel/intel-pack-2026-04-25.json\`
-- Same-day Hunter handoff: \`/Users/m1/.openclaw/workspace/mission-control/data/social-intel/hunter-community-intel-2026-04-25-agent-trust-over-demo-hype.json\`
-- Same-day JK package: \`/Users/m1/.openclaw/workspace/mission-control/data/content-delivery/jk-content-writer-output-2026-04-25.md\`
-- Brand positioning source: \`/Users/m1/Desktop/obsidianvault/ClawLite/brand-positioning-tony.md\`
-- Marketing assets index: \`/Users/m1/Desktop/obsidianvault/ClawLite/marketing-assets/00-INDEX.md\`
-- External evidence links carried forward from same-day Hunter research:
-  - https://x.com/steverab/status/2033906489350398178
-  - https://x.com/dair_ai/status/2026678090815123594
-  - https://news.google.com/rss/articles/CBMiowFBVV95cUxPTndHeG94c2taeXhFU0w4MXdLZVpUQmhMYmdrSWlxNGFqM2ZqTlliNGM1blRKVHJmUUZucVJuMWF2dXptdEFYM0VwYnF4QjRVWm1BWHZ6YTdDWnRHVUlLckdkWWdGaFZvaE5yRHVYR1JHRTllOGpZZnJfeXNaRHlLeUVUd1ZkX0p2UThSWjhLcW1RYnFvdlZOMEVfeW1Tcll1UmJV?oc=5
-
-## ASSET_CHECK
-\`\`\`json
-{
-  "angle": "agent trust over raw autonomy hype",
-  "hook_source": "hunter intel pack 2026-04-25 + JK content output 2026-04-25",
-  "cta_source": "brand-positioning-tony.md",
-  "proof_source": "https://x.com/steverab/status/2033906489350398178"
-}
-\`\`\`
-
-## Why this matters
-Buyers do not feel the real pain during setup alone. They feel it after the tool becomes part of daily work, when retries, updates, permission changes, and handoffs start to matter. A reliability-first choice reduces hidden cost and operator stress.
-
-## Core decision / first principle
-A strong decision starts with the operating model, not the launch demo. The right stack should make ordinary work boring in the best possible way: predictable, recoverable, and understandable for small teams.
-
-## What most teams get wrong
-Most teams optimize for first-run excitement and underestimate day-two friction. They choose impressive flexibility but inherit fragile defaults, unclear failures, and higher supervision cost.
-
-## Practical framework / comparison
-Use a simple framework: operational clarity, recovery path, cost integrity, and workflow durability. These criteria produce better decisions than feature-count comparisons.
-
-## When this approach is the right fit
-A reliability-first path fits teams that want control without becoming a full-time integration department. It is especially useful when budgets are tight and the same people must both ship and operate the system.
-
-## Common mistakes to avoid
-Do not confuse low token price with low operating cost. Do not treat installation speed as proof of long-term value. Do not buy impressive capability if the recovery path is vague.`
+Start here: https://clawlite.ai`
   },
   'why-gpt-5-5-makes-context-the-new-bottleneck': {
     title: "Why GPT-5.5 Makes Context the New Bottleneck for Agent Teams",
