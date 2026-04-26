@@ -44,16 +44,27 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdminClient();
 
-    // Verify account is active by checking entitlement status
+    // Verify account is active by checking entitlement OR balance
+    // (matches bootstrap's isAccountActive logic)
     const entitlement = await getActiveEntitlementForAccount(supabase, accountId);
-    if (!entitlement) {
+    const hasEntitlement = !!entitlement;
+
+    // Also check credit balance as fallback (allows topup-without-entitlement users to provision)
+    const accountBalance = await supabase
+      .from("accounts")
+      .select("credit_balance_usd")
+      .eq("id", accountId)
+      .maybeSingle();
+    const hasBalance = !!(accountBalance?.data && Number(accountBalance.data.credit_balance_usd || 0) > 0);
+
+    if (!hasEntitlement && !hasBalance) {
       return NextResponse.json({
         provisioningState: "failed",
         bindingId: null,
         credentialRef: null,
         provider: "clawrouter",
         model: "clawrouter/auto",
-        error: "Account is not active (no entitlement found)",
+        error: "Account has no entitlement and no balance",
       }, { status: 400 });
     }
 
