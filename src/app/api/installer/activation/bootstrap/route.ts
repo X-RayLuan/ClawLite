@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
         if (active) {
           entitlementStatus = "active";
         }
+        // Also resolve activation state so a checkout session is created/linked
+        // for the existing account — this ensures the purchase API can find it
+        await resolveInstallerActivationState(supabase, setupToken, resolvedAccountId);
       }
     } else {
       const activation = await resolveInstallerActivationState(supabase, setupToken);

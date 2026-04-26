@@ -213,7 +213,23 @@ export function toEntitlementView(row: EntitlementRow): EntitlementView {
 }
 
 export async function createCheckoutSessionRecord(input: CreateCheckoutSessionInput) {
-  const accountId = normalizeAccountId(input.accountId);
+  // Resolve accountId: use provided UUID, or look up existing account by email, or generate new
+  let accountId: string;
+  if (input.accountId) {
+    accountId = normalizeAccountId(input.accountId);
+  } else if (input.email) {
+    // Try to find an existing account by email so we link to the user's existing account
+    // rather than creating a duplicate with a fresh UUID
+    const existing = await input.supabase
+      .from("accounts")
+      .select("id")
+      .eq("email", input.email)
+      .maybeSingle();
+    accountId = existing?.data?.id || normalizeAccountId(undefined);
+  } else {
+    accountId = normalizeAccountId(undefined);
+  }
+
   const sessionId = crypto.randomUUID();
   const checkoutUrl = checkoutUrlForSession(sessionId);
   const accountUpsert = await input.supabase.from("accounts").upsert?.(
@@ -435,10 +451,13 @@ async function updateCheckoutSessionMetadata(
 export async function resolveInstallerActivationState(
   supabase: MinimalSupabaseClient,
   setupToken?: string | null,
+  accountIdOverride?: string | null,
 ): Promise<InstallerActivationState> {
   const resolvedSetupToken = setupToken || "";
   const latestCheckoutSession = await getLatestCheckoutSessionForSetupToken(supabase, resolvedSetupToken);
-  const account = await getAccountSummary(supabase, latestCheckoutSession?.accountId || null);
+  // Use the override accountId if provided (e.g., from an email lookup in bootstrap),
+  // otherwise fall back to the accountId from the latest checkout session
+  const account = await getAccountSummary(supabase, accountIdOverride ?? latestCheckoutSession?.accountId ?? null);
   const entitlement = await getActiveEntitlementForAccount(supabase, account.accountId);
   const activationUnlocked = Boolean(entitlement);
 

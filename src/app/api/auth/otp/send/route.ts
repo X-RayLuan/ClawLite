@@ -13,13 +13,31 @@ function hashCode(code: string) {
   return crypto.createHash("sha256").update(code, "utf8").digest("hex");
 }
 
-export async function POST(request: NextRequest) {
+// Attach CORS headers to any NextResponse
+function withCors(request: NextRequest, response: NextResponse): NextResponse {
+  const origin = request.headers.get("origin") || "*";
+  response.headers.set("Access-Control-Allow-Origin", origin);
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
+  const response = new NextResponse(null, { status: 204 });
+  return withCors(request, response);
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json().catch(() => ({}));
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
     if (!email || !email.includes("@")) {
-      return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
+      const response = NextResponse.json(
+        { ok: false, error: "invalid_email" },
+        { status: 400 }
+      );
+      return withCors(request, response);
     }
 
     const supabase = getSupabaseAdminClient();
@@ -46,7 +64,11 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("[otp/send] failed to insert OTP:", insertError);
-      return NextResponse.json({ ok: false, error: "failed_to_store_otp" }, { status: 500 });
+      const response = NextResponse.json(
+        { ok: false, error: "failed_to_store_otp" },
+        { status: 500 }
+      );
+      return withCors(request, response);
     }
 
     // Send email with Resend
@@ -90,8 +112,13 @@ export async function POST(request: NextRequest) {
       console.warn("[otp/send] RESEND_API_KEY or RESEND_FROM not set, skipping email");
     }
 
-    return NextResponse.json({ ok: true });
+    const okResponse = NextResponse.json({ ok: true });
+    return withCors(request, okResponse);
   } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error?.message || "internal_error" }, { status: 500 });
+    const response = NextResponse.json(
+      { ok: false, error: error?.message || "internal_error" },
+      { status: 500 }
+    );
+    return withCors(request, response);
   }
 }

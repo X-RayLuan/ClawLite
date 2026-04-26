@@ -6,6 +6,19 @@ import crypto from "crypto";
 
 export const runtime = "nodejs";
 
+function withCors(request: NextRequest, response: NextResponse): NextResponse {
+  const origin = request.headers.get("origin") || "*";
+  response.headers.set("Access-Control-Allow-Origin", origin);
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
+  const response = new NextResponse(null, { status: 204 });
+  return withCors(request, response);
+}
+
 function hashCode(code: string) {
   return crypto.createHash("sha256").update(code, "utf8").digest("hex");
 }
@@ -34,12 +47,12 @@ export async function POST(request: NextRequest) {
     const code = typeof body.code === "string" ? body.code.trim() : "";
 
     if (!email || !email.includes("@") || !code) {
-      return NextResponse.json({ ok: false, error: "invalid_input" }, { status: 400 });
+      return withCors(request, NextResponse.json({ ok: false, error: "invalid_input" }, { status: 400 }));
     }
 
     const normalizedCode = code.replace(/\D/g, "");
     if (normalizedCode.length !== 6) {
-      return NextResponse.json({ ok: false, error: "invalid_code" }, { status: 400 });
+      return withCors(request, NextResponse.json({ ok: false, error: "invalid_code" }, { status: 400 }));
     }
 
     const supabase = getSupabaseAdminClient();
@@ -55,12 +68,12 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!anyRecord?.data) {
-      return NextResponse.json({ ok: false, error: "invalid_code" }, { status: 401 });
+      return withCors(request, NextResponse.json({ ok: false, error: "invalid_code" }, { status: 401 }));
     }
 
     // Check if expired
     if (new Date(anyRecord.data.expires_at) <= new Date(now)) {
-      return NextResponse.json({ ok: false, error: "expired_code" }, { status: 401 });
+      return withCors(request, NextResponse.json({ ok: false, error: "expired_code" }, { status: 401 }));
     }
 
     // Check if already used
@@ -73,7 +86,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!unusedRecord?.data) {
-      return NextResponse.json({ ok: false, error: "invalid_code" }, { status: 401 });
+      return withCors(request, NextResponse.json({ ok: false, error: "invalid_code" }, { status: 401 }));
     }
 
     // Mark OTP as used
@@ -91,13 +104,13 @@ export async function POST(request: NextRequest) {
 
     if (!accountResult?.data) {
       // No account yet — return ok: true but no account info
-      return NextResponse.json({
+      return withCors(request, NextResponse.json({
         ok: true,
         accountId: null,
         email,
         isActive: false,
         balanceUsd: 0,
-      });
+      }));
     }
 
     const row = accountResult.data;
@@ -105,15 +118,15 @@ export async function POST(request: NextRequest) {
     const balanceUsd = Number(row.credit_balance_usd || 0);
     const isActive = await isAccountActive(supabase, accountId);
 
-    return NextResponse.json({
+    return withCors(request, NextResponse.json({
       ok: true,
       accountId,
       email: row.email,
       isActive,
       balanceUsd,
-    });
+    }));
   } catch (error: any) {
     console.error("[installer/auth/verify-otp] unexpected error:", error);
-    return NextResponse.json({ ok: false, error: error?.message || "internal_error" }, { status: 500 });
+    return withCors(request, NextResponse.json({ ok: false, error: error?.message || "internal_error" }, { status: 500 }));
   }
 }
