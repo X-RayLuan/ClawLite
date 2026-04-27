@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'node:crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -19,6 +20,8 @@ type ActivationBatchRequest = {
   dryRun?: boolean
   mode?: 'probe' | 'batch'
   recipients: ActivationRecipient[]
+  probeToken?: string
+  recordProbeDryRun?: boolean
 }
 
 type ProbeState = {
@@ -34,6 +37,15 @@ type ProbeState = {
   copySentAt?: string | null
 }
 
+type ProbeTokenPayload = {
+  v: 1
+  issuedAt: number
+  date: string
+  runtime: string
+  campaignId: string
+  recipientCount: number
+}
+
 const SEND_DELAY_MS = 250
 const MAX_RATE_LIMIT_RETRIES = 3
 const OFFICIAL_JENNY_RUNTIME = 'local-node-direct-resend'
@@ -41,7 +53,37 @@ const OFFICIAL_JENNY_SEND_PATH = 'clawlite-api -> resend-node-sdk'
 const PROBE_MAX_RECIPIENTS = 3
 const PROBE_FRESHNESS_MS = 30 * 60 * 1000
 const SHANGHAI_TIME_ZONE = 'Asia/Shanghai'
-const DATA_DIR = path.resolve(process.cwd(), '..', 'mission-control', 'data')
+
+function resolveMissionControlDataDir() {
+  const isVercelRuntime = Boolean(process.env.VERCEL)
+
+  const candidates = [
+    process.env.MISSION_CONTROL_DATA_DIR,
+    process.env.MISSION_CONTROL_ROOT && path.join(process.env.MISSION_CONTROL_ROOT, 'mission-control', 'data'),
+    isVercelRuntime ? '/tmp/mission-control/data' : null,
+    '/tmp/mission-control/data',
+    process.env.VERCEL ? path.resolve(process.cwd(), 'tmp', 'mission-control', 'data') : null,
+    path.resolve(process.cwd(), '..', 'mission-control', 'data'),
+    path.resolve(process.cwd(), '..', '..', 'mission-control', 'data'),
+    '/Users/m1/.openclaw/workspace/mission-control/data',
+  ].filter(Boolean)
+
+  let lastError: unknown = null
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    try {
+      fs.mkdirSync(candidate, { recursive: true })
+      return candidate
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  const reason = lastError instanceof Error ? lastError.message : String(lastError || 'unknown')
+  throw new Error(`Unable to resolve a writable mission-control data directory: ${reason}`)
+}
+
+const DATA_DIR = resolveMissionControlDataDir()
 const EMAIL_DELIVERY_DIR = path.join(DATA_DIR, 'email-delivery')
 
 function sleep(ms: number) {
@@ -95,6 +137,58 @@ function hasFreshPassedProbe(state: ProbeState) {
   const ts = new Date(state.lastProbePassedAt).getTime()
   if (Number.isNaN(ts)) return false
   return Date.now() - ts <= PROBE_FRESHNESS_MS
+}
+
+function serializeProbeToken(payload: ProbeTokenPayload) {
+  return Buffer.from(JSON.stringify(payload)).toString('base64url')
+}
+
+function issueProbeToken(payload: ProbeTokenPayload, secret: string) {
+  const serialized = serializeProbeToken(payload)
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(serialized)
+    .digest('hex')
+  return `${serialized}.${signature}`
+}
+
+function parseProbeToken(token: string, secret: string): ProbeTokenPayload | null {
+  try {
+    const [serialized, signature] = token.split('.')
+    if (!serialized || !signature) return null
+
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(serialized)
+      .digest('hex')
+
+    if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+      return null
+    }
+
+    const message = Buffer.from(serialized, 'base64url').toString('utf8')
+    const payload = JSON.parse(message) as ProbeTokenPayload
+    if (payload?.v !== 1 || typeof payload.issuedAt !== 'number' || !payload.runtime || !payload.date || !payload.campaignId) {
+      return null
+    }
+
+    return payload
+  } catch {
+    return null
+  }
+}
+
+function isValidProbeToken(rawToken: string | undefined, secret: string, date: string, campaignId: string) {
+  if (!rawToken) return false
+  const payload = parseProbeToken(rawToken, secret)
+  if (!payload) return false
+  if (payload.date !== date) return false
+  if (payload.runtime !== OFFICIAL_JENNY_RUNTIME) return false
+  if (payload.campaignId !== campaignId) return false
+  if (Date.now() - payload.issuedAt > PROBE_FRESHNESS_MS) return false
+  if (payload.issuedAt > Date.now()) return false
+
+  return true
 }
 
 function isCircuitBreakerError(error: unknown) {
@@ -229,7 +323,18 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as ActivationBatchRequest
-    const { campaignId, subject, ctaUrl, dryRun = false, mode = 'batch', recipients = [] } = body
+    const {
+      campaignId,
+      subject,
+      ctaUrl,
+      dryRun = false,
+      mode = 'batch',
+      recipients = [],
+      probeToken: providedProbeToken,
+      recordProbeDryRun = false,
+    } = body
+
+    const isProbeMode = mode === 'probe'
 
     if (!campaignId || !subject || !ctaUrl) {
       return NextResponse.json(
@@ -252,7 +357,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (mode === 'probe' && recipients.length > PROBE_MAX_RECIPIENTS) {
+    if (isProbeMode && recipients.length > PROBE_MAX_RECIPIENTS && !dryRun && !recordProbeDryRun) {
       return NextResponse.json(
         { success: false, error: `Probe size exceeds limit (${PROBE_MAX_RECIPIENTS})` },
         { status: 400 }
@@ -262,8 +367,9 @@ export async function POST(req: NextRequest) {
     const today = getShanghaiDate()
     const probeState = readProbeState(today)
     const laneLocked = sameDayLaneLocked(today)
+    const hasValidProbeToken = isValidProbeToken(providedProbeToken, expectedSecret, today, campaignId)
 
-    if (!dryRun && laneLocked && mode !== 'probe') {
+    if (!dryRun && laneLocked && !isProbeMode) {
       return NextResponse.json(
         {
           success: false,
@@ -274,7 +380,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!dryRun && probeState.circuitBreakerState === 'open' && mode !== 'probe') {
+    if (!dryRun && probeState.circuitBreakerState === 'open' && !isProbeMode && !hasValidProbeToken) {
       return NextResponse.json(
         {
           success: false,
@@ -285,7 +391,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!dryRun && mode !== 'probe' && !hasFreshPassedProbe(probeState)) {
+    if (!dryRun && !isProbeMode && !hasFreshPassedProbe(probeState) && !hasValidProbeToken) {
       return NextResponse.json(
         {
           success: false,
@@ -394,20 +500,32 @@ export async function POST(req: NextRequest) {
     const accepted = results.filter((item) => item.accepted).length
     const failed = results.length - accepted
 
-    if (!dryRun) {
-      if (mode === 'probe') {
-        nextProbeState.lastProbeAt = new Date().toISOString()
-        nextProbeState.lastProbeRecipientCount = recipients.length
-        if (accepted > 0 && !breakerReason) {
-          nextProbeState.lastProbePassedAt = new Date().toISOString()
-          nextProbeState.circuitBreakerState = 'closed'
-          nextProbeState.blocker = null
-        } else {
-          nextProbeState.lastProbeFailedAt = new Date().toISOString()
-          nextProbeState.blocker = breakerReason || 'Probe failed without accepted sends'
-        }
-      }
+    const nowIso = new Date().toISOString()
+    let probeToken: string | null = null
 
+    if (isProbeMode && (!dryRun || recordProbeDryRun)) {
+      nextProbeState.lastProbeAt = nowIso
+      nextProbeState.lastProbeRecipientCount = recipients.length
+
+      if (accepted > 0 && !breakerReason) {
+        nextProbeState.lastProbePassedAt = nowIso
+        nextProbeState.circuitBreakerState = 'closed'
+        nextProbeState.blocker = null
+        probeToken = issueProbeToken({
+          v: 1,
+          issuedAt: Date.now(),
+          date: today,
+          runtime: OFFICIAL_JENNY_RUNTIME,
+          campaignId,
+          recipientCount: recipients.length,
+        }, expectedSecret)
+      } else {
+        nextProbeState.lastProbeFailedAt = nowIso
+        nextProbeState.blocker = breakerReason || 'Probe failed without accepted sends'
+      }
+    }
+
+    if (!dryRun || recordProbeDryRun) {
       if (breakerReason) {
         nextProbeState.circuitBreakerState = 'open'
         nextProbeState.blocker = breakerReason
@@ -428,6 +546,7 @@ export async function POST(req: NextRequest) {
       sendPath: OFFICIAL_JENNY_SEND_PATH,
       circuitBreakerTripped: Boolean(breakerReason),
       breakerReason,
+      probeToken,
       results,
     })
   } catch (err: any) {
