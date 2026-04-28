@@ -5,6 +5,9 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 const SUPPORTED_MODELS = [
+  { id: "gpt-5.4", name: "GPT-5.4", provider: "openai", contextWindow: 1050000 },
+  { id: "gpt-5.4-mini", name: "GPT-5.4 Mini", provider: "openai", contextWindow: 400000 },
+  { id: "gpt-5.4-pro", name: "GPT-5.4 Pro", provider: "openai", contextWindow: 1050000 },
   { id: "gpt-4o", name: "GPT-4o", provider: "openai", contextWindow: 128000 },
   { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", contextWindow: 128000 },
   { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "openai", contextWindow: 128000 },

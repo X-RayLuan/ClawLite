@@ -4,9 +4,11 @@ import {
   listDeliveredKeysForAccount,
   ensureManagedKeyDelivery,
 } from "@/lib/clawrouter-delivery";
-import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
+import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
 
 export const runtime = "nodejs";
+
+const CLAWLITE_BASE_URL = "https://clawlite.ai/api/openai";
 
 async function rotateAndCreateKey(supabase: any, accountId: string): Promise<string | null> {
   await supabase
@@ -16,16 +18,15 @@ async function rotateAndCreateKey(supabase: any, accountId: string): Promise<str
     .eq("status", "active");
 
   const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-  if (!keyResult.key.plaintextSecret) return null;
-
-  await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
-  return keyResult.key.plaintextSecret;
+  const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
+  await ensureManagedKeyDelivery({ supabase, accountId, apiKey: { ...keyResult.key, plaintextSecret: revealed.plaintextSecret } });
+  return revealed.plaintextSecret;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { setupToken, accountId, targetConfigPath } = body;
+    const { setupToken, accountId, targetConfigPath, baseUrl } = body;
 
     if (!setupToken) {
       return NextResponse.json({ error: "setupToken is required" }, { status: 400 });
@@ -44,20 +45,21 @@ export async function POST(request: NextRequest) {
         k.deliveryMode === "managed_key" &&
         k.plaintextKey,
     );
-    let credentialRef: string | null = managedKey?.plaintextKey || null;
+    let plaintextKey: string | null = managedKey?.plaintextKey || null;
 
-    if (!credentialRef) {
+    if (!plaintextKey) {
       // No existing managed delivery — create one
       const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-      if (keyResult.key.plaintextSecret) {
-        credentialRef = keyResult.key.plaintextSecret;
-        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
-      } else {
-        credentialRef = await rotateAndCreateKey(supabase, accountId);
+      try {
+        const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
+        plaintextKey = revealed.plaintextSecret;
+        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: { ...keyResult.key, plaintextSecret: revealed.plaintextSecret } });
+      } catch {
+        plaintextKey = await rotateAndCreateKey(supabase, accountId);
       }
     }
 
-    if (!credentialRef) {
+    if (!plaintextKey) {
       return NextResponse.json({
         configInjectionState: "failed",
         configTarget: targetConfigPath || null,
@@ -66,13 +68,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Per PRD: write clawlite provider config with baseUrl
+    const resolvedBaseUrl = (typeof baseUrl === "string" && baseUrl.trim() !== "")
+      ? baseUrl.trim()
+      : CLAWLITE_BASE_URL;
+
     return NextResponse.json({
       configInjectionState: "written",
       configTarget: targetConfigPath || "~/.openclaw/openclaw.json",
       patchPreview: {
-        provider: "clawrouter",
-        credentialRef,
-        model: "clawrouter/auto",
+        provider: "clawlite",
+        baseUrl: resolvedBaseUrl,
+        apiKey: plaintextKey,
       },
     });
   } catch (error: any) {

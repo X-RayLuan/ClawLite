@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveInstallerActivationState } from "@/lib/clawrouter-checkout";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET /api/installer/activation/validate?setupToken=xxx
 export async function GET(request: NextRequest) {

@@ -104,12 +104,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (!res.ok) {
           const errText = await res.text().catch(() => "");
           console.error("[otp/send] Resend error:", errText);
+          const response = NextResponse.json(
+            { ok: false, error: "Failed to send email. Please try again." },
+            { status: 502 }
+          );
+          return withCors(request, response);
         }
+
+        const response = NextResponse.json({ ok: true });
+        return withCors(request, response);
       } catch (emailErr) {
         console.error("[otp/send] failed to send email:", emailErr);
+        const response = NextResponse.json(
+          { ok: false, error: "Failed to send email. Please try again." },
+          { status: 500 }
+        );
+        return withCors(request, response);
       }
     } else {
       console.warn("[otp/send] RESEND_API_KEY or RESEND_FROM not set, skipping email");
+      const response = NextResponse.json(
+        { ok: false, error: "Email service not configured." },
+        { status: 503 }
+      );
+      return withCors(request, response);
     }
 
     const okResponse = NextResponse.json({ ok: true });

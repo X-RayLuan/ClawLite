@@ -6,6 +6,7 @@ import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
 import { findEzRouterApiKeyByName, getEzRouterUsageStats } from "@/lib/ezrouter";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {

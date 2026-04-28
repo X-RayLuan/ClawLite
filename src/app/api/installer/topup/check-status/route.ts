@@ -4,6 +4,7 @@ import { getActiveEntitlementForAccount } from "@/lib/clawrouter-checkout";
 import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function isAccountActive(supabase: any, accountId: string): Promise<boolean> {
   const entitlement = await getActiveEntitlementForAccount(supabase, accountId);

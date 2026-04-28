@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
-import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
+import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
 import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
 import { assignInventoryKeyToAccount, ensureManagedKeyDelivery } from "@/lib/clawrouter-delivery";
 import { sendClawLiteApiKeyEmail } from "@/lib/email";
@@ -47,7 +47,7 @@ async function maybeSendApiKeyEmail(input: {
   fallbackEmail?: string | null;
   keyResult: Awaited<ReturnType<typeof ensureClawRouterApiKey>>;
 }) {
-  if (!input.keyResult.created || !input.keyResult.key.plaintextSecret) {
+  if (!input.keyResult.created) {
     return;
   }
 
@@ -58,9 +58,10 @@ async function maybeSendApiKeyEmail(input: {
   }
 
   try {
+    const revealed = await revealApiKey(input.supabase, input.keyResult.key.id, input.accountId);
     await sendClawLiteApiKeyEmail({
       to: email,
-      apiKey: input.keyResult.key.plaintextSecret,
+      apiKey: revealed.plaintextSecret,
     });
   } catch (emailError) {
     console.error("[stripe webhook] failed to send api key email", emailError);
@@ -169,12 +170,15 @@ export async function POST(req: Request) {
 
           // 保留原有 managed key 发放逻辑
           const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-          if (keyResult.key.plaintextSecret) {
+          try {
+            const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
             await ensureManagedKeyDelivery({
               supabase,
               accountId,
-              apiKey: keyResult.key,
+              apiKey: { ...keyResult.key, plaintextSecret: revealed.plaintextSecret },
             });
+          } catch (e) {
+            console.error("[stripe webhook] failed to deliver managed key:", e);
           }
           await maybeSendApiKeyEmail({
             supabase,

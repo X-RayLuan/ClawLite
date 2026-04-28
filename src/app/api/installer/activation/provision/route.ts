@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
+import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
 import {
   listDeliveredKeysForAccount,
   ensureManagedKeyDelivery,
@@ -10,7 +10,6 @@ import { getActiveEntitlementForAccount } from "@/lib/clawrouter-checkout";
 export const runtime = "nodejs";
 
 async function rotateAndCreateKey(supabase: any, accountId: string): Promise<string | null> {
-  // Mark all existing active api_keys as inactive so ensureClawRouterApiKey creates a new one
   await supabase
     .from("api_keys")
     .update({ status: "inactive" })
@@ -18,16 +17,14 @@ async function rotateAndCreateKey(supabase: any, accountId: string): Promise<str
     .eq("status", "active");
 
   const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-  if (!keyResult.key.plaintextSecret) return null;
-
-  // Persist plaintext to deliveries table for future retrieval
+  const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
   await ensureManagedKeyDelivery({
     supabase,
     accountId,
-    apiKey: keyResult.key,
+    apiKey: { ...keyResult.key, plaintextSecret: revealed.plaintextSecret },
   });
 
-  return keyResult.key.plaintextSecret;
+  return revealed.plaintextSecret;
 }
 
 export async function POST(request: NextRequest) {
@@ -82,10 +79,11 @@ export async function POST(request: NextRequest) {
     if (!plaintextKey) {
       // No existing managed delivery — create one
       const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-      if (keyResult.key.plaintextSecret) {
-        plaintextKey = keyResult.key.plaintextSecret;
-        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: keyResult.key });
-      } else {
+      try {
+        const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
+        plaintextKey = revealed.plaintextSecret;
+        await ensureManagedKeyDelivery({ supabase, accountId, apiKey: { ...keyResult.key, plaintextSecret: revealed.plaintextSecret } });
+      } catch {
         plaintextKey = await rotateAndCreateKey(supabase, accountId);
       }
     }

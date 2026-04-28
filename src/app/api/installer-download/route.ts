@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");

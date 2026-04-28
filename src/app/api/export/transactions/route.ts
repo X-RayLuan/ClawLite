@@ -3,6 +3,7 @@ import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET /api/export/transactions - 导出交易记录为 CSV
 export async function GET(request: NextRequest) {

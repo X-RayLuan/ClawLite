@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getActiveEntitlementForAccount } from "@/lib/clawrouter-checkout";
 import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
+import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
+
+const CLAWLITE_BASE_URL = "https://clawlite.ai/api/openai";
 
 function withCors(request: NextRequest, response: NextResponse): NextResponse {
   const origin = request.headers.get("origin") || "*";
@@ -109,7 +112,9 @@ export async function POST(request: NextRequest) {
         accountId: null,
         email,
         isActive: false,
-        balanceUsd: 0,
+        apiKey: null,
+        balance: 0,
+        currency: "USD",
       }));
     }
 
@@ -118,12 +123,26 @@ export async function POST(request: NextRequest) {
     const balanceUsd = Number(row.credit_balance_usd || 0);
     const isActive = await isAccountActive(supabase, accountId);
 
+    // Get or create API key, then decrypt to get plaintext
+    let apiKey: string | null = null;
+    try {
+      const keyResult = await ensureClawRouterApiKey(supabase, accountId);
+      const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
+      apiKey = revealed.plaintextSecret;
+    } catch (keyErr) {
+      console.error("[installer/auth/verify-otp] failed to get API key:", keyErr);
+    }
+
     return withCors(request, NextResponse.json({
       ok: true,
       accountId,
       email: row.email,
       isActive,
-      balanceUsd,
+      // PRD: return plaintext API key directly (no encryption/decryption)
+      apiKey,
+      baseUrl: CLAWLITE_BASE_URL,
+      balance: balanceUsd,
+      currency: "USD",
     }));
   } catch (error: any) {
     console.error("[installer/auth/verify-otp] unexpected error:", error);

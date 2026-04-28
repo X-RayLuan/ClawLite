@@ -6,6 +6,7 @@ import { ensureClawRouterAccount, reconcileTopupsFromStripe } from "@/lib/clawro
 import { reconcileInventoryAccessFromStripe } from "@/lib/clawrouter-delivery";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function getUserAccount(userId: string, email: string | null, supabase: ReturnType<typeof getSupabaseAdminClient>) {
   await ensureClawRouterAccount({ supabase, accountId: userId, email });

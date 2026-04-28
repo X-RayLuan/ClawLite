@@ -4,26 +4,14 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 
 // Model pricing – USD per 1M tokens
-// Note: ezrouter uses different model IDs. Map OpenAI-style names to ezrouter names.
 const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  // GPT-5.4 family
   "gpt-5.4": { inputPer1M: 3, outputPer1M: 15 },
   "gpt-5.4-mini": { inputPer1M: 0.6, outputPer1M: 2.4 },
   "gpt-5.4-pro": { inputPer1M: 5, outputPer1M: 20 },
-  // Claude Sonnet 4.6 (aliases: claude-3-5-sonnet-20241022, claude-3-5-sonnet-20250320)
-  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-sonnet-20250320": { inputPer1M: 3, outputPer1M: 15 },
-  // Claude Haiku 4.5 (alias: claude-3-5-haiku-20241022)
-  "claude-haiku-4-5": { inputPer1M: 1, outputPer1M: 5 },
-  "claude-3-5-haiku-20241022": { inputPer1M: 1, outputPer1M: 5 },
-  // Claude Opus 4.7
-  "claude-opus-4-7": { inputPer1M: 5, outputPer1M: 25 },
-  // Claude Sonnet 4.5
-  "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
+  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
+  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
 };
 
-// Default pricing for unknown models
 const DEFAULT_PRICING = { inputPer1M: 3, outputPer1M: 15 };
 
 function getModelPricing(model: string) {
@@ -89,7 +77,7 @@ async function recordUsageAsync(params: {
       request_id: params.requestId,
     });
   } catch (err) {
-    console.error("[claude/proxy] failed to record usage:", err);
+    console.error("[openai/proxy] failed to record usage:", err);
   }
 }
 
@@ -119,26 +107,29 @@ export async function POST(request: NextRequest) {
   let balance;
   try {
     balance = await checkBalance(keyInfo.accountId);
-  } catch (err: any) {
-    if (err.message === "account_not_found") {
-      return NextResponse.json({ error: "account_not_found" }, { status: 401 });
-    }
+  } catch (err) {
+    console.error("[openai/proxy] balance check failed:", err);
     return NextResponse.json({ error: "balance_check_failed" }, { status: 500 });
   }
 
-  // 4. Parse request body for model/tokens to estimate cost
+  // 4. Parse body, inject default model
   let body: any;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "invalid_request_body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid_json_body" }, { status: 400 });
+  }
+
+  // Default model: gpt-5.4
+  if (!body?.model) {
+    body = { ...body, model: "gpt-5.4" };
   }
 
   const model = body?.model || "gpt-5.4";
   const messages = body?.messages || [];
   const maxTokens = body?.max_tokens || 4096;
 
-  // Rough token estimation: ~4 chars per token for input
+  // Rough token estimation
   const inputText = JSON.stringify(messages);
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensOut = maxTokens;
@@ -147,31 +138,26 @@ export async function POST(request: NextRequest) {
   if (balance.availableBalanceUsd < estimatedCost) {
     return NextResponse.json(
       { error: "insufficient_balance", available: balance.availableBalanceUsd, required: estimatedCost },
-      { status: 402 },
+      { status: 402 }
     );
   }
 
-  // 5. Freeze estimated cost
+  // 5. Freeze balance
   let freezeTxId: string | undefined;
   try {
     const freezeTx = await freezeBalance(
       keyInfo.accountId,
       estimatedCost,
       undefined,
-      `claude_proxy:${model}`,
+      `openai_proxy:${model}`,
     );
     freezeTxId = freezeTx.id;
-  } catch (err: any) {
-    if (err.message === "insufficient_balance") {
-      return NextResponse.json(
-        { error: "insufficient_balance", available: balance.availableBalanceUsd, required: estimatedCost },
-        { status: 402 },
-      );
-    }
-    return NextResponse.json({ error: "freeze_failed" }, { status: 500 });
+  } catch (err) {
+    console.error("[openai/proxy] freeze failed:", err);
+    return NextResponse.json({ error: "balance_freeze_failed" }, { status: 500 });
   }
 
-  // 6. Forward to ezrouter
+  // 6. Proxy to Ezrouter
   const ezrouterBaseUrl = (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "");
   const ezrouterToken = process.env.EZROUTER_AUTH_TOKEN;
   if (!ezrouterToken) {
@@ -179,14 +165,11 @@ export async function POST(request: NextRequest) {
   }
 
   const requestId = crypto.randomUUID();
-  let ezrouterStatus = 200;
-  let ezrouterError: string | null = null;
   let actualTokensIn = estimatedTokensIn;
   let actualTokensOut = estimatedTokensOut;
-  let streamed = false;
 
   try {
-    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/claude/chat/completions`, {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -195,18 +178,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(body),
     });
-
-    ezrouterStatus = ezrouterResponse.status;
-
-    if (!ezrouterResponse.ok) {
-      let errorBody: any;
-      try {
-        errorBody = await ezrouterResponse.json();
-      } catch {
-        errorBody = await ezrouterResponse.text();
-      }
-      ezrouterError = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterResponse.status}`;
-    }
 
     // Stream response to client
     const stream = new ReadableStream({
@@ -221,10 +192,8 @@ export async function POST(request: NextRequest) {
             const { done, value } = await reader.read();
             if (done) break;
             controller.enqueue(value);
-            streamed = true;
 
-            // Try to parse SSE to extract token usage
-            // Each chunk is a text line like "data: {...}"
+            // Try to parse SSE for token usage
             const text = new TextDecoder().decode(value, { stream: true });
             const lines = text.split("\n");
             for (const line of lines) {
@@ -238,68 +207,21 @@ export async function POST(request: NextRequest) {
                     actualTokensOut = parsed.usage.completion_tokens;
                   }
                 } catch {
-                  // ignore parse errors per chunk
+                  // ignore parse errors
                 }
               }
             }
           }
-        } catch (streamErr) {
-          console.error("[claude/proxy] stream error:", streamErr);
-        } finally {
           controller.close();
+        } catch (err) {
+          controller.error(err);
         }
       },
     });
 
-    // Return stream immediately — finally block runs after stream finishes
-    return new Response(stream, {
-      status: ezrouterStatus,
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-store",
-        "X-Request-ID": requestId,
-        "Transfer-Encoding": "chunked",
-      },
-    });
-  } catch (err: any) {
-    ezrouterError = err?.message || "ezrouter_fetch_failed";
-    ezrouterStatus = 502;
-
-    return NextResponse.json(
-      { error: ezrouterError },
-      {
-        status: 502,
-        headers: {
-          "X-Request-ID": requestId,
-        },
-      },
-    );
-  } finally {
-    // 7. Settle balance and record usage synchronously
-    // (finally runs after stream finishes, so actualTokensIn/Out are final)
+    // Record actual usage after completion
     const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
-
-    try {
-      // Charge the actual (or estimated) cost — awaited synchronously
-      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_proxy:${model}`);
-
-      // Release any remaining frozen amount (between estimated and actual)
-      const frozenRemaining = estimatedCost - finalCost;
-      if (frozenRemaining > 0.01) {
-        // Only release if > 1 cent difference
-        try {
-          const { refundBalance } = await import("@/lib/balance");
-          await refundBalance(keyInfo.accountId, frozenRemaining, freezeTxId, `claude_proxy_refund:${model}`);
-        } catch {
-          // ignore refund errors
-        }
-      }
-    } catch (err) {
-      console.error("[claude/proxy] chargeBalance failed:", err);
-      // Error is logged but does not block the response
-    }
-
-    await recordUsageAsync({
+    recordUsageAsync({
       supabase,
       accountId: keyInfo.accountId,
       apiKeyId: keyInfo.keyId,
@@ -307,8 +229,38 @@ export async function POST(request: NextRequest) {
       tokensIn: actualTokensIn,
       tokensOut: actualTokensOut,
       costEstimate: finalCost,
-      status: ezrouterError ? "error" : "success",
+      status: ezrouterResponse.ok ? "success" : "error",
       requestId,
     });
+
+    // Charge actual cost
+    if (ezrouterResponse.ok) {
+      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId ?? undefined, `openai_proxy:${model}`);
+    } else {
+      await chargeBalance(keyInfo.accountId, 0, freezeTxId ?? undefined, `openai_proxy_refund:${model}`);
+    }
+
+    return new Response(stream, {
+      status: ezrouterResponse.status,
+      headers: {
+        "Content-Type": ezrouterResponse.headers.get("Content-Type") || "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Request-ID": requestId,
+      },
+    });
+  } catch (err: any) {
+    console.error("[openai/proxy] ezrouter fetch failed:", err);
+    recordUsageAsync({
+      supabase,
+      accountId: keyInfo.accountId,
+      apiKeyId: keyInfo.keyId,
+      model,
+      tokensIn: estimatedTokensIn,
+      tokensOut: estimatedTokensOut,
+      costEstimate: 0,
+      status: "error",
+      requestId,
+    });
+    return NextResponse.json({ error: err?.message || "proxy_failed" }, { status: 502 });
   }
 }

@@ -18,8 +18,7 @@ export type ApiKeyView = {
   status: string;
   createdAt: string | null;
   lastUsedAt: string | null;
-  plaintextSecret?: string | null;
-  hasEncryptedSecret?: boolean;
+  hasEncryptedSecret: boolean;
 };
 
 export type UsageSummaryView = {
@@ -34,23 +33,25 @@ function hashSecret(secret: string) {
 }
 
 function makePublicApiKey() {
-  return `clrl_live_${crypto.randomBytes(24).toString("hex")}`;
+  return `cls_${crypto.randomBytes(24).toString("hex")}`;
 }
 
 function makeKeyPrefix(secret: string) {
   return secret.slice(0, 16);
 }
 
-// AES-256-GCM encryption: returns "iv:authTag:ciphertext" as hex string
+// AES-256-GCM encryption
 function encryptSecret(plaintext: string): string {
   const key = getCipherSecret();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const plaintextBuf = Buffer.from(plaintext, "utf8");
+  const ciphertext = Buffer.concat([cipher.update(plaintextBuf), cipher.final()]);
   const authTag = cipher.getAuthTag();
-  return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted.toString("hex")}`;
+  return `${iv.toString("hex")}:${authTag.toString("hex")}:${ciphertext.toString("hex")}`;
 }
 
+// AES-256-GCM decryption
 function decryptSecret(encrypted: string): string {
   const [ivHex, authTagHex, ciphertextHex] = encrypted.split(":");
   const key = getCipherSecret();
@@ -59,7 +60,8 @@ function decryptSecret(encrypted: string): string {
   const ciphertext = Buffer.from(ciphertextHex, "hex");
   const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
-  return decipher.update(ciphertext) + decipher.final("utf8");
+  const final = decipher.final();
+  return Buffer.concat([decipher.update(ciphertext), final]).toString("utf8");
 }
 
 function toApiKeyView(row: any): ApiKeyView {
@@ -98,7 +100,7 @@ export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, ac
 
   const existing = await supabase
     .from("api_keys")
-    .select("id, account_id, name, key_prefix, status, created_at, last_used_at")
+    .select("id, account_id, name, key_prefix, status, created_at, last_used_at, secret_encrypted")
     .eq("account_id", accountId)
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -113,8 +115,10 @@ export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, ac
     return { key: toApiKeyView(existing.data), created: false };
   }
 
+  // Create new key — stored encrypted, revealed via revealApiKey
   const plaintextSecret = makePublicApiKey();
   const encryptedSecret = encryptSecret(plaintextSecret);
+
   const insert = await supabase
     .from("api_keys")
     .insert({
@@ -132,15 +136,10 @@ export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, ac
     throw new Error(insert?.error?.message || "failed_to_create_api_key");
   }
 
-  return {
-    key: {
-      ...toApiKeyView(insert.data),
-      plaintextSecret,
-    },
-    created: true,
-  };
+  return { key: toApiKeyView(insert.data), created: true };
 }
 
+// Reveal plaintext API key — decrypts from secret_encrypted
 export async function revealApiKey(supabase: MinimalSupabaseClient, keyId: string, accountId: string): Promise<{ plaintextSecret: string }> {
   const response = await supabase
     .from("api_keys")
@@ -155,6 +154,7 @@ export async function revealApiKey(supabase: MinimalSupabaseClient, keyId: strin
   }
 
   const row = response.data;
+
   if (!row.secret_encrypted) {
     throw new Error("key_not_recoverable");
   }
