@@ -233,11 +233,11 @@ export async function POST(request: NextRequest) {
       requestId,
     });
 
-    // Charge actual cost
-    if (ezrouterResponse.ok) {
+    // Charge actual cost (only if > 0 to avoid balance.ts guard throwing on 0)
+    if (ezrouterResponse.ok && finalCost > 0) {
       await chargeBalance(keyInfo.accountId, finalCost, freezeTxId ?? undefined, `openai_proxy:${model}`);
-    } else {
-      await chargeBalance(keyInfo.accountId, 0, freezeTxId ?? undefined, `openai_proxy_refund:${model}`);
+    } else if (!ezrouterResponse.ok) {
+      // Refund: no charge needed, balance freeze just expires
     }
 
     return new Response(stream, {
