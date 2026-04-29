@@ -54,7 +54,7 @@ async function validateApiKey(supabase: ReturnType<typeof import("@/lib/supabase
   return { keyId: row.id, accountId: row.account_id };
 }
 
-async function recordUsageAsync(params: {
+async function recordUsage(params: {
   supabase: ReturnType<typeof import("@/lib/supabase-admin").getSupabaseAdminClient>;
   accountId: string;
   apiKeyId: string;
@@ -64,9 +64,9 @@ async function recordUsageAsync(params: {
   costEstimate: number;
   status: string;
   requestId: string;
-}) {
+}): Promise<{ success: boolean; error?: string }> {
   try {
-    await params.supabase.from("usage_events").insert({
+    const { error: insertError } = await params.supabase.from("usage_events").insert({
       account_id: params.accountId,
       api_key_id: params.apiKeyId,
       model: params.model,
@@ -76,8 +76,15 @@ async function recordUsageAsync(params: {
       status: params.status,
       request_id: params.requestId,
     });
+    if (insertError) {
+      console.error("[openai/proxy] usage insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+    console.log(`[openai/proxy] usage recorded: tokens_in=${params.tokensIn} tokens_out=${params.tokensOut} cost=${params.costEstimate}`);
+    return { success: true };
   } catch (err) {
     console.error("[openai/proxy] failed to record usage:", err);
+    return { success: false, error: String(err) };
   }
 }
 
@@ -222,11 +229,37 @@ export async function POST(request: NextRequest) {
                 if (usage?.completion_tokens > 0) {
                   actualTokensOut = usage.completion_tokens;
                 }
+                // Also handle input_tokens/output_tokens (some providers use these)
+                if (usage?.input_tokens > 0) {
+                  actualTokensIn = usage.input_tokens;
+                }
+                if (usage?.output_tokens > 0) {
+                  actualTokensOut = usage.output_tokens;
+                }
               } catch {
                 // ignore parse errors for malformed SSE data
               }
             }
           }
+
+          // Flush any remaining SSE data in buffer (handles final chunk without trailing \n\n)
+          if (sseBuffer.trim()) {
+            const line = sseBuffer.trimStart();
+            if (line.startsWith("data: ")) {
+              const payload = line.slice(6).trim();
+              if (payload !== "[DONE]") {
+                try {
+                  const parsed = JSON.parse(payload);
+                  const usage = parsed.usage ?? parsed;
+                  if (usage?.prompt_tokens > 0) actualTokensIn = usage.prompt_tokens;
+                  if (usage?.completion_tokens > 0) actualTokensOut = usage.completion_tokens;
+                  if (usage?.input_tokens > 0) actualTokensIn = usage.input_tokens;
+                  if (usage?.output_tokens > 0) actualTokensOut = usage.output_tokens;
+                } catch { /* ignore */ }
+              }
+            }
+          }
+
           controller.close();
         } catch (err) {
           controller.error(err);
@@ -234,9 +267,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Record actual usage after completion
+    // Record actual usage after completion (must await so failures are not silent)
     const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
-    recordUsageAsync({
+    const usageResult = await recordUsage({
       supabase,
       accountId: keyInfo.accountId,
       apiKeyId: keyInfo.keyId,
@@ -247,6 +280,9 @@ export async function POST(request: NextRequest) {
       status: ezrouterResponse.ok ? "success" : "error",
       requestId,
     });
+    if (!usageResult.success) {
+      console.error("[openai/proxy] usage recording failed:", usageResult.error);
+    }
 
     // Charge actual cost (only if > 0 to avoid balance.ts guard throwing on 0)
     if (ezrouterResponse.ok && finalCost > 0) {
@@ -265,7 +301,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: any) {
     console.error("[openai/proxy] ezrouter fetch failed:", err);
-    recordUsageAsync({
+    await recordUsage({
       supabase,
       accountId: keyInfo.accountId,
       apiKeyId: keyInfo.keyId,
