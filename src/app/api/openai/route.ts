@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
   let actualTokensIn = estimatedTokensIn;
   let actualTokensOut = estimatedTokensOut;
+  let sseBuffer = "";
 
   try {
     const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai`, {
@@ -194,21 +195,35 @@ export async function POST(request: NextRequest) {
             controller.enqueue(value);
 
             // Try to parse SSE for token usage
+            // SSE messages are delimited by blank lines (\n\n).
+            // Because chunks can arrive mid-line, we accumulate until \n\n.
             const text = new TextDecoder().decode(value, { stream: true });
-            const lines = text.split("\n");
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                try {
-                  const parsed = JSON.parse(line.slice(6));
-                  if (parsed.usage?.prompt_tokens) {
-                    actualTokensIn = parsed.usage.prompt_tokens;
-                  }
-                  if (parsed.usage?.completion_tokens) {
-                    actualTokensOut = parsed.usage.completion_tokens;
-                  }
-                } catch {
-                  // ignore parse errors
+            // Normalise \r\n → \n and track double-newline boundaries
+            const normalised = text.replace(/\r\n/g, "\n");
+            sseBuffer += normalised;
+
+            // Split on SSE message delimiter (blank line = \n\n or trailing \n\n)
+            const messages = sseBuffer.split(/\n\n/);
+            // Keep the last "tail" as the new buffer (it may be incomplete)
+            sseBuffer = messages.pop() ?? "";
+
+            for (const raw of messages) {
+              const line = raw.trimStart();
+              if (!line.startsWith("data: ")) continue;
+              const payload = line.slice(6).trim();
+              if (payload === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(payload);
+                // OpenAI compatible usage fields (may be top-level or inside choices)
+                const usage = parsed.usage ?? parsed;
+                if (usage?.prompt_tokens > 0) {
+                  actualTokensIn = usage.prompt_tokens;
                 }
+                if (usage?.completion_tokens > 0) {
+                  actualTokensOut = usage.completion_tokens;
+                }
+              } catch {
+                // ignore parse errors for malformed SSE data
               }
             }
           }
