@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { listDeliveredKeysForAccount, DeliveredKeyView } from "./clawrouter-delivery";
 
 export type CheckoutSessionRow = {
   id: string;
@@ -459,18 +460,48 @@ export async function resolveInstallerActivationState(
   // otherwise fall back to the accountId from the latest checkout session
   const account = await getAccountSummary(supabase, accountIdOverride ?? latestCheckoutSession?.accountId ?? null);
   const entitlement = await getActiveEntitlementForAccount(supabase, account.accountId);
-  const activationUnlocked = Boolean(entitlement);
+  if (entitlement) {
+    return {
+      setupToken: resolvedSetupToken,
+      activationUnlocked: true,
+      account,
+      entitlement: {
+        status: "active" as const,
+        plan: entitlement.plan || null,
+        product: entitlement.product || null,
+        startsAt: entitlement.startsAt || null,
+        endsAt: entitlement.endsAt || null,
+      },
+      latestCheckoutSession,
+      allowedPaths: ["connect_now", "use_own_key"] as const,
+      recommendedPath: "connect_now" as const,
+    };
+  }
+
+  // Check for active delivered keys (e.g., user completed email verification and got a key)
+  const deliveredKeys = await listDeliveredKeysForAccount(supabase, account.accountId);
+  const hasDeliveredKey = deliveredKeys.some((k: DeliveredKeyView) => k.status === "active" && k.plaintextKey);
+
+  // Check for positive credit balance
+  const accountRow = await supabase
+    .from("accounts")
+    .select("credit_balance_usd")
+    .eq("id", account.accountId)
+    .maybeSingle();
+  const hasBalance = !!(accountRow?.data && Number(accountRow.data.credit_balance_usd || 0) > 0);
+
+  const activationUnlocked = hasDeliveredKey || hasBalance;
 
   return {
     setupToken: resolvedSetupToken,
     activationUnlocked,
     account,
     entitlement: {
-      status: activationUnlocked ? "active" : "inactive",
-      plan: entitlement?.plan || null,
-      product: entitlement?.product || null,
-      startsAt: entitlement?.startsAt || null,
-      endsAt: entitlement?.endsAt || null,
+      status: activationUnlocked ? "active" : "inactive" as const,
+      plan: null,
+      product: null,
+      startsAt: null,
+      endsAt: null,
     },
     latestCheckoutSession,
     allowedPaths: activationUnlocked
