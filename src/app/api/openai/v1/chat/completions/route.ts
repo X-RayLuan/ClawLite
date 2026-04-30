@@ -143,9 +143,26 @@ export async function POST(request: NextRequest) {
   const model = rawModel.includes("/") ? rawModel.split("/")[1] : rawModel;
   const maxTokens = body?.max_tokens || 4096;
 
-  // For chat completions, body.messages should already be in the correct format
-  const messages = body?.messages || [];
-  const inputText = JSON.stringify(messages);
+  // Support both chat completions (messages) and text completions (prompt)
+  let messages: any[] = [];
+  let inputText = "";
+
+  if (body?.messages && body?.messages.length > 0) {
+    // Chat completions format
+    messages = body.messages;
+    inputText = JSON.stringify(messages);
+  } else if (body?.prompt !== undefined) {
+    // Text completions format - convert to chat format
+    const promptText = typeof body.prompt === "string" ? body.prompt : Array.isArray(body.prompt) ? body.prompt.join("\n") : String(body.prompt);
+    messages = [{ role: "user", content: promptText }];
+    inputText = promptText;
+    // Replace body.prompt with body.messages for ezrouter
+    body = { ...body, messages };
+    delete (body as any).prompt;
+  }
+
+  // Update body with stripped model name for ezrouter
+  body = { ...body, model };
 
   // Rough token estimation
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
