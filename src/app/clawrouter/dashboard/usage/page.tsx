@@ -57,9 +57,9 @@ export default function ClawRouterUsagePage() {
         const data = await res.json();
         // Map API response { summary, balance } to what OverviewCards expects { totalTokens, totalCost, remainingBalance }
         setSummary({
-          totalTokens: (data.summary?.totalTokensIn ?? 0) + (data.summary?.totalTokensOut ?? 0),
-          totalCost: data.summary?.totalCost ?? 0,
-          remainingBalance: data.balance?.balanceUsd ?? 0,
+          totalTokens: Number(data.summary?.totalTokensIn ?? 0) + Number(data.summary?.totalTokensOut ?? 0),
+          totalCost: Number(data.summary?.totalCost ?? 0),
+          remainingBalance: Number(data.balance?.balanceUsd ?? 0),
         });
       }
     } catch {
@@ -121,9 +121,17 @@ export default function ClawRouterUsagePage() {
         });
         if (res.ok) {
           const json = await res.json();
-          const items: UsageRecord[] = Array.isArray(json) ? json : json.data ?? json.records ?? [];
+          const raw: any[] = Array.isArray(json) ? json : json.data ?? json.records ?? json.usageEvents ?? [];
+          const items: UsageRecord[] = raw.map((r: any) => ({
+            id: r.id,
+            time: r.created_at,
+            model: r.model ?? '',
+            inputTokens: Number(r.tokens_in ?? r.inputTokens ?? 0),
+            outputTokens: Number(r.tokens_out ?? r.outputTokens ?? 0),
+            cost: Number(r.cost ?? r.cost_estimate ?? 0),
+          }));
           setRecords(items);
-          setTotal(json.total ?? items.length);
+          setTotal(Number(json.pagination?.total ?? json.total ?? items.length));
         }
       } catch {
         // silently fail
