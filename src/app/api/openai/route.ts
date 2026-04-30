@@ -140,11 +140,25 @@ export async function POST(request: NextRequest) {
   }
 
   const model = body?.model || "gpt-5.4";
-  const messages = body?.messages || [];
   const maxTokens = body?.max_tokens || 4096;
 
+  // Support both chat completions (messages) and text completions (prompt)
+  let messages: any[] = [];
+  let inputText = "";
+
+  if (body?.messages && body?.messages.length > 0) {
+    // Chat completions format
+    messages = body.messages;
+    inputText = JSON.stringify(messages);
+  } else if (body?.prompt !== undefined) {
+    // Text completions format - convert to chat format
+    const promptText = typeof body.prompt === "string" ? body.prompt : Array.isArray(body.prompt) ? body.prompt.join("\n") : String(body.prompt);
+    messages = [{ role: "user", content: promptText }];
+    inputText = promptText;
+  }
+
   // Rough token estimation
-  const inputText = JSON.stringify(messages);
+  const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensOut = maxTokens;
   const estimatedCost = estimateCost(model, estimatedTokensIn, estimatedTokensOut);
