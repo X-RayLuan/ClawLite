@@ -22,6 +22,9 @@ function formatNumber(num: number): string {
 }
 
 function formatCurrency(amount: number): string {
+  if (amount < 0.01 && amount > 0) {
+    return '$' + amount.toFixed(6);
+  }
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 

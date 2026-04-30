@@ -55,7 +55,12 @@ export default function ClawRouterUsagePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setSummary(data);
+        // Map API response { summary, balance } to what OverviewCards expects { totalTokens, totalCost, remainingBalance }
+        setSummary({
+          totalTokens: (data.summary?.totalTokensIn ?? 0) + (data.summary?.totalTokensOut ?? 0),
+          totalCost: data.summary?.totalCost ?? 0,
+          remainingBalance: data.balance?.balanceUsd ?? 0,
+        });
       }
     } catch {
       // silently fail
