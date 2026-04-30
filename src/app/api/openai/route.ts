@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 5. Freeze balance
+  console.log(`[openai/proxy] freezing balance: accountId=${keyInfo.accountId} amount=${estimatedCost}`);
   let freezeTxId: string | undefined;
   try {
     const freezeTx = await freezeBalance(
@@ -159,6 +160,7 @@ export async function POST(request: NextRequest) {
       `openai_proxy:${model}`,
     );
     freezeTxId = freezeTx.id;
+    console.log(`[openai/proxy] freeze succeeded: txId=${freezeTxId}`);
   } catch (err) {
     console.error("[openai/proxy] freeze failed:", err);
     return NextResponse.json({ error: "balance_freeze_failed" }, { status: 500 });
@@ -269,6 +271,7 @@ export async function POST(request: NextRequest) {
 
     // Record actual usage after completion (must await so failures are not silent)
     const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
+    console.log(`[openai/proxy] recording usage: tokensIn=${actualTokensIn} tokensOut=${actualTokensOut} cost=${finalCost} status=${ezrouterResponse.ok ? 'success' : 'error'}`);
     const usageResult = await recordUsage({
       supabase,
       accountId: keyInfo.accountId,
@@ -282,13 +285,20 @@ export async function POST(request: NextRequest) {
     });
     if (!usageResult.success) {
       console.error("[openai/proxy] usage recording failed:", usageResult.error);
+    } else {
+      console.log(`[openai/proxy] usage recorded successfully`);
     }
 
     // Charge actual cost (only if > 0 to avoid balance.ts guard throwing on 0)
     if (ezrouterResponse.ok && finalCost > 0) {
+      console.log(`[openai/proxy] charging balance: accountId=${keyInfo.accountId} amount=${finalCost}`);
       await chargeBalance(keyInfo.accountId, finalCost, freezeTxId ?? undefined, `openai_proxy:${model}`);
+      console.log(`[openai/proxy] charge completed`);
     } else if (!ezrouterResponse.ok) {
       // Refund: no charge needed, balance freeze just expires
+      console.log(`[openai/proxy] request failed, skipping charge`);
+    } else {
+      console.log(`[openai/proxy] finalCost is 0, skipping charge`);
     }
 
     return new Response(stream, {
