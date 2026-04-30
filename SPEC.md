@@ -27,7 +27,7 @@ A frontend-first web application hosted at clawlite.ai, guiding users from zero 
 - Linux: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -`
 
 ### Step 3: Install OpenClaw
-- One-click-copy command: `npm install -g openclaw`
+- One-click-copy command: `npm install -g openclaw@2026.3.13`
 - Guide user to paste output to confirm successful installation
 - Common error messages (permissions, network issues)
 
