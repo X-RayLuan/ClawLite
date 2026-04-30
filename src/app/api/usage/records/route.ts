@@ -14,11 +14,16 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdminClient();
 
     const searchParams = request.nextUrl.searchParams;
-    const limit = Math.min(Number(searchParams.get("limit")) || 50, 200);
-    const offset = Number(searchParams.get("offset")) || 0;
+
+    // Pagination: frontend sends page (1-based) + pageSize; API computes offset
+    const pageSize = Math.min(Number(searchParams.get("pageSize")) || 20, 200);
+    const page = Math.max(Number(searchParams.get("page")) || 1, 1);
+    const offset = (page - 1) * pageSize;
+
     const keyName = searchParams.get("keyName")?.trim() || null;
-    const startDate = searchParams.get("startDate")?.trim() || null;
-    const endDate = searchParams.get("endDate")?.trim() || null;
+    // Accept both start/startDate and end/endDate (frontend uses start/end)
+    const startDate = searchParams.get("start")?.trim() || searchParams.get("startDate")?.trim() || null;
+    const endDate = searchParams.get("end")?.trim() || searchParams.get("endDate")?.trim() || null;
     const typeFilter = searchParams.get("type")?.trim() || "all";
 
     // Build balance_transactions query with filters
@@ -27,7 +32,7 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact" })
       .eq("account_id", userId)
       .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .range(offset, offset + pageSize - 1);
 
     if (startDate) {
       txQuery = txQuery.gte("created_at", startDate);
@@ -58,17 +63,15 @@ export async function GET(request: NextRequest) {
     }));
 
     // Build usage_events query with filters
-    // Note: usage_events has api_key_id (FK to api_keys.id), not key_name directly
     let eventsQuery = supabase
       .from("usage_events")
       .select("id, api_key_id, model, tokens_in, tokens_out, cost_estimate, status, error_code, created_at", { count: "exact" })
       .eq("account_id", userId)
       .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .range(offset, offset + pageSize - 1);
 
     if (keyName) {
-      // Filter by key name requires a subquery or join - skip for now to avoid complexity
-      // The keyName filter is not critical for basic usage
+      // Filter by key name requires a subquery or join - skip for now
     }
     if (startDate) {
       eventsQuery = eventsQuery.gte("created_at", startDate);
@@ -104,7 +107,8 @@ export async function GET(request: NextRequest) {
           key_name: e.api_key_id ? (keyNameMap[e.api_key_id] || null) : null,
         })),
         pagination: {
-          limit,
+          page,
+          pageSize,
           offset,
           totalTransactions: txCount || 0,
           totalEvents: totalEvents || 0,
