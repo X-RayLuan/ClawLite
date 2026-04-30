@@ -159,7 +159,6 @@ export async function POST(request: NextRequest) {
 
   // Rough token estimation
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
-  const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensOut = maxTokens;
   const estimatedCost = estimateCost(model, estimatedTokensIn, estimatedTokensOut);
 
