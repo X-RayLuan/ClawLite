@@ -91,6 +91,13 @@ async function recordUsage(params: {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  return NextResponse.json(
+    { error: "method_not_allowed", message: "POST only" },
+    { status: 405, headers: { Allow: "POST" } }
+  );
+}
+
 export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdminClient();
 
