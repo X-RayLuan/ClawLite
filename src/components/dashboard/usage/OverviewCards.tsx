@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 
 export interface UsageSummary {
   totalTokens: number;
+  inputTokens: number;
+  outputTokens: number;
   totalCost: number;
   remainingBalance: number;
 }
@@ -69,7 +71,7 @@ export function OverviewCards({ data, loading }: OverviewCardsProps) {
       <StatCard
         label="本月消耗 Token"
         value={loading ? '—' : formatNumber(data?.totalTokens ?? 0)}
-        subValue="近30天累计"
+        subValue={`In: ${formatNumber(data?.inputTokens ?? 0)} · Out: ${formatNumber(data?.outputTokens ?? 0)}`}
         loading={loading}
         accent="coral"
       />

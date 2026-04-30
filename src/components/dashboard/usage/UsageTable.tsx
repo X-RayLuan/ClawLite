@@ -12,6 +12,7 @@ export interface UsageRecord {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  totalTokens: number;
   cost: number;
 }
 
@@ -49,12 +50,13 @@ function formatDate(iso: string): string {
 }
 
 function exportToCSV(records: UsageRecord[]) {
-  const headers = ['时间', '模型', 'Input Tokens', 'Output Tokens', '费用 (USD)'];
+  const headers = ['时间', '模型', 'Input Tokens', 'Output Tokens', 'Total Tokens', '费用 (USD)'];
   const rows = records.map((r) => [
     r.time,
     r.model,
     r.inputTokens,
     r.outputTokens,
+    r.totalTokens,
     r.cost.toFixed(6),
   ]);
   const csv = [headers, ...rows]
@@ -132,8 +134,9 @@ export function UsageTable({
               <tr className="border-b border-stone-200">
                 <th className="py-3 pr-4 text-left font-semibold text-stone-600">时间</th>
                 <th className="py-3 pr-4 text-left font-semibold text-stone-600">模型</th>
-                <th className="py-3 pr-4 text-right font-semibold text-stone-600">Input Tokens</th>
-                <th className="py-3 pr-4 text-right font-semibold text-stone-600">Output Tokens</th>
+                <th className="py-3 pr-4 text-right font-semibold text-stone-600">Input</th>
+                <th className="py-3 pr-4 text-right font-semibold text-stone-600">Output</th>
+                <th className="py-3 pr-4 text-right font-semibold text-stone-600">Total</th>
                 <th className="py-3 text-right font-semibold text-stone-600">费用</th>
               </tr>
             </thead>
@@ -150,7 +153,7 @@ export function UsageTable({
                 ))
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-stone-400">
+                  <td colSpan={6} className="py-12 text-center text-stone-400">
                     暂无记录
                   </td>
                 </tr>
@@ -167,6 +170,9 @@ export function UsageTable({
                     </td>
                     <td className="py-3 pr-4 text-right text-stone-600">
                       {formatNumber(record.outputTokens)}
+                    </td>
+                    <td className="py-3 pr-4 text-right font-medium text-stone-900">
+                      {formatNumber(record.totalTokens)}
                     </td>
                     <td className="py-3 text-right font-medium text-stone-900">
                       {formatCurrency(record.cost)}
