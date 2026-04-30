@@ -105,10 +105,13 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Validate API Key
+  console.log(`[openai/proxy] validating API key, prefix: ${apiKey.slice(0, 16)}`);
   const keyInfo = await validateApiKey(supabase, apiKey);
   if (!keyInfo) {
+    console.error(`[openai/proxy] API key validation failed`);
     return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
   }
+  console.log(`[openai/proxy] API key validated: accountId=${keyInfo.accountId}`);
 
   // 3. Check balance
   let balance;
