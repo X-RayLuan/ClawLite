@@ -105,13 +105,10 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Validate API Key
-  console.log(`[openai/proxy] validating API key, prefix: ${apiKey.slice(0, 16)}`);
   const keyInfo = await validateApiKey(supabase, apiKey);
   if (!keyInfo) {
-    console.error(`[openai/proxy] API key validation failed`);
     return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
   }
-  console.log(`[openai/proxy] API key validated: accountId=${keyInfo.accountId}`);
 
   // 3. Check balance
   let balance;
@@ -153,7 +150,6 @@ export async function POST(request: NextRequest) {
   }
 
   // 5. Freeze balance
-  console.log(`[openai/proxy] freezing balance: accountId=${keyInfo.accountId} amount=${estimatedCost}`);
   let freezeTxId: string | undefined;
   try {
     const freezeTx = await freezeBalance(
@@ -163,7 +159,6 @@ export async function POST(request: NextRequest) {
       `openai_proxy:${model}`,
     );
     freezeTxId = freezeTx.id;
-    console.log(`[openai/proxy] freeze succeeded: txId=${freezeTxId}`);
   } catch (err) {
     console.error("[openai/proxy] freeze failed:", err);
     return NextResponse.json({ error: "balance_freeze_failed" }, { status: 500 });
@@ -181,6 +176,9 @@ export async function POST(request: NextRequest) {
   let actualTokensOut = estimatedTokensOut;
   let sseBuffer = "";
 
+  let ezrouterStatus = 200;
+  let ezrouterError: string | null = null;
+
   try {
     const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai`, {
       method: "POST",
@@ -192,7 +190,19 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    // Stream response to client
+    ezrouterStatus = ezrouterResponse.status;
+
+    if (!ezrouterResponse.ok) {
+      let errorBody: any;
+      try {
+        errorBody = await ezrouterResponse.json();
+      } catch {
+        errorBody = await ezrouterResponse.text();
+      }
+      ezrouterError = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterResponse.status}`;
+    }
+
+    // Stream response to client — same pattern as /api/claude
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -206,17 +216,12 @@ export async function POST(request: NextRequest) {
             if (done) break;
             controller.enqueue(value);
 
-            // Try to parse SSE for token usage
-            // SSE messages are delimited by blank lines (\n\n).
-            // Because chunks can arrive mid-line, we accumulate until \n\n.
+            // Parse SSE for token usage
             const text = new TextDecoder().decode(value, { stream: true });
-            // Normalise \r\n → \n and track double-newline boundaries
             const normalised = text.replace(/\r\n/g, "\n");
             sseBuffer += normalised;
 
-            // Split on SSE message delimiter (blank line = \n\n or trailing \n\n)
             const messages = sseBuffer.split(/\n\n/);
-            // Keep the last "tail" as the new buffer (it may be incomplete)
             sseBuffer = messages.pop() ?? "";
 
             for (const raw of messages) {
@@ -226,28 +231,18 @@ export async function POST(request: NextRequest) {
               if (payload === "[DONE]") continue;
               try {
                 const parsed = JSON.parse(payload);
-                // OpenAI compatible usage fields (may be top-level or inside choices)
                 const usage = parsed.usage ?? parsed;
-                if (usage?.prompt_tokens > 0) {
-                  actualTokensIn = usage.prompt_tokens;
-                }
-                if (usage?.completion_tokens > 0) {
-                  actualTokensOut = usage.completion_tokens;
-                }
-                // Also handle input_tokens/output_tokens (some providers use these)
-                if (usage?.input_tokens > 0) {
-                  actualTokensIn = usage.input_tokens;
-                }
-                if (usage?.output_tokens > 0) {
-                  actualTokensOut = usage.output_tokens;
-                }
+                if (usage?.prompt_tokens > 0) actualTokensIn = usage.prompt_tokens;
+                if (usage?.completion_tokens > 0) actualTokensOut = usage.completion_tokens;
+                if (usage?.input_tokens > 0) actualTokensIn = usage.input_tokens;
+                if (usage?.output_tokens > 0) actualTokensOut = usage.output_tokens;
               } catch {
-                // ignore parse errors for malformed SSE data
+                // ignore parse errors
               }
             }
           }
 
-          // Flush any remaining SSE data in buffer (handles final chunk without trailing \n\n)
+          // Flush remaining buffer (handles final chunk without trailing \n\n)
           if (sseBuffer.trim()) {
             const line = sseBuffer.trimStart();
             if (line.startsWith("data: ")) {
@@ -272,9 +267,39 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Record actual usage after completion (must await so failures are not silent)
+    // Return stream immediately — same pattern as /api/claude
+    return new Response(stream, {
+      status: ezrouterStatus,
+      headers: {
+        "Content-Type": ezrouterResponse.headers.get("Content-Type") || "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Request-ID": requestId,
+        "Transfer-Encoding": "chunked",
+      },
+    });
+  } catch (err: any) {
+    ezrouterError = err?.message || "ezrouter_fetch_failed";
+    ezrouterStatus = 502;
+
+    return NextResponse.json(
+      { error: ezrouterError },
+      {
+        status: 502,
+        headers: {
+          "X-Request-ID": requestId,
+        },
+      },
+    );
+  } finally {
+    // 7. Settle balance and record usage after stream is consumed
     const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
-    console.log(`[openai/proxy] recording usage: tokensIn=${actualTokensIn} tokensOut=${actualTokensOut} cost=${finalCost} status=${ezrouterResponse.ok ? 'success' : 'error'}`);
+
+    try {
+      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `openai_proxy:${model}`);
+    } catch (err) {
+      console.error("[openai/proxy] chargeBalance failed:", err);
+    }
+
     const usageResult = await recordUsage({
       supabase,
       accountId: keyInfo.accountId,
@@ -283,48 +308,11 @@ export async function POST(request: NextRequest) {
       tokensIn: actualTokensIn,
       tokensOut: actualTokensOut,
       costEstimate: finalCost,
-      status: ezrouterResponse.ok ? "success" : "error",
+      status: ezrouterError ? "error" : "success",
       requestId,
     });
     if (!usageResult.success) {
       console.error("[openai/proxy] usage recording failed:", usageResult.error);
-    } else {
-      console.log(`[openai/proxy] usage recorded successfully`);
     }
-
-    // Charge actual cost (only if > 0 to avoid balance.ts guard throwing on 0)
-    if (ezrouterResponse.ok && finalCost > 0) {
-      console.log(`[openai/proxy] charging balance: accountId=${keyInfo.accountId} amount=${finalCost}`);
-      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId ?? undefined, `openai_proxy:${model}`);
-      console.log(`[openai/proxy] charge completed`);
-    } else if (!ezrouterResponse.ok) {
-      // Refund: no charge needed, balance freeze just expires
-      console.log(`[openai/proxy] request failed, skipping charge`);
-    } else {
-      console.log(`[openai/proxy] finalCost is 0, skipping charge`);
-    }
-
-    return new Response(stream, {
-      status: ezrouterResponse.status,
-      headers: {
-        "Content-Type": ezrouterResponse.headers.get("Content-Type") || "text/event-stream",
-        "Cache-Control": "no-cache",
-        "X-Request-ID": requestId,
-      },
-    });
-  } catch (err: any) {
-    console.error("[openai/proxy] ezrouter fetch failed:", err);
-    await recordUsage({
-      supabase,
-      accountId: keyInfo.accountId,
-      apiKeyId: keyInfo.keyId,
-      model,
-      tokensIn: estimatedTokensIn,
-      tokensOut: estimatedTokensOut,
-      costEstimate: 0,
-      status: "error",
-      requestId,
-    });
-    return NextResponse.json({ error: err?.message || "proxy_failed" }, { status: 502 });
   }
 }
