@@ -155,6 +155,9 @@ export async function POST(request: NextRequest) {
     const promptText = typeof body.prompt === "string" ? body.prompt : Array.isArray(body.prompt) ? body.prompt.join("\n") : String(body.prompt);
     messages = [{ role: "user", content: promptText }];
     inputText = promptText;
+    // Replace body.prompt with body.messages for ezrouter
+    body = { ...body, messages };
+    delete (body as any).prompt;
   }
 
   // Rough token estimation
