@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
   let ezrouterError: string | null = null;
 
   try {
-    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai/chat/completions`, {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai/v1/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
