@@ -139,7 +139,9 @@ export async function POST(request: NextRequest) {
     body = { ...body, model: "gpt-5.4" };
   }
 
-  const model = body?.model || "gpt-5.4";
+  // Strip provider prefix from model name (e.g. "crs/gpt-5.4" -> "gpt-5.4")
+  const rawModel = body?.model || "gpt-5.4";
+  const model = rawModel.includes("/") ? rawModel.split("/")[1] : rawModel;
   const maxTokens = body?.max_tokens || 4096;
 
   // Support both chat completions (messages) and text completions (prompt)
@@ -159,6 +161,9 @@ export async function POST(request: NextRequest) {
     body = { ...body, messages };
     delete (body as any).prompt;
   }
+
+  // Update body with stripped model name for ezrouter
+  body = { ...body, model };
 
   // Rough token estimation
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
