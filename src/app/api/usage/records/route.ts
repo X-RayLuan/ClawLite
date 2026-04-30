@@ -6,6 +6,13 @@ import type { BalanceTransaction } from "@/lib/balance";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Helper: add one day to a YYYY-MM-DD string (handles timezone edge cases)
+function addOneDay(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00+00:00");
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authorization = request.headers.get("authorization");
@@ -23,7 +30,10 @@ export async function GET(request: NextRequest) {
     const keyName = searchParams.get("keyName")?.trim() || null;
     // Accept both start/startDate and end/endDate (frontend uses start/end)
     const startDate = searchParams.get("start")?.trim() || searchParams.get("startDate")?.trim() || null;
-    const endDate = searchParams.get("end")?.trim() || searchParams.get("endDate")?.trim() || null;
+    // For end date, add 1 day so the upper bound captures the full end date in local time
+    // e.g. end="2026-04-30" becomes "2026-05-01" so records on 2026-04-30 are included
+    const endDateParam = searchParams.get("end")?.trim() || searchParams.get("endDate")?.trim() || null;
+    const endDate = endDateParam ? addOneDay(endDateParam) : null;
     const typeFilter = searchParams.get("type")?.trim() || "all";
 
     // Build balance_transactions query with filters
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest) {
       txQuery = txQuery.gte("created_at", startDate);
     }
     if (endDate) {
-      txQuery = txQuery.lte("created_at", endDate);
+      txQuery = txQuery.lt("created_at", endDate);
     }
     if (typeFilter !== "all") {
       txQuery = txQuery.eq("tx_type", typeFilter);
@@ -77,7 +87,7 @@ export async function GET(request: NextRequest) {
       eventsQuery = eventsQuery.gte("created_at", startDate);
     }
     if (endDate) {
-      eventsQuery = eventsQuery.lte("created_at", endDate);
+      eventsQuery = eventsQuery.lt("created_at", endDate);
     }
 
     const { data: events, error: eventsError, count: totalEvents } = await eventsQuery;
@@ -97,19 +107,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const usageEvents = (events || []).map((e: any) => ({
+      ...e,
+      cost: e.cost_estimate,
+      key_name: e.api_key_id ? (keyNameMap[e.api_key_id] || null) : null,
+    }));
+
     return NextResponse.json(
       {
         ok: true,
+        // Flat array for backward compat + nested structure
+        data: usageEvents,
         transactions,
-        usageEvents: (events || []).map((e: any) => ({
-          ...e,
-          cost: e.cost_estimate,
-          key_name: e.api_key_id ? (keyNameMap[e.api_key_id] || null) : null,
-        })),
+        usageEvents,
         pagination: {
           page,
           pageSize,
           offset,
+          total: (txCount || 0) + (totalEvents || 0),
           totalTransactions: txCount || 0,
           totalEvents: totalEvents || 0,
         },
