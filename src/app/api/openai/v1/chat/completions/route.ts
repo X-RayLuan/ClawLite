@@ -1,0 +1,328 @@
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
+
+// Model pricing – USD per 1M tokens
+const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
+  "gpt-5.4": { inputPer1M: 3, outputPer1M: 15 },
+  "gpt-5.4-mini": { inputPer1M: 0.6, outputPer1M: 2.4 },
+  "gpt-5.4-pro": { inputPer1M: 5, outputPer1M: 20 },
+  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
+  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
+};
+
+const DEFAULT_PRICING = { inputPer1M: 3, outputPer1M: 15 };
+
+function getModelPricing(model: string) {
+  return MODEL_PRICING[model] ?? DEFAULT_PRICING;
+}
+
+function estimateCost(model: string, tokensIn: number, tokensOut: number): number {
+  const { inputPer1M, outputPer1M } = getModelPricing(model);
+  return (tokensIn / 1_000_000) * inputPer1M + (tokensOut / 1_000_000) * outputPer1M;
+}
+
+function hashSecret(secret: string) {
+  return crypto.createHash("sha256").update(secret).digest("hex");
+}
+
+function getKeyPrefix(key: string): string {
+  return key.slice(0, 16);
+}
+
+async function validateApiKey(supabase: ReturnType<typeof import("@/lib/supabase-admin").getSupabaseAdminClient>, key: string) {
+  const prefix = getKeyPrefix(key);
+  const hash = hashSecret(key);
+
+  const { data, error } = await supabase
+    .from("api_keys")
+    .select("id, account_id, status, secret_hash")
+    .eq("key_prefix", prefix)
+    .eq("status", "active")
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+
+  const row = data[0];
+  if (row.secret_hash !== hash) {
+    return null;
+  }
+
+  return { keyId: row.id, accountId: row.account_id };
+}
+
+async function recordUsage(params: {
+  supabase: ReturnType<typeof import("@/lib/supabase-admin").getSupabaseAdminClient>;
+  accountId: string;
+  apiKeyId: string;
+  model: string;
+  tokensIn: number;
+  tokensOut: number;
+  costEstimate: number;
+  status: string;
+  requestId: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error: insertError } = await params.supabase.from("usage_events").insert({
+      account_id: params.accountId,
+      api_key_id: params.apiKeyId,
+      model: params.model,
+      tokens_in: params.tokensIn,
+      tokens_out: params.tokensOut,
+      cost_estimate: params.costEstimate,
+      status: params.status,
+      request_id: params.requestId,
+    });
+    if (insertError) {
+      console.error("[openai/v1/chat/completions] usage insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error("[openai/v1/chat/completions] failed to record usage:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  return NextResponse.json(
+    { error: "method_not_allowed", message: "POST only" },
+    { status: 200 }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = getSupabaseAdminClient();
+
+  // 1. Parse API Key
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "missing_api_key" }, { status: 401 });
+  }
+  const apiKey = authHeader.slice(7);
+  if (!apiKey) {
+    return NextResponse.json({ error: "missing_api_key" }, { status: 401 });
+  }
+
+  // 2. Validate API Key
+  const keyInfo = await validateApiKey(supabase, apiKey);
+  if (!keyInfo) {
+    return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
+  }
+
+  // 3. Check balance
+  let balance;
+  try {
+    balance = await checkBalance(keyInfo.accountId);
+  } catch (err) {
+    console.error("[openai/v1/chat/completions] balance check failed:", err);
+    return NextResponse.json({ error: "balance_check_failed" }, { status: 500 });
+  }
+
+  // 4. Parse body, inject default model
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_json_body" }, { status: 400 });
+  }
+
+  // Default model: gpt-5.4
+  if (!body?.model) {
+    body = { ...body, model: "gpt-5.4" };
+  }
+
+  // Strip provider prefix from model name (e.g. "crs/gpt-5.4" -> "gpt-5.4")
+  const rawModel = body?.model || "gpt-5.4";
+  const model = rawModel.includes("/") ? rawModel.split("/")[1] : rawModel;
+  const maxTokens = body?.max_tokens || 4096;
+
+  // For chat completions, body.messages should already be in the correct format
+  const messages = body?.messages || [];
+  const inputText = JSON.stringify(messages);
+
+  // Rough token estimation
+  const estimatedTokensIn = Math.ceil(inputText.length / 4);
+  const estimatedTokensOut = maxTokens;
+  const estimatedCost = estimateCost(model, estimatedTokensIn, estimatedTokensOut);
+
+  if (balance.availableBalanceUsd < estimatedCost) {
+    return NextResponse.json(
+      { error: "insufficient_balance", available: balance.availableBalanceUsd, required: estimatedCost },
+      { status: 402 }
+    );
+  }
+
+  // 5. Freeze balance
+  let freezeTxId: string | undefined;
+  try {
+    const freezeTx = await freezeBalance(
+      keyInfo.accountId,
+      estimatedCost,
+      undefined,
+      `openai_v1_chat:${model}`,
+    );
+    freezeTxId = freezeTx.id;
+  } catch (err) {
+    console.error("[openai/v1/chat/completions] freeze failed:", err);
+    return NextResponse.json({ error: "balance_freeze_failed" }, { status: 500 });
+  }
+
+  // 6. Proxy to Ezrouter
+  const ezrouterBaseUrl = (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "");
+  const ezrouterToken = process.env.EZROUTER_AUTH_TOKEN;
+  if (!ezrouterToken) {
+    return NextResponse.json({ error: "ezrouter_not_configured" }, { status: 500 });
+  }
+
+  const requestId = crypto.randomUUID();
+  let actualTokensIn = estimatedTokensIn;
+  let actualTokensOut = estimatedTokensOut;
+  let sseBuffer = "";
+
+  let ezrouterStatus = 200;
+  let ezrouterError: string | null = null;
+
+  try {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: ezrouterToken,
+        "X-Request-ID": requestId,
+      },
+      body: JSON.stringify(body),
+    });
+
+    ezrouterStatus = ezrouterResponse.status;
+
+    if (!ezrouterResponse.ok) {
+      let errorBody: any;
+      try {
+        errorBody = await ezrouterResponse.json();
+      } catch {
+        errorBody = await ezrouterResponse.text();
+      }
+      ezrouterError = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterResponse.status}`;
+    }
+
+    // Stream response to client
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const reader = ezrouterResponse.body?.getReader();
+          if (!reader) {
+            controller.close();
+            return;
+          }
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+
+            // Parse SSE for token usage
+            const text = new TextDecoder().decode(value, { stream: true });
+            const normalised = text.replace(/\r\n/g, "\n");
+            sseBuffer += normalised;
+
+            const msgParts = sseBuffer.split(/\n\n/);
+            sseBuffer = msgParts.pop() ?? "";
+
+            for (const raw of msgParts) {
+              const line = raw.trimStart();
+              if (!line.startsWith("data: ")) continue;
+              const payload = line.slice(6).trim();
+              if (payload === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(payload);
+                const usage = parsed.usage ?? parsed;
+                if (usage?.prompt_tokens > 0) actualTokensIn = usage.prompt_tokens;
+                if (usage?.completion_tokens > 0) actualTokensOut = usage.completion_tokens;
+                if (usage?.input_tokens > 0) actualTokensIn = usage.input_tokens;
+                if (usage?.output_tokens > 0) actualTokensOut = usage.output_tokens;
+              } catch {
+                // ignore parse errors
+              }
+            }
+          }
+
+          // Flush remaining buffer
+          if (sseBuffer.trim()) {
+            const line = sseBuffer.trimStart();
+            if (line.startsWith("data: ")) {
+              const payload = line.slice(6).trim();
+              if (payload !== "[DONE]") {
+                try {
+                  const parsed = JSON.parse(payload);
+                  const usage = parsed.usage ?? parsed;
+                  if (usage?.prompt_tokens > 0) actualTokensIn = usage.prompt_tokens;
+                  if (usage?.completion_tokens > 0) actualTokensOut = usage.completion_tokens;
+                  if (usage?.input_tokens > 0) actualTokensIn = usage.input_tokens;
+                  if (usage?.output_tokens > 0) actualTokensOut = usage.output_tokens;
+                } catch { /* ignore */ }
+              }
+            }
+          }
+
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      status: ezrouterStatus,
+      headers: {
+        "Content-Type": ezrouterResponse.headers.get("Content-Type") || "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Request-ID": requestId,
+        "Transfer-Encoding": "chunked",
+      },
+    });
+  } catch (err: any) {
+    ezrouterError = err?.message || "ezrouter_fetch_failed";
+    ezrouterStatus = 502;
+
+    return NextResponse.json(
+      { error: ezrouterError },
+      {
+        status: 502,
+        headers: {
+          "X-Request-ID": requestId,
+        },
+      },
+    );
+  } finally {
+    // 7. Settle balance and record usage after stream is consumed
+    if (!ezrouterError) {
+      const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
+      try {
+        await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `openai_v1_chat:${model}`);
+      } catch (err) {
+        console.error("[openai/v1/chat/completions] chargeBalance failed:", err);
+      }
+    }
+
+    const usageResult = await recordUsage({
+      supabase,
+      accountId: keyInfo.accountId,
+      apiKeyId: keyInfo.keyId,
+      model,
+      tokensIn: actualTokensIn,
+      tokensOut: actualTokensOut,
+      costEstimate: estimateCost(model, actualTokensIn, actualTokensOut),
+      status: ezrouterError ? "error" : "success",
+      requestId,
+    });
+    if (!usageResult.success) {
+      console.error("[openai/v1/chat/completions] usage recording failed:", usageResult.error);
+    }
+  }
+}
