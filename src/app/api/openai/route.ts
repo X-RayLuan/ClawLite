@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
   let ezrouterError: string | null = null;
 
   try {
-    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai`, {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -292,12 +292,14 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     // 7. Settle balance and record usage after stream is consumed
-    const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
-
-    try {
-      await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `openai_proxy:${model}`);
-    } catch (err) {
-      console.error("[openai/proxy] chargeBalance failed:", err);
+    // Only charge if the request was successful (no ezrouterError)
+    if (!ezrouterError) {
+      const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
+      try {
+        await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `openai_proxy:${model}`);
+      } catch (err) {
+        console.error("[openai/proxy] chargeBalance failed:", err);
+      }
     }
 
     const usageResult = await recordUsage({
@@ -307,7 +309,7 @@ export async function POST(request: NextRequest) {
       model,
       tokensIn: actualTokensIn,
       tokensOut: actualTokensOut,
-      costEstimate: finalCost,
+      costEstimate: estimateCost(model, actualTokensIn, actualTokensOut),
       status: ezrouterError ? "error" : "success",
       requestId,
     });
