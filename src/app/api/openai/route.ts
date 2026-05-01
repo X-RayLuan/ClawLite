@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
   if (balance.availableBalanceUsd < estimatedCost) {
     return NextResponse.json(
-      { error: "insufficient_balance", available: balance.availableBalanceUsd, required: estimatedCost },
+      { error: "insufficient_balance", available: balance.availableBalanceUsd, required: estimatedCost, rechargeUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://clawlite.ai'}/clawrouter/dashboard/add-credits` },
       { status: 402 }
     );
   }
