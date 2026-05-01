@@ -3,16 +3,16 @@ import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 
-// Model pricing – USD per 1M tokens
+// Model pricing – USD per 1M tokens (matching OpenAI official pricing)
 const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-5.4": { inputPer1M: 3, outputPer1M: 15 },
-  "gpt-5.4-mini": { inputPer1M: 0.6, outputPer1M: 2.4 },
-  "gpt-5.4-pro": { inputPer1M: 5, outputPer1M: 20 },
+  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
+  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
+  "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
   "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
   "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
 };
 
-const DEFAULT_PRICING = { inputPer1M: 3, outputPer1M: 15 };
+const DEFAULT_PRICING = { inputPer1M: 2.5, outputPer1M: 10 };
 
 function getModelPricing(model: string) {
   return MODEL_PRICING[model] ?? DEFAULT_PRICING;

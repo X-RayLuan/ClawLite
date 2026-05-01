@@ -3,28 +3,28 @@ import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 
-// Model pricing – USD per 1M tokens
+// Model pricing – USD per 1M tokens (matching OpenAI/Anthropic official pricing)
 // Note: ezrouter uses different model IDs. Map OpenAI-style names to ezrouter names.
 const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  // GPT-5.4 family
-  "gpt-5.4": { inputPer1M: 3, outputPer1M: 15 },
-  "gpt-5.4-mini": { inputPer1M: 0.6, outputPer1M: 2.4 },
-  "gpt-5.4-pro": { inputPer1M: 5, outputPer1M: 20 },
-  // Claude Sonnet 4.6 (aliases: claude-3-5-sonnet-20241022, claude-3-5-sonnet-20250320)
+  // GPT-5.4 family (OpenAI official pricing)
+  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
+  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
+  "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
+  // Claude Sonnet 4.6 (Anthropic official pricing: $3/$15)
   "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
   "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
   "claude-3-5-sonnet-20250320": { inputPer1M: 3, outputPer1M: 15 },
-  // Claude Haiku 4.5 (alias: claude-3-5-haiku-20241022)
-  "claude-haiku-4-5": { inputPer1M: 1, outputPer1M: 5 },
-  "claude-3-5-haiku-20241022": { inputPer1M: 1, outputPer1M: 5 },
-  // Claude Opus 4.7
-  "claude-opus-4-7": { inputPer1M: 5, outputPer1M: 25 },
+  // Claude Haiku 4.5 (Anthropic official pricing: $0.8/$4)
+  "claude-haiku-4-5": { inputPer1M: 0.8, outputPer1M: 4 },
+  "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
+  // Claude Opus 4.7 (Anthropic official pricing: $15/$75)
+  "claude-opus-4-7": { inputPer1M: 15, outputPer1M: 75 },
   // Claude Sonnet 4.5
   "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
 };
 
 // Default pricing for unknown models
-const DEFAULT_PRICING = { inputPer1M: 3, outputPer1M: 15 };
+const DEFAULT_PRICING = { inputPer1M: 2.5, outputPer1M: 10 };
 
 function getModelPricing(model: string) {
   return MODEL_PRICING[model] ?? DEFAULT_PRICING;
