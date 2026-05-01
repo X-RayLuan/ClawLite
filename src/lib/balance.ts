@@ -49,7 +49,7 @@ export async function checkBalance(accountId: string): Promise<AccountBalance> {
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .maybeSingle();
+    .single();
 
   console.log("[checkBalance] result:", { account, error });
 
