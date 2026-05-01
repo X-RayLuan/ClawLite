@@ -43,15 +43,11 @@ function mapTx(row: any): BalanceTransaction {
 export async function checkBalance(accountId: string): Promise<AccountBalance> {
   const supabase = getSupabaseAdminClient();
 
-  console.log("[checkBalance] accountId:", accountId);
-
   const { data: account, error } = await supabase
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
     .single();
-
-  console.log("[checkBalance] result:", { account, error });
 
   if (error || !account) throw new Error("account_not_found");
 
