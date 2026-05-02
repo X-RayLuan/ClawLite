@@ -23,7 +23,8 @@ export default function DownloadsPage() {
       return;
     }
 
-    const client = supabase;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const client = supabase!;
     let mounted = true;
 
     async function settleSession() {

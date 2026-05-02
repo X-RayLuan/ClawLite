@@ -1,10 +1,10 @@
 export const INSTALLER_VERSION = {
-  macos: 'v1.5.178',
-  windows: 'v1.5.178'
+  macos: 'v1.5.179',
+  windows: 'v1.5.179'
 } as const
 
-const MAC_RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Installer/releases/download/${INSTALLER_VERSION.macos}`
-const WIN_RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Installer/releases/download/${INSTALLER_VERSION.windows}`
+const MAC_RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/${INSTALLER_VERSION.macos}`
+const WIN_RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/${INSTALLER_VERSION.windows}`
 
 export const MAC_INSTALLER_URL = `${MAC_RELEASE_BASE}/clawlite.dmg`
 export const WIN_INSTALLER_URL = `${WIN_RELEASE_BASE}/clawlite-setup.exe`
