@@ -16,6 +16,7 @@ export type BlogPost = {
 
 export const blogStaticParams = () => {
   return [
+    { slug: 'ray-serve-llm-migration-safety-debt' },
     { slug: 'top-ai-agent-security-risks-and-how-to-mitigate-them-identif' },
     { slug: 'secure-openclaw-setup-cost-control' },
     { slug: 'im-super-surprised-by-mindstudio-its-so-cheap-that-im-even-s' },
@@ -93,6 +94,88 @@ export const blogStaticParams = () => {
 }
 
 export const blogPosts: Record<string, BlogPost> = {
+  'ray-serve-llm-migration-safety-debt': {
+    title: "Ray Serve LLM Migration Safety: What Operators Should Check Before the Stack Shifts",
+    date: "2026-05-02",
+    content: `# Ray Serve LLM Migration Safety: What Operators Should Check Before the Stack Shifts
+
+**Angle:** migration safety debt in fast-moving LLM serving stacks
+**CTA:** Start with ClawLite at https://clawlite.ai if you want a simpler OpenClaw path with cheaper tokens, free BYOK, and less setup friction.
+
+Ray's May 2 signal is clear: the LLM serving foundation is moving while operators are still asking for safer deploys, rollback behavior, compatibility cleanup, and production debugging clarity. The practical answer for AI teams is not to avoid Ray; it is to treat migration safety as the buying criterion and verify rollout, rollback, routing, and observability before the next serving-stack change reaches users.
+
+if your team depends on Ray Serve or any agent-serving stack, evaluate the migration path before evaluating the feature list. New routes, ASGI handoffs, replica routing, Pydantic compatibility cleanup, and KubeRay reliability fixes are all signs that operational clarity matters more than another launch headline.
+
+## TL;DR
+
+- Same-day Hunter intel shows Ray Serve LLM routing work changing internals around routes, ASGI handoff, target groups, and HAProxy replica routing.
+- The Ray Serve auto-rollback RFC means rollback safety is an active product need, not a solved assumption.
+- Pydantic v2 cleanup, Ray Data edge-case failures, NPU benchmarking, and KubeRay transient-head-node fixes widen the migration-safety story.
+- For ClawLite buyers, the lesson is simple: choose AI infrastructure that is cheap to start, easy to inspect, and calm to recover when the stack changes underneath you.
+
+## The market signal: migration safety debt
+
+The May 2 Hunter intel pack frames the problem as migration safety debt. Ray is not standing still. Maintainers are actively reshaping LLM serving internals, while operators still need confidence that deploys can roll forward, roll back, and fail in explainable ways.
+
+That combination matters because production teams do not experience architecture transitions as roadmap diagrams. They experience them as broken routes, surprise compatibility errors, unclear logs, and late-night questions about whether a new serving layer is safe to ship.
+
+This is the same adoption pressure that ClawLite is built around. Small teams, indie developers, creators, and technical operators want powerful AI workflows, but they do not want another brittle stack that demands full-time supervision. Lower setup friction and cheaper tokens only matter if the workflow remains understandable when something changes.
+
+## Ray Serve LLM signals from May 2
+
+| Signal | What changed or surfaced | Why operators should care |
+|---|---|---|
+| LLM internal route and ASGI handoff | Ray PR \`#62670\` adds LLM \`/internal/route\` behavior and backend ASGI handoff. | Routing and handoff changes can affect debugging, middleware assumptions, and request tracing. |
+| Request router target groups | Ray PR \`#62668\` adds ingress request router targets to \`TargetGroup\`. | Targeting logic is part of traffic safety; teams need to know what is routed where. |
+| HAProxy replica routing | Ray PR \`#62669\` routes HAProxy requests by replica ID. | Replica-level routing can improve control, but also raises the need for clear failure and rollback semantics. |
+| Auto-rollback RFC | Ray issue \`#63016\` requests safer auto-rollback behavior for \`serve deploy\`. | Rollback is now visible as an operator need, not just an implementation detail. |
+| Compatibility cleanup | Ray issue \`#63071\` tracks final Pydantic v2 migration cleanup. | Compatibility removals are exactly where hidden production assumptions surface. |
+| KubeRay transient spike fix | KubeRay PR \`#4399\` prevents premature job termination during transient head-node spikes. | Infrastructure reliability still depends on edge-case handling under real operating noise. |
+
+The important point is not that any one item is alarming. The important point is that they cluster around the same buyer question: can this stack change safely while my team keeps operating?
+
+## Why migration safety beats feature excitement
+
+Feature announcements are easy to understand. Migration safety is harder to market, but it is what operators actually feel.
+
+When a serving stack changes request routing, handoff layers, compatibility paths, or deployment behavior, the risk is not only downtime. The deeper risk is ambiguity. If a request disappears between layers, if a replica receives traffic unexpectedly, or if a deploy fails without preserving the last healthy state, the team loses trust even when the system eventually recovers.
+
+That is why the Ray Serve auto-rollback RFC is so important. Rollback is the feature that proves the platform respects production reality. It tells operators whether a bad deploy leaves the system half-transitioned, safely reverted, or waiting for manual rescue.
+
+For small AI teams, ambiguity is expensive. They rarely have a separate platform group waiting to investigate every odd failure. The same person who ships the workflow may also debug providers, tokens, channels, deploys, and customer-visible output.
+
+## A practical migration-safety checklist
+
+Before adopting or upgrading an LLM-serving or agent-serving stack, ask these questions:
+
+1. **Route clarity:** Can operators see how requests move through ingress, internal routes, ASGI handoff, and replicas?
+2. **Rollback behavior:** What exactly happens when a deploy fails health checks or times out?
+3. **Compatibility boundary:** Which old compatibility paths are removed, and what warning period exists before removal?
+4. **Replica-level debugging:** Can the team identify which replica handled a request and why it was selected?
+5. **Kubernetes resilience:** How does the system behave during transient head-node spikes, controller delays, and job termination edge cases?
+6. **Cheap rehearsal path:** Can a small team test these behaviors before committing production-scale spend?
+
+If the answer is vague, the stack may still be powerful, but it is not yet low-friction.
+
+## What this means for ClawLite positioning
+
+ClawLite should not overclaim against Ray. Ray is a serious distributed systems project with active maintainers and real adoption. The stronger message is more practical: buyers increasingly value operational calm.
+
+ClawLite is a one-click OpenClaw distribution for people who want an approachable AI assistant experience without turning setup, provider choice, and token cost into a second job. The brand promise is direct:
+
+- one-click install to reduce setup drag;
+- free BYOK for teams that want key ownership;
+- cheaper hosted token usage where cost pressure matters;
+- a calmer OpenClaw path for indie developers, creators, small teams, and technical users.
+
+That positioning is valuable because migration risk is not limited to Ray. Every fast-moving AI stack has version churn, provider changes, integration breaks, routing shifts, and cost surprises. The winning products are the ones that make the first step easy and the recovery path obvious.
+
+Start here: [https://clawlite.ai](https://clawlite.ai). The lobster is not the point; the point is that ClawLite 🦞 should feel like a calm operating layer instead of another fragile stack to babysit.
+
+## Conclusion
+
+Ray's May 2 signal is a useful warning for every AI infrastructure buyer: do not confuse momentum with operational readiness. Active LLM-serving work can be a good sign, but only if operators receive enough migration clarity to deploy safely, roll back confidently, and debug production edge cases without guesswork. For ClawLite, the content angle is simple and durable: sell operational calm — one-click setup, cost control, BYOK freedom, and workflows that stay inspectable when the underlying AI stack keeps moving.`
+  },
   'top-ai-agent-security-risks-and-how-to-mitigate-them-identif': {
     title: "Top AI Agent Security Risks and How Small Teams Can Mitigate Them",
     date: "2026-04-26",
