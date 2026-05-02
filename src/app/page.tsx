@@ -280,7 +280,8 @@ export default function HomePage() {
         setTimeout(() => {
           try {
             const launcher = document.querySelector('[class*="minimizeVoice"]');
-            const store = window.NEWOAKS_CHATBOTS_STORE?.["4bfc5c07ab9043b3a0d69b12b2e86b07"];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const store = (window as any).NEWOAKS_CHATBOTS_STORE?.["4bfc5c07ab9043b3a0d69b12b2e86b07"];
             if (launcher && store?.open) {
               launcher.addEventListener('click', () => store.open(), { once: true });
             }
