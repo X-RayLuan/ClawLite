@@ -269,10 +269,26 @@ export default function HomePage() {
         {`window.chatpilotConfig = {
           chatbotId: "4bfc5c07ab9043b3a0d69b12b2e86b07",
           domain: "https://www.newoaks.ai",
-          chatModeOnly: true
+          chatModeOnly: true,
+          ShowChatBoxDelay: -1
         }`}
       </Script>
-      <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" />
+      <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" onLoad={() => {
+        // After the bubble widget loads, wait for React components to mount,
+        // then attach a click fallback to the launcher button.
+        // Without this, some browsers may not propagate clicks to the React handler.
+        setTimeout(() => {
+          try {
+            const launcher = document.querySelector('[class*="minimizeVoice"]');
+            const store = window.NEWOAKS_CHATBOTS_STORE?.["4bfc5c07ab9043b3a0d69b12b2e86b07"];
+            if (launcher && store?.open) {
+              launcher.addEventListener('click', () => store.open(), { once: true });
+            }
+          } catch (e) {
+            // Silently ignore - widget handles its own events
+          }
+        }, 3000);
+      }} />
 
       {/* Verified Section */}
       <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
