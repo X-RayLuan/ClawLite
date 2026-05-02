@@ -8,7 +8,7 @@ export const pricingConfig = {
     label: "ClawLite Tokens",
     pricingLabel: "Usage-based",
     description: "Managed billing for fast-moving teams.",
-    discountText: "50% discount from official API price",
+    discountText: "Usage-based managed billing",
     ezRouterUrl: "https://openrouter.ezsite.ai"
   },
   remoteImplementation: {

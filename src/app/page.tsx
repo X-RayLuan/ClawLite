@@ -282,7 +282,7 @@ export default function HomePage() {
             Not just installed — proven to work.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-stone-500">
-            ClawLite is the only OpenClaw installer that verifies every step, backs up your configs, and guarantees 40% cheaper tokens.
+            ClawLite is the only OpenClaw installer that verifies every step, backs up your configs, and manages token billing for you.
           </p>
         </div>
 
@@ -319,9 +319,9 @@ export default function HomePage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100">
               <span className="text-2xl">&#x1F4B0;</span>
             </div>
-            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">40% cheaper tokens. Verified savings.</h3>
+            <h3 className="font-display text-xl font-semibold leading-[1.05] text-stone-900">Managed token billing. Simple and transparent.</h3>
             <p className="mt-2 text-sm leading-relaxed text-stone-500">
-              Not a promise. A verified 40% savings on every single call.
+              Token pricing locked in at setup. No hidden fees, no surprises.
             </p>
             <div className="mt-4 space-y-1 text-xs text-stone-400">
               <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ export default function HomePage() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
+                <Link href="/login?returnTo=%2Fdownloads">Get Started</Link>
               </Button>
             </div>
           </Card>

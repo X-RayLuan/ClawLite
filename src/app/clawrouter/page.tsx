@@ -11,7 +11,7 @@ import { pricingConfig } from "@/lib/pricing";
 import { getSupabaseClient } from "@/lib/supabase";
 
 const stats = [
-  { value: "30–50%", label: "lower cost positioning" },
+  { value: "Usage-based", label: "pay for what you use" },
   { value: "3", label: "core AI workload lanes" },
   { value: "24/7", label: "account-ready access path" },
   { value: "1", label: "router for all model calls" },

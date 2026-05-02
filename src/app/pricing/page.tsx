@@ -47,13 +47,13 @@ export default function PricingPage() {
             <div className="mt-2 text-3xl font-semibold text-ink">Usage-based</div>
             <p className="mt-2 text-sm text-ink/65">Managed billing for fast-moving teams.</p>
             <ul className="mt-4 space-y-2 text-sm text-ink/75">
-              <li>• 50% discount from official API price</li>
+              <li>• Usage-based managed billing</li>
               <li>• One-click setup, no provider key hunting</li>
               <li>• Best when you want the fastest path to production</li>
             </ul>
             <div className="mt-6">
               <Button asChild>
-                <Link href="/login?returnTo=%2Fdownloads">Get 50% Discount Token Coupon</Link>
+                <Link href="/login?returnTo=%2Fdownloads">Get Started</Link>
               </Button>
             </div>
           </article>
