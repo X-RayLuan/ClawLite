@@ -424,6 +424,7 @@ export default function HomePage() {
             <ul className="mt-4 space-y-2 text-sm text-stone-500">
               <li>&#x2022; {pricingConfig.tokens.discountText}</li>
               <li>&#x2022; One-click setup, no provider key hunting</li>
+              <li>&#x2022; Best when you want the fastest path to production</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
