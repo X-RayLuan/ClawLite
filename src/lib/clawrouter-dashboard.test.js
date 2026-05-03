@@ -38,3 +38,37 @@ test('mapAssignedInventoryKeys returns only current assigned inventory keys', ()
     },
   ]);
 });
+
+test('mapAssignedInventoryKeys accepts snake_case Supabase rows', () => {
+  const keys = [
+    {
+      id: '1',
+      name: 'Key A',
+      provider: 'clawrouter',
+      plaintext_key: 'cls_55fc81bf20b0_secret',
+      key_prefix: 'cls_55fc81bf20b0',
+      face_value_usd: 5,
+      sale_price_usd: 5,
+      status: 'assigned',
+      assigned_account_id: 'acct_1',
+      assigned_at: '2026-05-03T11:00:00.000Z',
+    },
+  ];
+
+  const visible = mapAssignedInventoryKeys(keys);
+
+  assert.deepEqual(visible, [
+    {
+      id: '1',
+      deliveryMode: 'inventory_key',
+      displayName: 'Key A',
+      provider: 'clawrouter',
+      plaintextKey: 'cls_55fc81bf20b0_secret',
+      keyPrefix: 'cls_55fc81bf20b0',
+      faceValueUsd: 5,
+      salePriceUsd: 5,
+      status: 'active',
+      createdAt: '2026-05-03T11:00:00.000Z',
+    },
+  ]);
+});
