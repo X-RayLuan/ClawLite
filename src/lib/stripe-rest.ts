@@ -100,3 +100,38 @@ export async function createStripeCheckoutSessionViaFetch({
     raw: parsed,
   };
 }
+
+export async function retrieveStripeCheckoutSessionViaFetch({
+  secretKey,
+  sessionId,
+}: {
+  secretKey: string;
+  sessionId: string;
+}) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+    cache: "no-store",
+  });
+
+  const parsed = await readStripeJson(response);
+
+  if (!response.ok) {
+    const error = new Error(parsed?.error?.message || parsed?.raw || "stripe_fetch_checkout_session_failed") as Error & {
+      type?: string | null;
+      code?: string | null;
+      statusCode?: number;
+      requestId?: string | null;
+      raw?: any;
+    };
+    error.type = parsed?.error?.type || null;
+    error.code = parsed?.error?.code || null;
+    error.statusCode = response.status;
+    error.requestId = response.headers.get("request-id");
+    error.raw = parsed?.error || parsed;
+    throw error;
+  }
+
+  return parsed;
+}
