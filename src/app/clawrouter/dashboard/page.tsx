@@ -68,6 +68,7 @@ export default function ClawRouterDashboardPage() {
   const [topupState, setTopupState] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copyErrorKeyId, setCopyErrorKeyId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [seedanceSummary, setSeedanceSummary] = useState<SeedanceSummary>(null);
   const [seedanceKeys, setSeedanceKeys] = useState<SeedanceKey[]>([]);
@@ -190,13 +191,42 @@ export default function ClawRouterDashboardPage() {
   }
 
   async function handleCopyKey(keyId: string, plaintextKey: string | null) {
-    if (!plaintextKey) return;
+    if (!plaintextKey) {
+      setCopiedKeyId(null);
+      setCopyErrorKeyId(keyId);
+      window.setTimeout(() => setCopyErrorKeyId((current) => (current === keyId ? null : current)), 2000);
+      return;
+    }
+
+    const fallbackCopy = () => {
+      const textarea = document.createElement("textarea");
+      textarea.value = plaintextKey;
+      textarea.setAttribute("readonly", "true");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      textarea.style.pointerEvents = "none";
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return copied;
+    };
+
     try {
-      await navigator.clipboard.writeText(plaintextKey);
+      const copied = navigator.clipboard?.writeText
+        ? await navigator.clipboard.writeText(plaintextKey).then(() => true).catch(() => fallbackCopy())
+        : fallbackCopy();
+
+      if (!copied) throw new Error("copy_failed");
+
+      setCopyErrorKeyId(null);
       setCopiedKeyId(keyId);
       window.setTimeout(() => setCopiedKeyId((current) => (current === keyId ? null : current)), 1500);
     } catch {
       setCopiedKeyId(null);
+      setCopyErrorKeyId(keyId);
+      window.setTimeout(() => setCopyErrorKeyId((current) => (current === keyId ? null : current)), 2000);
     }
   }
 
@@ -370,7 +400,7 @@ export default function ClawRouterDashboardPage() {
                                 className="border-stone-300 bg-white/90 text-stone-900 hover:bg-white"
                                 onClick={() => handleCopyKey(key.id, key.plaintextKey)}
                               >
-                                {copiedKeyId === key.id ? "Copied" : "Copy"}
+                                {copiedKeyId === key.id ? "Copied" : copyErrorKeyId === key.id ? "Unavailable" : "Copy"}
                               </Button>
                             </div>
                             {key.faceValueUsd != null || key.salePriceUsd != null ? (
