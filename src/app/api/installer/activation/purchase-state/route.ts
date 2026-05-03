@@ -6,6 +6,7 @@ import {
   settleCheckoutSessionRecord,
 } from "@/lib/clawrouter-checkout";
 import { listDeliveredKeysForAccount } from "@/lib/clawrouter-delivery";
+import { buildInstallerStripeSecret } from "@/lib/installer-activation-purchase";
 import { retrieveStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 
 export const runtime = "nodejs";
@@ -39,10 +40,10 @@ async function reconcilePaidStripeCheckout(input: {
 }) {
   if (!input.localSession?.externalSessionId) return false;
   if (input.localSession.provider !== "stripe") return false;
-  if (!process.env.STRIPE_SECRET_KEY) return false;
+  const stripeSecret = buildInstallerStripeSecret(process.env.STRIPE_SECRET_KEY);
 
   const stripeSession = await retrieveStripeCheckoutSessionViaFetch({
-    secretKey: process.env.STRIPE_SECRET_KEY,
+    secretKey: stripeSecret,
     sessionId: input.localSession.externalSessionId,
   });
 

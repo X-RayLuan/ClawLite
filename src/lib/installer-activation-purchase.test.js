@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildInstallerStripeCheckoutConfig } from './installer-activation-purchase.ts';
+import {
+  buildInstallerStripeCheckoutConfig,
+  buildInstallerStripeSecret,
+} from './installer-activation-purchase.ts';
 
 test('buildInstallerStripeCheckoutConfig trims Stripe env values', () => {
   const config = buildInstallerStripeCheckoutConfig({
@@ -20,4 +23,12 @@ test('buildInstallerStripeCheckoutConfig rejects missing Stripe config instead o
     () => buildInstallerStripeCheckoutConfig({ secretKey: 'sk_test_installer', priceId: ' \n' }),
     /missing_stripe_clawrouter_price_id/,
   );
+});
+
+test('buildInstallerStripeSecret trims env values for purchase-state reconciliation', () => {
+  assert.equal(buildInstallerStripeSecret(' sk_live_installer \n'), 'sk_live_installer');
+});
+
+test('buildInstallerStripeSecret rejects missing secret', () => {
+  assert.throws(() => buildInstallerStripeSecret(' \n'), /missing_stripe_secret_key/);
 });
