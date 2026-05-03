@@ -29,6 +29,11 @@ async function isAccountActive(supabase: any, accountId: string): Promise<boolea
   return false;
 }
 
+type ReconciledStripeCheckout = {
+  accountId: string;
+  emailMasked: string | null;
+};
+
 async function reconcilePaidStripeCheckout(input: {
   supabase: any;
   localSession: {
@@ -37,9 +42,9 @@ async function reconcilePaidStripeCheckout(input: {
     provider: string | null;
     externalSessionId: string | null;
   } | null;
-}) {
-  if (!input.localSession?.externalSessionId) return false;
-  if (input.localSession.provider !== "stripe") return false;
+}): Promise<ReconciledStripeCheckout | null> {
+  if (!input.localSession?.externalSessionId) return null;
+  if (input.localSession.provider !== "stripe") return null;
   const stripeSecret = buildInstallerStripeSecret(process.env.STRIPE_SECRET_KEY);
 
   const stripeSession = await retrieveStripeCheckoutSessionViaFetch({
@@ -48,7 +53,7 @@ async function reconcilePaidStripeCheckout(input: {
   });
 
   const paid = stripeSession?.payment_status === "paid" || stripeSession?.status === "complete";
-  if (!paid) return false;
+  if (!paid) return null;
 
   await settleCheckoutSessionRecord({
     supabase: input.supabase,
@@ -66,7 +71,10 @@ async function reconcilePaidStripeCheckout(input: {
     },
   });
 
-  return true;
+  return {
+    accountId: input.localSession.accountId,
+    emailMasked: stripeSession.customer_details?.email || stripeSession.customer_email || null,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -83,7 +91,10 @@ export async function GET(request: NextRequest) {
     if (accountId) {
       const active = await isAccountActive(supabase, accountId);
       if (active) {
-        return NextResponse.json({ purchaseState: "completed" });
+        return NextResponse.json({
+          purchaseState: "completed",
+          account: { accountId, emailMasked: null },
+        });
       }
     }
 
@@ -92,15 +103,29 @@ export async function GET(request: NextRequest) {
     if (activation.account.accountId) {
       const active = await isAccountActive(supabase, activation.account.accountId);
       if (active) {
-        return NextResponse.json({ purchaseState: "completed" });
+        return NextResponse.json({
+          purchaseState: "completed",
+          account: {
+            accountId: activation.account.accountId,
+            emailMasked: activation.account.email || null,
+          },
+        });
       }
     }
 
-    if (await reconcilePaidStripeCheckout({
+    const reconciled = await reconcilePaidStripeCheckout({
       supabase,
       localSession: activation.latestCheckoutSession,
-    })) {
-      return NextResponse.json({ purchaseState: "completed", reconciled: true });
+    });
+    if (reconciled) {
+      return NextResponse.json({
+        purchaseState: "completed",
+        reconciled: true,
+        account: {
+          accountId: reconciled.accountId,
+          emailMasked: reconciled.emailMasked,
+        },
+      });
     }
 
     const purchaseState = activation.latestCheckoutSession?.purchaseState || "not_started";
