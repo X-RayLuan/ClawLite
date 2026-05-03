@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { Resend } from "resend";
 import crypto from "crypto";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
-const OTP_LENGTH = 6;
-const OTP_TTL_MINUTES = 5;
+export const runtime = "nodejs";
 
-function generateCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
+const OTP_TTL_MINUTES = 10;
 
-function hashCode(code: string) {
-  return crypto.createHash("sha256").update(code, "utf8").digest("hex");
-}
-
-// Attach CORS headers to any NextResponse
 function withCors(request: NextRequest, response: NextResponse): NextResponse {
   const origin = request.headers.get("origin") || "*";
   response.headers.set("Access-Control-Allow-Origin", origin);
@@ -22,9 +15,20 @@ function withCors(request: NextRequest, response: NextResponse): NextResponse {
   return response;
 }
 
+function hashCode(code: string): string {
+  return crypto.createHash("sha256").update(code, "utf8").digest("hex");
+}
+
+function generateOtp(): string {
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
-  const response = new NextResponse(null, { status: 204 });
-  return withCors(request, response);
+  return withCors(request, new NextResponse(null, { status: 204 }));
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -32,111 +36,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json().catch(() => ({}));
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
-    if (!email || !email.includes("@")) {
-      const response = NextResponse.json(
-        { ok: false, error: "invalid_email" },
-        { status: 400 }
-      );
-      return withCors(request, response);
+    if (!isValidEmail(email)) {
+      return withCors(request, NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 }));
+    }
+
+    if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) {
+      return withCors(request, NextResponse.json({ ok: false, error: "email_service_not_configured" }, { status: 500 }));
     }
 
     const supabase = getSupabaseAdminClient();
+    const code = generateOtp();
+    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
 
-    // Delete any existing unused OTPs for this email (cleanup)
     await supabase
       .from("otp_codes")
       .update({ used: true })
       .eq("email", email)
       .eq("used", false);
 
-    const code = generateCode();
-    const hashedCode = hashCode(code);
-    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
+    const insertResult = await supabase.from("otp_codes").insert({
+      email,
+      code_hash: hashCode(code),
+      expires_at: expiresAt,
+      used: false,
+    });
 
-    const { error: insertError } = await supabase
-      .from("otp_codes")
-      .insert({
-        email,
-        code_hash: hashedCode,
-        expires_at: expiresAt,
-        used: false,
-      });
-
-    if (insertError) {
-      console.error("[otp/send] failed to insert OTP:", insertError);
-      const response = NextResponse.json(
-        { ok: false, error: "failed_to_store_otp" },
-        { status: 500 }
-      );
-      return withCors(request, response);
+    if (insertResult.error) {
+      throw new Error(insertResult.error.message || "failed_to_store_otp");
     }
 
-    // Send email with Resend
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const resendFrom = process.env.RESEND_FROM;
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM,
+      to: [email],
+      subject: "Your ClawLite verification code",
+      text: `Your ClawLite verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`,
+      html: `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;line-height:1.6;color:#111827;"><h2>Your ClawLite verification code</h2><p>Enter this code in the ClawLite installer:</p><p style="font-size:28px;font-weight:800;letter-spacing:6px;margin:18px 0;">${code}</p><p style="color:#6b7280;font-size:13px;">This code expires in ${OTP_TTL_MINUTES} minutes. If you did not request it, you can ignore this email.</p></div>`,
+    });
 
-    if (resendApiKey && resendFrom) {
-      try {
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: resendFrom,
-            to: [email],
-            subject: "Your ClawLite login code",
-            html: `
-              <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;color:#111827;max-width:480px;margin:0 auto;padding:32px 16px;">
-                <h2 style="margin:0 0 16px;">Your ClawLite login code</h2>
-                <p style="margin:0 0 16px;">Use this code to sign in to your ClawLite account:</p>
-                <div style="margin:0 0 20px;padding:20px 24px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;text-align:center;">
-                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:32px;font-weight:700;letter-spacing:0.3em;color:#111827;">${code}</span>
-                </div>
-                <p style="margin:0;font-size:14px;color:#6b7280;">This code expires in ${OTP_TTL_MINUTES} minutes. If you did not request this, you can safely ignore this email.</p>
-              </div>
-            `,
-            text: `Your ClawLite login code: ${code}\n\nThis code expires in ${OTP_TTL_MINUTES} minutes.`,
-          }),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text().catch(() => "");
-          console.error("[otp/send] Resend error:", errText);
-          const response = NextResponse.json(
-            { ok: false, error: "Failed to send email. Please try again." },
-            { status: 502 }
-          );
-          return withCors(request, response);
-        }
-
-        const response = NextResponse.json({ ok: true });
-        return withCors(request, response);
-      } catch (emailErr) {
-        console.error("[otp/send] failed to send email:", emailErr);
-        const response = NextResponse.json(
-          { ok: false, error: "Failed to send email. Please try again." },
-          { status: 500 }
-        );
-        return withCors(request, response);
-      }
-    } else {
-      console.warn("[otp/send] RESEND_API_KEY or RESEND_FROM not set, skipping email");
-      const response = NextResponse.json(
-        { ok: false, error: "Email service not configured." },
-        { status: 503 }
-      );
-      return withCors(request, response);
-    }
-
-    const okResponse = NextResponse.json({ ok: true });
-    return withCors(request, okResponse);
+    return withCors(request, NextResponse.json({ ok: true, id: result.data?.id || null }));
   } catch (error: any) {
-    const response = NextResponse.json(
-      { ok: false, error: error?.message || "internal_error" },
-      { status: 500 }
-    );
-    return withCors(request, response);
+    console.error("[auth/otp/send] unexpected error:", error);
+    return withCors(request, NextResponse.json({ ok: false, error: error?.message || "internal_error" }, { status: 500 }));
   }
 }
