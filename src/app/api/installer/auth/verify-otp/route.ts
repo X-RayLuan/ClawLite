@@ -43,6 +43,34 @@ async function isAccountActive(supabase: any, accountId: string): Promise<boolea
   return false;
 }
 
+async function ensureInstallerAccountForEmail(supabase: any, email: string) {
+  const existing = await supabase
+    .from("accounts")
+    .select("id, email, credit_balance_usd")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existing?.data) return existing.data;
+
+  const accountId = crypto.randomUUID();
+  const inserted = await supabase
+    .from("accounts")
+    .insert({
+      id: accountId,
+      user_id: accountId,
+      email,
+      credit_balance_usd: 0,
+    })
+    .select("id, email, credit_balance_usd")
+    .single();
+
+  if (inserted.error || !inserted.data) {
+    throw new Error(inserted.error?.message || "failed_to_create_installer_account");
+  }
+
+  return inserted.data;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -98,27 +126,7 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", unusedRecord.data.id);
 
-    // Look up account by email
-    const accountResult = await supabase
-      .from("accounts")
-      .select("id, email, credit_balance_usd")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (!accountResult?.data) {
-      // No account yet — return ok: true but no account info
-      return withCors(request, NextResponse.json({
-        ok: true,
-        accountId: null,
-        email,
-        isActive: false,
-        apiKey: null,
-        balance: 0,
-        currency: "USD",
-      }));
-    }
-
-    const row = accountResult.data;
+    const row = await ensureInstallerAccountForEmail(supabase, email);
     const accountId = row.id;
     const balanceUsd = Number(row.credit_balance_usd || 0);
     const isActive = await isAccountActive(supabase, accountId);
