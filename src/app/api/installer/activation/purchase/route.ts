@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createCheckoutSessionRecord, markCheckoutSessionPending } from "@/lib/clawrouter-checkout";
 import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
+import { buildInstallerStripeCheckoutConfig } from "@/lib/installer-activation-purchase";
 
 export const runtime = "nodejs";
 
@@ -27,43 +28,43 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    let checkoutUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai"}/clawrouter/dashboard/add-credits`;
+    const stripeConfig = buildInstallerStripeCheckoutConfig({
+      secretKey: process.env.STRIPE_SECRET_KEY,
+      priceId: process.env.STRIPE_CLAWROUTER_PRICE_ID,
+    });
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai";
 
-    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_CLAWROUTER_PRICE_ID) {
-      try {
-        const stripeSession = await createStripeCheckoutSessionViaFetch({
-          secretKey: process.env.STRIPE_SECRET_KEY,
-          fields: {
-            mode: "payment",
-            "line_items[0][price]": process.env.STRIPE_CLAWROUTER_PRICE_ID,
-            "line_items[0][quantity]": 1,
-            success_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai"}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&stripe_session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://clawlite.ai"}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&cancelled=1`,
-            "metadata[checkout_session_id]": session.id,
-            "metadata[account_id]": session.accountId,
-            "metadata[installer_setup_token]": setupToken,
-            "metadata[product]": "clawrouter",
-            "metadata[delivery_mode]": "managed_topup",
-          },
-        });
+    const stripeSession = await createStripeCheckoutSessionViaFetch({
+      secretKey: stripeConfig.secretKey,
+      fields: {
+        mode: "payment",
+        "line_items[0][price]": stripeConfig.priceId,
+        "line_items[0][quantity]": 1,
+        success_url: `${siteUrl}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&stripe_session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteUrl}/clawrouter/checkout?session=${encodeURIComponent(session.id)}&cancelled=1`,
+        "metadata[checkout_session_id]": session.id,
+        "metadata[account_id]": session.accountId,
+        "metadata[installer_setup_token]": setupToken,
+        "metadata[product]": "clawrouter",
+        "metadata[delivery_mode]": "managed_topup",
+      },
+    });
 
-        await markCheckoutSessionPending({
-          supabase,
-          sessionId: session.id,
-          provider: "stripe",
-          externalSessionId: stripeSession.id,
-          checkoutUrl: stripeSession.url || checkoutUrl,
-        });
-
-        checkoutUrl = stripeSession.url || checkoutUrl;
-      } catch {
-        // Fall back to dashboard URL if Stripe fails
-      }
+    if (!stripeSession.url) {
+      throw new Error("stripe_checkout_url_missing");
     }
+
+    await markCheckoutSessionPending({
+      supabase,
+      sessionId: session.id,
+      provider: "stripe",
+      externalSessionId: stripeSession.id,
+      checkoutUrl: stripeSession.url,
+    });
 
     return NextResponse.json({
       purchaseState: "checkout_pending",
-      checkoutUrl,
+      checkoutUrl: stripeSession.url,
       pollAfterMs: 2500,
     });
   } catch (error: any) {
