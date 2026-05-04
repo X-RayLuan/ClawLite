@@ -319,8 +319,13 @@ export default function ApiKeysPage() {
       if (res.ok && payload?.ok && payload.key) {
         setKeys((prev) => [payload.key, ...prev]);
         setNewKeyName("");
-        setCreateOpen(false);
-        setNewKeyResult(null);
+        // If plaintextSecret returned, show it in modal; otherwise close
+        if (payload.plaintextSecret) {
+          setNewKeyResult({ ...payload.key, plaintextSecret: payload.plaintextSecret });
+        } else {
+          setCreateOpen(false);
+          setNewKeyResult(null);
+        }
       } else {
         setError(t.errors.create);
       }

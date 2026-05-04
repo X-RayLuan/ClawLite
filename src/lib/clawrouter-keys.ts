@@ -112,7 +112,7 @@ export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, ac
   }
 
   if (existing?.data) {
-    return { key: toApiKeyView(existing.data), created: false };
+    return { key: toApiKeyView(existing.data), created: false, plaintextSecret: null };
   }
 
   // Create new key — stored encrypted, revealed via revealApiKey
@@ -136,7 +136,7 @@ export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, ac
     throw new Error(insert?.error?.message || "failed_to_create_api_key");
   }
 
-  return { key: toApiKeyView(insert.data), created: true };
+  return { key: toApiKeyView(insert.data), created: true, plaintextSecret };
 }
 
 // Reveal plaintext API key — decrypts from secret_encrypted

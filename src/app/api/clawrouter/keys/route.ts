@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       key: result.key,
       created: result.created,
+      plaintextSecret: result.plaintextSecret ?? null,
       delivery,
     }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (error: any) {
