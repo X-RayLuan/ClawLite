@@ -67,6 +67,7 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [revealingId, setRevealingId] = useState<string | null>(null);
@@ -358,16 +359,59 @@ export default function ApiKeysPage() {
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
       {/* Mobile: Top navigation bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 border-b border-stone-200/60 bg-white/90 px-4 py-3">
-        <Link
-          href="/clawrouter/dashboard"
+        <button
+          onClick={() => setSidebarOpen(true)}
           className="rounded-xl border border-stone-300 bg-white/80 p-2 text-stone-700 hover:bg-white"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-        </Link>
+        </button>
         <span className="font-semibold text-stone-900">{navT.nav.apiKeys}</span>
       </div>
+
+      {/* Mobile: Sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+          <div className="relative z-10 w-64 h-full bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center gap-3 border-b border-stone-200 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold text-white">
+                CR
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-stone-950">{navT.common.clawRouter}</p>
+                <p className="text-xs text-stone-500">{email || navT.common.accountFallback}</p>
+              </div>
+            </div>
+            <nav className="mt-5 space-y-1.5 px-3">
+              {navItems.map((item) => {
+                const isActive = item.active;
+                if (item.href) {
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`block rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <div
+                    key={item.label}
+                    className={`rounded-2xl px-4 py-3 text-sm ${isActive ? "bg-stone-900 text-white" : "text-stone-700 hover:bg-stone-100"}`}
+                  >
+                    {item.label}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8 lg:pt-0 pt-16">
         <aside className="hidden lg:block rounded-[28px] border border-stone-300/60 bg-white/85 p-5 shadow-none">
