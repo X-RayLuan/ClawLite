@@ -60,8 +60,7 @@ function decryptSecret(encrypted: string): string {
   const ciphertext = Buffer.from(ciphertextHex, "hex");
   const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
-  const final = decipher.final();
-  return Buffer.concat([decipher.update(ciphertext), final]).toString("utf8");
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 }
 
 function toApiKeyView(row: any): ApiKeyView {
@@ -162,7 +161,7 @@ export async function revealApiKey(supabase: MinimalSupabaseClient, keyId: strin
   try {
     const plaintext = decryptSecret(row.secret_encrypted);
     return { plaintextSecret: plaintext };
-  } catch {
+  } catch (err) {
     throw new Error("key_decryption_failed");
   }
 }
