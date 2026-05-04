@@ -317,11 +317,9 @@ export default function ApiKeysPage() {
       const payload = await res.json().catch(() => null);
       if (res.ok && payload?.ok && payload.key) {
         setKeys((prev) => [payload.key, ...prev]);
-        if (payload.key.plaintextSecret) {
-          setFullKeys((prev) => ({ ...prev, [payload.key.id]: payload.key.plaintextSecret }));
-        }
-        setNewKeyResult(payload.key);
         setNewKeyName("");
+        setCreateOpen(false);
+        setNewKeyResult(null);
       } else {
         setError(t.errors.create);
       }
