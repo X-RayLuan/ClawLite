@@ -194,8 +194,10 @@ export function ApiKeyCard() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
           "Cache-Control": "no-store",
         },
+        body: JSON.stringify({ force: true }),
         cache: "no-store",
       });
 

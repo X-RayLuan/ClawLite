@@ -255,17 +255,27 @@ export default function ApiKeysPage() {
       if (!accessToken) return;
       setSubmitting(true);
       try {
-        const res = await fetch(`/api/clawrouter/keys/${key.id}`, {
-          method: "PATCH",
+        const res = await fetch(`/api/clawrouter/keys`, {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
             "Cache-Control": "no-store",
           },
+          body: JSON.stringify({ force: true }),
           cache: "no-store",
         });
         const payload = await res.json().catch(() => null);
         if (res.ok && payload?.ok && payload.key) {
-          setKeys((prev) => prev.map((k) => (k.id === key.id ? payload.key : k)));
+          // Refresh the key list
+          const listRes = await fetch("/api/clawrouter/keys", {
+            headers: { Authorization: `Bearer ${accessToken}`, "Cache-Control": "no-store" },
+            cache: "no-store",
+          });
+          const listPayload = await listRes.json().catch(() => null);
+          if (listPayload?.ok) {
+            setKeys(listPayload.keys || []);
+          }
           if (payload.key.plaintextSecret) {
             setFullKeys((prev) => ({ ...prev, [payload.key.id]: payload.key.plaintextSecret }));
           }

@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
     const accessToken = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
     const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
     const supabase = getSupabaseAdminClient();
+    const body = await request.json().catch(() => ({}));
+    const { force } = body;
 
     // Find or create account for this auth user
     const { data: existingAccount } = await supabase
@@ -57,6 +59,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, error: "failed_to_create_account" }, { status: 500 });
       }
       accountId = newAccount.id;
+    }
+
+    // If force=true, delete all existing active keys first
+    if (force) {
+      await supabase
+        .from("api_keys")
+        .delete()
+        .eq("account_id", accountId)
+        .eq("status", "active");
     }
 
     const result = await ensureClawRouterApiKey(supabase, accountId);

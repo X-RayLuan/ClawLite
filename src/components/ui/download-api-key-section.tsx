@@ -152,8 +152,44 @@ export function DownloadApiKeySection({ accessToken }: { accessToken: string }) 
 
   const handleRegenerate = useCallback(async () => {
     if (!window.confirm(t.confirmRegenerate)) return;
-    await handleGenerate();
-  }, [handleGenerate, t.confirmRegenerate]);
+    if (!accessToken) return;
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/clawrouter/keys", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify({ force: true }),
+        cache: "no-store",
+      });
+      const payload = await res.json().catch(() => null);
+
+      if (res.ok && payload?.ok && payload.key) {
+        syncApiKey(payload.key, { revealFullKey: true });
+        if (payload.key?.plaintextSecret) {
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+              id: payload.key.id,
+              fullKey: payload.key.plaintextSecret,
+            }));
+          } catch {
+            // ignore localStorage errors
+          }
+        }
+        return;
+      }
+      setError(t.generateError);
+    } catch {
+      setError(t.generateError);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [accessToken, syncApiKey, t.confirmRegenerate, t.generateError]);
 
   const handleReveal = useCallback(async () => {
     if (!accessToken || !apiKeyRef.current?.id) return;

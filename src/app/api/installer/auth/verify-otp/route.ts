@@ -135,8 +135,22 @@ export async function POST(request: NextRequest) {
     let apiKey: string | null = null;
     try {
       const keyResult = await ensureClawRouterApiKey(supabase, accountId);
-      const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
-      apiKey = revealed.plaintextSecret;
+      try {
+        const revealed = await revealApiKey(supabase, keyResult.key.id, accountId);
+        apiKey = revealed.plaintextSecret;
+      } catch (revealErr) {
+        // Decryption failed — old key was encrypted with a different secret.
+        // Delete it and create a fresh one.
+        console.error("[installer/auth/verify-otp] key decryption failed, regenerating:", revealErr);
+        await supabase
+          .from("api_keys")
+          .delete()
+          .eq("account_id", accountId)
+          .eq("status", "active");
+        const newKeyResult = await ensureClawRouterApiKey(supabase, accountId);
+        const newRevealed = await revealApiKey(supabase, newKeyResult.key.id, accountId);
+        apiKey = newRevealed.plaintextSecret;
+      }
     } catch (keyErr) {
       console.error("[installer/auth/verify-otp] failed to get API key:", keyErr);
     }

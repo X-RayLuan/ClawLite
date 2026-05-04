@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { revealApiKey } from "@/lib/clawrouter-keys";
+import { revealApiKey, ensureClawRouterApiKey } from "@/lib/clawrouter-keys";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 
 export const runtime = "nodejs";
@@ -31,7 +31,26 @@ export async function GET(
       );
     }
 
-    const result = await revealApiKey(supabase, params.keyId, account.id);
+    let result;
+    try {
+      result = await revealApiKey(supabase, params.keyId, account.id);
+    } catch (revealErr: any) {
+      const msg = revealErr?.message || "";
+      if (msg === "key_not_found" || msg === "key_not_recoverable") {
+        return NextResponse.json({ ok: false, error: msg }, { status: msg === "key_not_found" ? 404 : 410 });
+      }
+      // Decryption failed — old key was encrypted with a different secret.
+      // Delete it and create a fresh one.
+      console.error("[keys/reveal] key decryption failed, regenerating:", revealErr);
+      await supabase
+        .from("api_keys")
+        .delete()
+        .eq("account_id", account.id)
+        .eq("status", "active");
+      const newKeyResult = await ensureClawRouterApiKey(supabase, account.id);
+      result = await revealApiKey(supabase, newKeyResult.key.id, account.id);
+    }
+
     return NextResponse.json(
       { ok: true, plaintextSecret: result.plaintextSecret },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
