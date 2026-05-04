@@ -45,7 +45,16 @@ export async function GET(request: NextRequest) {
       .filter((r: any) => new Date(r.created_at) >= todayStart)
       .reduce((sum: number, r: any) => sum + Number(r.cost_estimate || 0), 0);
 
+    // DEBUG: directly check what balance we get from raw query
+    const { data: debugAccount } = await supabase
+      .from("accounts")
+      .select("id, user_id, credit_balance_usd")
+      .eq("id", userId)
+      .maybeSingle();
+    console.error("[usage/summary] DEBUG raw account lookup:", { userId, debugAccount });
+
     const balance = await checkBalance(userId);
+    console.error("[usage/summary] DEBUG checkBalance result:", { userId, balance });
 
     return NextResponse.json(
       {
@@ -64,6 +73,7 @@ export async function GET(request: NextRequest) {
           frozenBalanceUsd: balance.frozenBalanceUsd,
           availableBalanceUsd: balance.availableBalanceUsd,
         },
+        _debug: { userId, debugAccount, checkBalance: balance },
       },
       {
         headers: { "Cache-Control": "no-store, max-age=0" },
