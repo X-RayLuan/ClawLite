@@ -60,6 +60,9 @@ export const content = {
         cta: "Get Started Free"
       }
     },
+    pricing: {
+      title: "BYOK or ClawLite Tokens. Your choice."
+    },
     setup: {
       title: "Setup Wizard",
       subtitle: "Follow 4 steps: OS \u2192 Install Wizard \u2192 API \u2192 Channel.",
@@ -254,6 +257,9 @@ export const content = {
         ],
         cta: "\u514d\u8d39\u5f00\u59cb"
       }
+    },
+    pricing: {
+      title: "BYOK 或 ClawLite Tokens，随你选择。"
     },
     setup: {
       title: "\u5b89\u88c5\u5411\u5bfc",
@@ -450,6 +456,9 @@ export const content = {
         cta: "Comenzar gratis"
       }
     },
+    pricing: {
+      title: "BYOK o ClawLite Tokens. Tú decides."
+    },
     setup: {
       title: "Asistente de instalaci\u00f3n",
       subtitle: "Sigue 4 pasos: SO \u2192 Asistente \u2192 API \u2192 Canal.",
@@ -645,6 +654,9 @@ export const content = {
         cta: "\u7121\u6599\u3067\u59cb\u3081\u308b"
       }
     },
+    pricing: {
+      title: "BYOKまたはClawLite Tokens。あなたの選択。"
+    },
     setup: {
       title: "\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u30a6\u30a3\u30b6\u30fc\u30c9",
       subtitle: "4\u30b9\u30c6\u30c3\u30d7\u306b\u5f93\u3046\uff1aOS \u2192 \u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u30a6\u30a3\u30b6\u30fc\u30c9 \u2192 API \u2192 \u30c1\u30e3\u30cd\u30eb\u3002",
@@ -839,6 +851,9 @@ export const content = {
         ],
         cta: "\ubb34\ub8cc\ub85c \uc2dc\uc791"
       }
+    },
+    pricing: {
+      title: "BYOK 또는 ClawLite Tokens. 당신의 선택입니다."
     },
     setup: {
       title: "\uc14b\uc5c5 \ub9c8\ubc95\uc0ac",
@@ -2744,3 +2759,4 @@ export function getContentForLang(lang: Lang): LocalizedContent {
     downloads: content.downloads[lang],
   };
 }
+

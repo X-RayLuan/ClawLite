@@ -400,7 +400,7 @@ export default function HomePage() {
       <section id="pricing" className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
         <div className="mb-8">
           <Badge>Pricing</Badge>
-          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">BYOK or ClawLite Tokens. Your choice.</h2>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-stone-900 sm:text-4xl lg:text-[3.15rem]">{pageContent.pricing.title}</h2>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
