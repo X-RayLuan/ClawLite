@@ -1,6 +1,6 @@
 export const INSTALLER_VERSION = {
-  macos: 'v1.5.186',
-  windows: 'v1.5.186'
+  macos: 'v1.5.187',
+  windows: 'v1.5.187'
 } as const
 
 const MAC_RELEASE_BASE = `https://github.com/X-RayLuan/ClawLite-Brand-Installer/releases/download/${INSTALLER_VERSION.macos}`
