@@ -7,7 +7,7 @@ import crypto from "crypto";
 
 export const runtime = "nodejs";
 
-const CLAWLITE_BASE_URL = "https://clawlite.ai/api/openai";
+const CLAWLITE_BASE_URL = "https://clawlite.ai/api/openai/v1";
 
 function withCors(request: NextRequest, response: NextResponse): NextResponse {
   const origin = request.headers.get("origin") || "*";
