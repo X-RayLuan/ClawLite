@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (error: any) {
+    console.error("[usage/summary] error:", error?.message || String(error));
     const errorMessage = error?.message || "failed_to_load_usage_summary";
     if (
       errorMessage === "missing_access_token" ||
