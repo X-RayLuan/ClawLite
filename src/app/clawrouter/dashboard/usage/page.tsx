@@ -377,6 +377,7 @@ export default function ClawRouterUsagePage() {
             onDateRangeChange={handleDateRangeChange}
           />
         </section>
+        </section>
       </div>
     </main>
   );

@@ -414,6 +414,7 @@ export default function TransactionsPage() {
             keyFilter={keyFilter}
           />
         </div>
+        </section>
       </div>
     </main>
   );
