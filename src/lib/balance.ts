@@ -43,13 +43,34 @@ function mapTx(row: any): BalanceTransaction {
 export async function checkBalance(accountId: string): Promise<AccountBalance> {
   const supabase = getSupabaseAdminClient();
 
+  // First try to find account by id (primary key)
   const { data: account, error } = await supabase
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .single();
+    .maybeSingle();
 
-  if (error || !account) throw new Error("account_not_found");
+  if (error && error.code !== "PGRST116") throw new Error("account_not_found");
+
+  // If not found by id, try by user_id (handles accounts created via keys route
+  // which only set user_id without specifying id)
+  if (!account) {
+    const { data: accountByUserId, error: userIdError } = await supabase
+      .from("accounts")
+      .select("id, credit_balance_usd")
+      .eq("user_id", accountId)
+      .maybeSingle();
+
+    if (userIdError && userIdError.code !== "PGRST116") throw new Error("account_not_found");
+    if (!accountByUserId) throw new Error("account_not_found");
+
+    return {
+      accountId: accountByUserId.id,
+      balanceUsd: Number(accountByUserId.credit_balance_usd || 0),
+      frozenBalanceUsd: 0,
+      availableBalanceUsd: Number(accountByUserId.credit_balance_usd || 0),
+    };
+  }
 
   const balance = Number(account.credit_balance_usd || 0);
 
