@@ -478,38 +478,20 @@ export default function ApiKeysPage() {
                     </span>
                     <div className="flex items-center justify-end gap-2">
                       {fullKeys[key.id] ? (
-                        <>
-                          <button
-                            onClick={() => handleCopy(key.id, fullKeys[key.id])}
-                            className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white"
-                          >
-                            {copied === key.id ? t.buttons.copied : t.buttons.copy}
-                          </button>
-                          <button
-                            onClick={() => handleRegenerate(key)}
-                            disabled={submitting}
-                            className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white disabled:opacity-50"
-                          >
-                            {t.buttons.regenerate}
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleCopy(key.id, fullKeys[key.id])}
+                          className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white"
+                        >
+                          {copied === key.id ? t.buttons.copied : t.buttons.copy}
+                        </button>
                       ) : key.status === "active" ? (
-                        <>
-                          <button
-                            onClick={() => handleReveal(key.id)}
-                            disabled={revealingId === key.id}
-                            className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white disabled:opacity-50"
-                          >
-                            {revealingId === key.id ? t.buttons.revealing : t.buttons.reveal}
-                          </button>
-                          <button
-                            onClick={() => handleRegenerate(key)}
-                            disabled={submitting}
-                            className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white disabled:opacity-50"
-                          >
-                            {t.buttons.regenerate}
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleReveal(key.id)}
+                          disabled={revealingId === key.id}
+                          className="rounded-xl border border-stone-300 bg-white/80 px-3 py-1.5 text-xs text-stone-700 hover:bg-white disabled:opacity-50"
+                        >
+                          {revealingId === key.id ? t.buttons.revealing : t.buttons.reveal}
+                        </button>
                       ) : null}
                       <button
                         onClick={() => setDeleteTarget(key)}
