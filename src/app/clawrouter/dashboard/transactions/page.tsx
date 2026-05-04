@@ -48,6 +48,21 @@ export default function TransactionsPage() {
   const [pagination, setPagination] = useState({ limit: 20, offset: 0, totalTransactions: 0 });
   const [apiKeys, setApiKeys] = useState<Array<{ id: string; key_prefix: string }>>([]);
   const [keyFilter, setKeyFilter] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = useMemo(
+    () => [
+      { label: t.nav.dashboard, href: '/clawrouter/dashboard' },
+      { label: t.nav.apiKeys, href: '/clawrouter/dashboard/api-keys' },
+      { label: t.nav.quickStart, href: '/clawrouter/dashboard/quick-start' },
+      { label: t.nav.models, href: '/clawrouter/dashboard/models' },
+      { label: t.nav.usage, href: '/clawrouter/dashboard/usage' },
+      { label: t.nav.transactions, href: '/clawrouter/dashboard/transactions', active: true },
+      { label: t.nav.affiliate, href: '/clawrouter/dashboard/affiliate' },
+      { label: t.nav.profile, href: '/clawrouter/dashboard/profile' },
+    ],
+    [t]
+  );
 
   const getDateRange = useCallback((range: DateRange): { startDate: string; endDate: string } => {
     const endDate = new Date();
@@ -251,8 +266,102 @@ export default function TransactionsPage() {
 
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 pt-16 lg:pt-8">
-        {/* Header */}
+      {/* Mobile: Top navigation bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] flex items-center gap-3 border-b border-stone-200/60 bg-white/90 px-4 py-3">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="rounded-xl border border-stone-300 bg-white/80 p-2 text-stone-700 hover:bg-white"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="font-semibold text-stone-900">{t.nav.transactions}</span>
+      </div>
+
+      {/* Mobile: Sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+          <div className="relative z-10 w-64 h-full bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center gap-3 border-b border-stone-200 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold text-white">
+                CR
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-stone-950">{t.common.clawRouter}</p>
+                <p className="text-xs text-stone-500">{email || t.common.accountFallback}</p>
+              </div>
+            </div>
+            <nav className="mt-5 space-y-1.5 px-3">
+              {navItems.map((item) => {
+                const isActive = item.active;
+                if (item.href) {
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`block rounded-2xl px-4 py-3 text-sm ${isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <div
+                    key={item.label}
+                    className={`rounded-2xl px-4 py-3 text-sm ${isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+                  >
+                    {item.label}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8 lg:pt-0 pt-16">
+        <aside className="hidden lg:block rounded-[28px] border border-stone-300/60 bg-white/85 p-5 shadow-none">
+          <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold text-white">
+              CR
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-stone-950">{t.common.clawRouter}</p>
+              <p className="text-xs text-stone-500">{email || t.common.accountFallback}</p>
+            </div>
+          </div>
+
+          <nav className="mt-5 space-y-1.5">
+            {navItems.map((item) => {
+              const isActive = item.active;
+              if (item.href) {
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`block rounded-2xl px-4 py-3 text-sm ${isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <div
+                  key={item.label}
+                  className={`rounded-2xl px-4 py-3 text-sm ${isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+                >
+                  {item.label}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <section className="space-y-6">
+          {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <Button variant="ghost" asChild className="px-0 text-stone-700 hover:bg-transparent hover:text-stone-950">

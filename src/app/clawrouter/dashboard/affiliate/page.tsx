@@ -235,7 +235,7 @@ export default function AffiliatePage() {
   return (
     <main className="min-h-screen bg-[rgba(247,243,236,0.92)] text-stone-950">
       {/* Mobile: Top navigation bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 border-b border-stone-200/60 bg-white/90 px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] flex items-center gap-3 border-b border-stone-200/60 bg-white/90 px-4 py-3">
         <Link
           href="/clawrouter/dashboard"
           className="rounded-xl border border-stone-300 bg-white/80 p-2 text-stone-700 hover:bg-white"
