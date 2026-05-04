@@ -33,6 +33,15 @@ function SimpleModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -443,7 +452,7 @@ export default function ApiKeysPage() {
               </div>
             ) : (
               <div className="overflow-hidden rounded-[22px] border border-stone-200">
-                <div className="grid grid-cols-[1fr_1fr_100px_100px_140px] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+                <div className="grid grid-cols-[1fr_1fr_100px_100px_180px] bg-[rgba(248,244,237,0.85)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
                   <span>{t.table.name}</span>
                   <span>{t.table.prefix}</span>
                   <span>{t.table.status}</span>
@@ -453,7 +462,7 @@ export default function ApiKeysPage() {
                 {keys.map((key) => (
                   <div
                     key={key.id}
-                    className="grid grid-cols-[1fr_1fr_100px_100px_140px] items-center border-t border-stone-200 px-4 py-3 text-sm"
+                    className="grid grid-cols-[1fr_1fr_100px_100px_180px] items-center border-t border-stone-200 px-4 py-3 text-sm"
                   >
                     <span className="truncate font-medium text-stone-900">{key.name}</span>
                     <span className="truncate font-mono text-stone-600">{key.keyPrefix}••••••••</span>
@@ -541,6 +550,12 @@ export default function ApiKeysPage() {
                 className="border-stone-300 bg-white/90 text-stone-900"
               >
                 {copied === newKeyResult.id ? t.buttons.copied : t.buttons.copy}
+              </Button>
+              <Button
+                onClick={() => { setCreateOpen(false); setNewKeyResult(null); }}
+                className="bg-stone-900 hover:bg-stone-800"
+              >
+                {t.buttons.done}
               </Button>
             </div>
           </div>

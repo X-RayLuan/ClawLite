@@ -32,6 +32,7 @@ export async function GET(
     }
 
     let result;
+    let regenerated = false;
     try {
       result = await revealApiKey(supabase, params.keyId, account.id);
     } catch (revealErr: any) {
@@ -40,19 +41,40 @@ export async function GET(
         return NextResponse.json({ ok: false, error: msg }, { status: msg === "key_not_found" ? 404 : 410 });
       }
       // Decryption failed — old key was encrypted with a different secret.
-      // Delete it and create a fresh one.
+      // Delete active keys and create a fresh one.
       console.error("[keys/reveal] key decryption failed, regenerating:", revealErr);
-      await supabase
+      const { error: deleteErr } = await supabase
         .from("api_keys")
         .delete()
         .eq("account_id", account.id)
         .eq("status", "active");
-      const newKeyResult = await ensureClawRouterApiKey(supabase, account.id);
-      result = await revealApiKey(supabase, newKeyResult.key.id, account.id);
+      if (deleteErr) {
+        console.error("[keys/reveal] failed to delete old keys:", deleteErr);
+      }
+      let newKeyResult;
+      try {
+        newKeyResult = await ensureClawRouterApiKey(supabase, account.id);
+      } catch (createErr: any) {
+        console.error("[keys/reveal] failed to create new key:", createErr);
+        return NextResponse.json(
+          { ok: false, error: createErr?.message || "failed_to_regenerate_key" },
+          { status: 500 }
+        );
+      }
+      try {
+        result = await revealApiKey(supabase, newKeyResult.key.id, account.id);
+        regenerated = true;
+      } catch (retryErr: any) {
+        console.error("[keys/reveal] even new key reveal failed:", retryErr);
+        return NextResponse.json(
+          { ok: false, error: retryErr?.message || "reveal_failed_after_regeneration" },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(
-      { ok: true, plaintextSecret: result.plaintextSecret },
+      { ok: true, plaintextSecret: result.plaintextSecret, regenerated },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (error: any) {
