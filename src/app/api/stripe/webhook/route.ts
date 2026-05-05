@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { settleCheckoutSessionRecord } from "@/lib/clawrouter-checkout";
 import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
-import { settleTopupCheckoutSession } from "@/lib/clawrouter-topups";
+import { ensureClawRouterAccount } from "@/lib/clawrouter-topups";
 import { assignInventoryKeyToAccount, ensureManagedKeyDelivery } from "@/lib/clawrouter-delivery";
 import { sendClawLiteApiKeyEmail } from "@/lib/email";
 import { addRechargeBalance } from "@/lib/recharge";
@@ -132,9 +132,13 @@ export async function POST(req: Request) {
             throw new Error("invalid_topup_metadata");
           }
 
-          // settleTopupCheckoutSession 已更新 accounts.credit_balance_usd（旧系统兼容）
-          // 新余额系统：插入 recharge_orders（幂等）+ balance_transactions
-          // 注意：余额更新已在 settleTopupCheckoutSession 中完成，这里只做记录
+          // Ensure account exists before adding balance (addRechargeBalance requires the account to exist)
+          await ensureClawRouterAccount({
+            supabase,
+            accountId,
+            email: session.customer_details?.email ?? session.customer_email ?? null,
+          });
+
           console.log(`[stripe webhook] clawrouter_topup: calling addRechargeBalance for account ${accountId}, amount ${amountUsd}, session ${session.id}`);
           try {
             const balanceResult = await addRechargeBalance(supabase, accountId, amountUsd, session.id, {
