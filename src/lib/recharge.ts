@@ -7,7 +7,6 @@ export type AddRechargeBalanceOptions = {
 
 export type AddRechargeBalanceResult = {
   rechargeOrderId: string;
-  balanceTransactionId: string;
   newBalance: number;
 };
 
@@ -15,8 +14,7 @@ export type AddRechargeBalanceResult = {
  * 充值余额：
  * 1. 在 recharge_orders 表插入记录（幂等：stripe_session_id 唯一约束）
  * 2. 在 accounts 表增加 credit_balance_usd
- * 3. 在 balance_transactions 表插入 recharge 记录（幂等 key）
- * 4. 在 topup_transactions 表插入记录（幂等 key: stripe_session_id）
+ * 3. 在 topup_transactions 表插入记录（幂等 key: stripe_session_id）
  */
 export async function addRechargeBalance(
   supabase: SupabaseClient,
@@ -95,36 +93,7 @@ export async function addRechargeBalance(
     throw new Error(updateError.message || "failed_to_update_credit_balance");
   }
 
-  // 3. 插入 balance_transactions 记录（幂等 key: stripe_session_id + tx_type=recharge）
-  const idempotencyKey = `recharge:${stripeSessionId}`;
-
-  const { data: txRecord, error: txError } = await supabase
-    .from("balance_transactions")
-    .insert({
-      account_id: accountId,
-      event_id: null,
-      tx_type: "recharge",
-      amount_usd: creditedAmountUsd,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      status: "completed",
-      description: `Stripe recharge${options?.promoCode ? ` (promo: ${options.promoCode})` : ""}`,
-      metadata: {
-        stripe_session_id: stripeSessionId,
-        recharge_order_id: rechargeOrder.id,
-        promo_code: options?.promoCode || null,
-        bonus_amount_usd: options?.bonusAmount || 0,
-        source: "stripe_webhook",
-      },
-    })
-    .select("id")
-    .single();
-
-  if (txError) {
-    throw new Error(txError.message || "failed_to_insert_balance_transaction");
-  }
-
-  // 4. 插入 topup_transactions 记录（幂等 key: stripe_session_id）
+  // 3. 插入 topup_transactions 记录（幂等 key: stripe_session_id）
   const { error: topupTxError } = await supabase
     .from("topup_transactions")
     .insert({
@@ -137,7 +106,6 @@ export async function addRechargeBalance(
       status: "completed",
       metadata: {
         recharge_order_id: rechargeOrder.id,
-        balance_transaction_id: txRecord.id,
         bonus_amount_usd: options?.bonusAmount || 0,
         source: "stripe_webhook",
       },
@@ -152,7 +120,6 @@ export async function addRechargeBalance(
 
   return {
     rechargeOrderId: rechargeOrder.id,
-    balanceTransactionId: txRecord.id,
     newBalance: balanceAfter,
   };
 }
