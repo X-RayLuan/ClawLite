@@ -3,6 +3,7 @@ import { google } from 'googleapis';
 import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function addWaitlistCustomerToSupabase(email: string, source: string) {

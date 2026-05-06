@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {

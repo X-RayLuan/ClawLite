@@ -6,6 +6,7 @@ import { ensureClawRouterApiKey, revealApiKey } from "@/lib/clawrouter-keys";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const CLAWLITE_BASE_URL = "https://clawlite.ai/api/openai/v1";
 

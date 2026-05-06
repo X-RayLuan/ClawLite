@@ -75,7 +75,8 @@ export default function AdminUsagePage() {
     setLoadingOverview(true);
     try {
       const res = await fetch('/api/admin/usage', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`, 'Cache-Control': 'no-store' },
+        cache: 'no-store',
       });
       if (res.ok) {
         const json = await res.json();

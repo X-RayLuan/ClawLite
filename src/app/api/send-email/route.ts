@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 export const runtime = 'nodejs';
+export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {

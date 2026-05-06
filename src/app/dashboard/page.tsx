@@ -182,7 +182,7 @@ function InstallerDashboardPageInner() {
       setAccountId(recheckAccountId);
       setStep("ready");
       setBalanceLoading(true);
-      fetch(`/api/installer/topup/check-status?accountId=${encodeURIComponent(recheckAccountId)}`)
+      fetch(`/api/installer/topup/check-status?accountId=${encodeURIComponent(recheckAccountId)}`, { cache: 'no-store' })
         .then((r) => r.json())
         .then((payload) => {
           if (payload?.ok) {

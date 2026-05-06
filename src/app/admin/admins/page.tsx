@@ -112,7 +112,8 @@ export default function AdminsPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/admins', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`, 'Cache-Control': 'no-store' },
+        cache: 'no-store',
       });
       if (res.ok) {
         const json = await res.json();

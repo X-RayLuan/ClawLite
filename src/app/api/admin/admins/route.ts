@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireAdminAuth, requireSuperAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET /api/admin/admins — list all admins (super_admin or admin)
 export async function GET(request: NextRequest) {

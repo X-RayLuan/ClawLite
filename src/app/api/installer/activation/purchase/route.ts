@@ -5,6 +5,7 @@ import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 import { buildInstallerStripeCheckoutConfig } from "@/lib/installer-activation-purchase";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {

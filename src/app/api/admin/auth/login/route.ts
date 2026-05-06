@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { generateAdminToken } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // Bootstrap super-admin email (set via env var)
 function getBootstrapEmail(): string | null {

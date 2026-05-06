@@ -8,6 +8,7 @@ import {
 } from "@/lib/license-keys";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // POST /api/v1/license/send-code
 export async function POST(request: NextRequest) {

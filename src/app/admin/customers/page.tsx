@@ -200,7 +200,8 @@ export default function CustomersPage() {
       const params = new URLSearchParams({ page: String(pg), page_size: String(PAGE_SIZE) });
       if (searchTerm) params.set('search', searchTerm);
       const res = await fetch(`/api/admin/customers?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`, 'Cache-Control': 'no-store' },
+        cache: 'no-store',
       });
       if (res.ok) {
         const json = await res.json();

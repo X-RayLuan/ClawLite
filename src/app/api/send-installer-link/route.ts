@@ -6,6 +6,8 @@ function getReleaseLink(os: string) {
   return getInstallerUrl(os)
 }
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const { email, os = 'macos' } = await request.json()

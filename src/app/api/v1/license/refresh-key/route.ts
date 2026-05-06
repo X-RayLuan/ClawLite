@@ -7,6 +7,7 @@ import {
 } from "@/lib/license-keys";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // POST /api/v1/license/refresh-key
 // Requires: Authorization: Bearer <api_key>

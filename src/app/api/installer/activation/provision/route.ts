@@ -8,6 +8,7 @@ import {
 import { getActiveEntitlementForAccount } from "@/lib/clawrouter-checkout";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function rotateAndCreateKey(supabase: any, accountId: string): Promise<string | null> {
   await supabase

@@ -3,6 +3,7 @@ import { createStripeCheckoutSessionViaFetch } from "@/lib/stripe-rest";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const ALLOWED_AMOUNTS = [5, 10, 20];
 

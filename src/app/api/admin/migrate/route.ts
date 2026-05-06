@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization") || "";
   const expectedToken = process.env.ADMIN_JWT_SECRET;

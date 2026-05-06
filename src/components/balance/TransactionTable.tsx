@@ -163,7 +163,9 @@ export function TransactionTable({
       const response = await fetch(`/api/export/transactions?${params}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          'Cache-Control': 'no-store',
         },
+        cache: 'no-store',
       });
       
       if (response.ok) {

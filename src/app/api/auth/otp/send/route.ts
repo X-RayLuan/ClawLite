@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const OTP_TTL_MINUTES = 10;
 

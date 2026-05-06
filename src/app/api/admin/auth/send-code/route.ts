@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { generate6DigitCode } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {

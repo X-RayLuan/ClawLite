@@ -40,7 +40,7 @@ async function createCheckout(accountId: string, email: string, amount: number):
 
 async function checkBalanceAfterTopup(accountId: string): Promise<number> {
   try {
-    const res = await fetch(`/api/installer/topup/check-status?accountId=${encodeURIComponent(accountId)}`);
+    const res = await fetch(`/api/installer/topup/check-status?accountId=${encodeURIComponent(accountId)}`, { cache: 'no-store' });
     const payload = await res.json().catch(() => null);
     if (res.ok && payload?.ok) {
       return payload.balanceUsd ?? 0;

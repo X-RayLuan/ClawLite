@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // DELETE /api/admin/admins/:id — soft-delete admin (super_admin only)
 export async function DELETE(

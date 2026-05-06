@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { findLicenseKeyByApiKey } from "@/lib/license-keys";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // POST /api/v1/license/validate
 export async function POST(request: NextRequest) {

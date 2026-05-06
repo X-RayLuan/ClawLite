@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { checkBalance } from "@/lib/balance";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ id: string }> };
 

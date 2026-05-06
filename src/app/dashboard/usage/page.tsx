@@ -31,7 +31,7 @@ export default function UsageDashboardPage() {
   const fetchSummary = useCallback(async () => {
     setLoadingSummary(true);
     try {
-      const res = await fetch('/api/usage/summary');
+      const res = await fetch('/api/usage/summary', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setSummary(data);
@@ -46,7 +46,7 @@ export default function UsageDashboardPage() {
   const fetchChart = useCallback(async () => {
     setLoadingChart(true);
     try {
-      const res = await fetch('/api/usage/by-model');
+      const res = await fetch('/api/usage/by-model', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         // normalize to ChartDataPoint[]
@@ -82,7 +82,7 @@ export default function UsageDashboardPage() {
           start: dateRange.start,
           end: dateRange.end,
         });
-        const res = await fetch(`/api/usage/records?${params}`);
+        const res = await fetch(`/api/usage/records?${params}`, { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
           const items: UsageRecord[] = Array.isArray(json) ? json : json.data ?? json.records ?? [];

@@ -58,7 +58,8 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
       // Load customer data
       try {
         const res = await fetch(`/api/admin/customers/${customerId}`, {
-          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}` },
+          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}`, 'Cache-Control': 'no-store' },
+          cache: 'no-store',
         });
         if (res.ok) {
           const data = await res.json();
@@ -71,7 +72,8 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
       // Load balance
       try {
         const res = await fetch(`/api/admin/customers/${customerId}/balance`, {
-          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}` },
+          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}`, 'Cache-Control': 'no-store' },
+          cache: 'no-store',
         });
         if (res.ok) {
           const data = await res.json();
@@ -88,7 +90,8 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
       // Load transactions for this customer (not admin's own)
       try {
         const res = await fetch(`/api/admin/customers/${customerId}/transactions?limit=50`, {
-          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}` },
+          headers: { Authorization: `Bearer ${(await client.auth.getSession()).data.session?.access_token}`, 'Cache-Control': 'no-store' },
+          cache: 'no-store',
         });
         if (res.ok) {
           const data = await res.json();
@@ -153,7 +156,8 @@ export default function AdminBalancePage({ params }: { params: Promise<{ id: str
 
       // Refresh balance
       const balanceRes = await fetch(`/api/admin/customers/${customerId}/balance`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session?.access_token}`, 'Cache-Control': 'no-store' },
+        cache: 'no-store',
       });
       if (balanceRes.ok) {
         const balanceData = await balanceRes.json();

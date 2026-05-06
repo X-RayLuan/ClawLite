@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // GET /api/admin/recharge-orders - 充值订单列表（分页、状态筛选）
 export async function GET(request: NextRequest) {

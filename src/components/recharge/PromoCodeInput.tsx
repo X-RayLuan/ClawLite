@@ -32,7 +32,7 @@ export function PromoCodeInput({ onValidChange }: PromoCodeInputProps) {
 
     try {
       // Call the real promo validation API
-      const res = await fetch(`/api/promo/validate?code=${encodeURIComponent(code.trim())}`);
+      const res = await fetch(`/api/promo/validate?code=${encodeURIComponent(code.trim())}`, { cache: 'no-store' });
       const data = await res.json();
 
       if (data.valid) {
