@@ -137,7 +137,8 @@ export function ApiKeyCard() {
 
     async function fetchKey() {
       try {
-        const res = await fetch("/api/clawrouter/keys?_rsc=r83br", {
+        const rsc = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const res = await fetch(`/api/clawrouter/keys?_rsc=${rsc}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Cache-Control": "no-store",
@@ -190,7 +191,8 @@ export function ApiKeyCard() {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/clawrouter/keys?_rsc=r83br", {
+      const rsc = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const res = await fetch(`/api/clawrouter/keys?_rsc=${rsc}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
