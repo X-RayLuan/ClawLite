@@ -66,7 +66,12 @@ export async function GET(request: NextRequest) {
         },
       },
       {
-        headers: { "Cache-Control": "no-store, max-age=0" },
+        headers: {
+          "Cache-Control": "no-store, max-age=0, s-maxage=0, no-cache",
+          "Pragma": "no-cache",
+          "Expires": "0",
+          "Vary": "*",
+        },
       },
     );
   } catch (error: any) {
