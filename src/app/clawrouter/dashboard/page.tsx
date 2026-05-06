@@ -238,8 +238,8 @@ export default function ClawRouterDashboardPage() {
 
   const loadDashboardData = useCallback(async (accessToken: string, options?: { refreshBilling?: boolean }) => {
     const accountUrl = options?.refreshBilling
-      ? "/api/clawrouter/account?refreshBilling=1"
-      : "/api/clawrouter/account";
+      ? "/api/clawrouter/account?refreshBilling=1&_rsc=r83br"
+      : "/api/clawrouter/account?_rsc=r83br";
 
     const accountResponse = await fetch(accountUrl, {
       headers: {
@@ -258,7 +258,7 @@ export default function ClawRouterDashboardPage() {
 
     // Fetch balance and usage from new usage summary API
     try {
-      const summaryRes = await fetch("/api/usage/summary", {
+      const summaryRes = await fetch("/api/usage/summary?_rsc=r83br", {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Cache-Control": "no-store",
@@ -294,7 +294,7 @@ export default function ClawRouterDashboardPage() {
 
       // Fetch real usage events for recent requests table
       try {
-        const recordsRes = await fetch("/api/usage/records?limit=10", {
+        const recordsRes = await fetch("/api/usage/records?limit=10&_rsc=r83br", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Cache-Control": "no-store",
