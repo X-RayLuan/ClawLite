@@ -24,7 +24,11 @@ export async function GET(request: NextRequest) {
     const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
     const supabase = getSupabaseAdminClient();
 
-    await ensureClawRouterAccount({
+    // ensureClawRouterAccount returns the account record (matched by email if exists, otherwise created).
+    // Use the returned account ID for all subsequent queries to ensure we work with the
+    // correct record even when the Supabase Auth userId differs from the accounts.id
+    // (e.g. when the same email was used in both installer and website flows).
+    const accountRow = await ensureClawRouterAccount({
       supabase,
       accountId: userId,
       email,
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest) {
     await maybeReconcileClawRouterAccount({
       shouldReconcile: shouldForceClawRouterAccountReconcile(request.nextUrl.searchParams),
       supabase,
-      accountId: userId,
+      accountId: accountRow.id,
       email,
       reconcileTopups: reconcileTopupsFromStripe,
       reconcileInventoryAccess: reconcileInventoryAccessFromStripe,
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
     const account = await supabase
       .from("accounts")
       .select("id, email, plan, billing_status, credit_balance_usd")
-      .eq("id", userId)
+      .eq("id", accountRow.id)
       .maybeSingle();
 
     if (account?.error && account.error.code !== "PGRST116") {
@@ -52,7 +56,7 @@ export async function GET(request: NextRequest) {
     const keys = await supabase
       .from("api_keys")
       .select("id", { count: "exact", head: true })
-      .eq("account_id", userId)
+      .eq("account_id", accountRow.id)
       .eq("status", "active");
 
     if (keys?.error) {
@@ -62,7 +66,7 @@ export async function GET(request: NextRequest) {
     const topups = await supabase
       .from("topup_transactions")
       .select("id, amount_usd, status, created_at")
-      .eq("account_id", userId)
+      .eq("account_id", accountRow.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -74,7 +78,7 @@ export async function GET(request: NextRequest) {
       {
         ok: true,
         account: {
-          id: userId,
+          id: accountRow.id,
           email: account.data?.email || email,
           plan: account.data?.plan || "free",
           billingStatus: account.data?.billing_status || "inactive",
