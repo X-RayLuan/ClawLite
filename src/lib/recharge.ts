@@ -16,6 +16,7 @@ export type AddRechargeBalanceResult = {
  * 1. 在 recharge_orders 表插入记录（幂等：stripe_session_id 唯一约束）
  * 2. 在 accounts 表增加 credit_balance_usd
  * 3. 在 balance_transactions 表插入 recharge 记录（幂等 key）
+ * 4. 在 topup_transactions 表插入记录（幂等 key: stripe_session_id）
  */
 export async function addRechargeBalance(
   supabase: SupabaseClient,
@@ -121,6 +122,32 @@ export async function addRechargeBalance(
 
   if (txError) {
     throw new Error(txError.message || "failed_to_insert_balance_transaction");
+  }
+
+  // 4. 插入 topup_transactions 记录（幂等 key: stripe_session_id）
+  const { error: topupTxError } = await supabase
+    .from("topup_transactions")
+    .insert({
+      account_id: accountId,
+      provider: "stripe",
+      stripe_session_id: stripeSessionId,
+      stripe_event_id: null,
+      amount_usd: creditedAmountUsd,
+      promo_code: options?.promoCode || null,
+      status: "completed",
+      metadata: {
+        recharge_order_id: rechargeOrder.id,
+        balance_transaction_id: txRecord.id,
+        bonus_amount_usd: options?.bonusAmount || 0,
+        source: "stripe_webhook",
+      },
+    });
+
+  if (topupTxError) {
+    // 唯一约束冲突说明已处理过，忽略即可
+    if (topupTxError.code !== "23505") {
+      console.error("[addRechargeBalance] failed to insert topup_transactions:", topupTxError);
+    }
   }
 
   return {
