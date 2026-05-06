@@ -11,6 +11,20 @@ export async function ensureClawRouterAccount(input: {
   email?: string | null;
 }) {
   const now = new Date().toISOString();
+
+  // 先按 email 查找是否已有账户（避免同一邮箱重复创建账户）
+  if (input.email) {
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const existingByEmail = await input.supabase
+      .from("accounts")
+      .select("id, email, credit_balance_usd")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+    if (existingByEmail?.data) {
+      return existingByEmail.data;
+    }
+  }
+
   const response = await input.supabase
     .from("accounts")
     .upsert(
