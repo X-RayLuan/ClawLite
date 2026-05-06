@@ -27,11 +27,11 @@ export async function DELETE(
     const supabase = getSupabaseAdminClient();
 
     // Verify target exists and is active
-    const { data: target, error: findError } = await supabase
+    const { data: target, error: findError } = await (supabase
       .from("admin_users")
       .select("id, email, role, is_active")
       .eq("id", id)
-      .maybeSingle();
+      .maybeSingle() as any);
 
     if (findError) throw new Error(findError.message);
     if (!target) {
