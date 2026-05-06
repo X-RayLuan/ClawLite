@@ -85,10 +85,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "missing_stripe_signature" }, { status: 400 });
     }
 
+    const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET,
+      webhookSecret,
     );
 
     const supabase = getSupabaseAdminClient();
