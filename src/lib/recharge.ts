@@ -103,7 +103,7 @@ export async function addRechargeBalance(
       account_id: accountId,
       event_id: null,
       tx_type: "recharge",
-      amount: creditedAmountUsd,
+      amount_usd: creditedAmountUsd,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
       status: "completed",
