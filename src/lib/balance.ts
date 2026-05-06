@@ -48,7 +48,7 @@ export async function checkBalance(accountId: string): Promise<AccountBalance> {
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .maybeSingle();
+    .maybeSingle({ cache: 'no-store' });
 
   if (error && error.code !== "PGRST116") throw new Error("account_not_found");
 
@@ -59,7 +59,7 @@ export async function checkBalance(accountId: string): Promise<AccountBalance> {
       .from("accounts")
       .select("id, credit_balance_usd")
       .eq("user_id", accountId)
-      .maybeSingle();
+      .maybeSingle({ cache: 'no-store' });
 
     if (userIdError && userIdError.code !== "PGRST116") throw new Error("account_not_found");
     if (!accountByUserId) throw new Error("account_not_found");
@@ -102,7 +102,7 @@ export async function freezeBalance(
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .maybeSingle();
+    .maybeSingle({ cache: 'no-store' });
 
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
@@ -150,7 +150,7 @@ export async function chargeBalance(
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .maybeSingle();
+    .maybeSingle({ cache: 'no-store' });
 
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
@@ -202,7 +202,7 @@ export async function refundBalance(
     .from("accounts")
     .select("id, credit_balance_usd")
     .eq("id", accountId)
-    .maybeSingle();
+    .maybeSingle({ cache: 'no-store' });
 
   if (accError || !account) throw new Error("account_not_found");
   const currentBalance = Number(account.credit_balance_usd || 0);
