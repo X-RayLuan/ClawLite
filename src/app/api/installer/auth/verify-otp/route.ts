@@ -44,14 +44,35 @@ async function isAccountActive(supabase: any, accountId: string): Promise<boolea
 }
 
 async function ensureInstallerAccountForEmail(supabase: any, email: string) {
-  const existing = await supabase
+  // Use .limit(1) with explicit ordering instead of .maybeSingle() to handle
+  // the case where multiple accounts share the same email (historical duplicates).
+  // .maybeSingle() on multiple rows returns an error in Supabase JS v2, causing
+  // the lookup to be silently ignored and a new account to be inserted.
+  const { data: rows, error: lookupError } = await supabase
     .from("accounts")
     .select("id, email, credit_balance_usd")
     .eq("email", email)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(2);
 
-  if (existing?.data) return existing.data;
+  if (lookupError) {
+    throw new Error(`account_lookup_failed: ${lookupError.message}`);
+  }
 
+  if (rows && rows.length === 1) {
+    return rows[0];
+  }
+
+  if (rows && rows.length > 1) {
+    // Multiple accounts for the same email — log for visibility and return
+    // the oldest (first created) record to ensure deterministic behaviour.
+    console.warn(
+      `[installer/auth/verify-otp] multiple accounts for email=${email}: picking oldest id=${rows[0].id}`
+    );
+    return rows[0];
+  }
+
+  // No existing account — create one.
   const accountId = crypto.randomUUID();
   const inserted = await supabase
     .from("accounts")
