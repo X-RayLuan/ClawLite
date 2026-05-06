@@ -58,7 +58,6 @@ export async function addRechargeBalance(
       if (existing.data) {
         return {
           rechargeOrderId: existing.data.id,
-          balanceTransactionId: "",
           newBalance: 0,
         };
       }
