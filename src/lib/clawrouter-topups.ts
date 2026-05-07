@@ -17,10 +17,18 @@ export async function ensureClawRouterAccount(input: {
     const normalizedEmail = input.email.toLowerCase().trim();
     const existingByEmail = await input.supabase
       .from("accounts")
-      .select("id, email, credit_balance_usd")
+      .select("id, user_id, email, credit_balance_usd")
       .eq("email", normalizedEmail)
       .maybeSingle();
     if (existingByEmail?.data) {
+      // If user_id is wrong (was set to a random UUID during installer flow),
+      // correct it to the actual Auth user ID so ClawRouter API can find the account.
+      if (existingByEmail.data.user_id !== input.accountId) {
+        await input.supabase
+          .from("accounts")
+          .update({ user_id: input.accountId, updated_at: now })
+          .eq("id", existingByEmail.data.id);
+      }
       return existingByEmail.data;
     }
   }

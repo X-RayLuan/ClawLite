@@ -51,7 +51,7 @@ async function ensureInstallerAccountForEmail(supabase: any, email: string) {
   // the lookup to be silently ignored and a new account to be inserted.
   const { data: rows, error: lookupError } = await supabase
     .from("accounts")
-    .select("id, email, credit_balance_usd")
+    .select("id, user_id, email, credit_balance_usd")
     .eq("email", email)
     .order("created_at", { ascending: true })
     .limit(2);
@@ -61,7 +61,23 @@ async function ensureInstallerAccountForEmail(supabase: any, email: string) {
   }
 
   if (rows && rows.length === 1) {
-    return rows[0];
+    // If user_id is a random UUID (from installer flow) and a proper Auth user
+    // account now exists for this email, correct the user_id so both flows share
+    // the same account. This is a no-op if user_id is already correct.
+    const row = rows[0];
+    const { data: authUser } = await supabase
+      .from("auth.users")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+    if (authUser && row.user_id !== authUser.id) {
+      await supabase
+        .from("accounts")
+        .update({ user_id: authUser.id })
+        .eq("id", row.id);
+      row.user_id = authUser.id;
+    }
+    return row;
   }
 
   if (rows && rows.length > 1) {
@@ -73,16 +89,33 @@ async function ensureInstallerAccountForEmail(supabase: any, email: string) {
     return rows[0];
   }
 
-  // No existing account — create one.
-  const accountId = crypto.randomUUID();
+  // No existing account — check if an Auth user already exists for this email
+  // and use their ID to keep accounts in sync.
+  let accountId: string;
+  const { data: authUser } = await supabase
+    .from("auth.users")
+    .select("id")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
+
+  if (authUser) {
+    // Auth user exists — create account with matching id/user_id
+    accountId = authUser.id;
+  } else {
+    // No Auth user yet — create with random UUID (will be corrected on website registration)
+    accountId = crypto.randomUUID();
+  }
+
+  const now = new Date().toISOString();
   const inserted = await supabase
     .from("accounts")
-    .insert({
+    .upsert({
       id: accountId,
       user_id: accountId,
       email,
       credit_balance_usd: 0,
-    })
+      updated_at: now,
+    }, { onConflict: "id" })
     .select("id, email, credit_balance_usd")
     .single();
 
