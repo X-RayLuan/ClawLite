@@ -265,31 +265,74 @@ export default function HomePage() {
       </section>
 
 
-      <Script id="chatpilot-config" strategy="beforeInteractive">
-        {`window.chatpilotConfig = {
-          chatbotId: "4bfc5c07ab9043b3a0d69b12b2e86b07",
-          domain: "https://www.newoaks.ai",
-          chatModeOnly: true,
-          ShowChatBoxDelay: -1
-        }`}
+      {/* Custom Chat Widget - self-contained to avoid NewOaks embed issues */}
+      <div
+        id="clw-chat-container"
+        style={{
+          position: 'fixed',
+          bottom: '48px',
+          right: '48px',
+          zIndex: 2147483645,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '16px',
+        }}
+      >
+        <iframe
+          id="clw-chat-iframe"
+          src="https://www.newoaks.ai/chatbot-iframe/4bfc5c07ab9043b3a0d69b12b2e86b07?close"
+          style={{
+            display: 'none',
+            border: '1px solid rgb(229,231,235)',
+            borderRadius: '12px',
+            width: '430px',
+            height: '560px',
+            zIndex: 2147483647,
+          }}
+        />
+        <button
+          id="clw-chat-btn"
+          aria-label="Chat with us"
+          style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '28px',
+            background: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            border: 'none',
+            padding: 0,
+          }}
+        >
+          <img
+            src="https://newoaks.s3.us-west-1.amazonaws.com/NewOaks/8310/2a6539e0-0033-4574-a533-f7831d78e671.png"
+            alt="Chat"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        </button>
+      </div>
+      <Script id="clw-chat-init" strategy="afterInteractive">
+        {`
+        (function() {
+          var btn = document.getElementById('clw-chat-btn');
+          var iframe = document.getElementById('clw-chat-iframe');
+          if (!btn || !iframe) return;
+          btn.addEventListener('click', function() {
+            var isHidden = iframe.style.display === 'none' || iframe.style.display === '';
+            iframe.style.display = isHidden ? 'block' : 'none';
+          });
+        })();
+        `}
       </Script>
-      <Script id="chatpilot-embed" src="https://www.newoaks.ai/embed.min.js" strategy="afterInteractive" onLoad={() => {
-        // After the bubble widget loads, wait for React components to mount,
-        // then attach a click fallback to the launcher button.
-        // Without this, some browsers may not propagate clicks to the React handler.
-        setTimeout(() => {
-          try {
-            const launcher = document.querySelector('[class*="minimizeVoice"]');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const store = (window as any).NEWOAKS_CHATBOTS_STORE?.["4bfc5c07ab9043b3a0d69b12b2e86b07"];
-            if (launcher && store?.open) {
-              launcher.addEventListener('click', () => store.open(), { once: true });
-            }
-          } catch (e) {
-            // Silently ignore - widget handles its own events
-          }
-        }, 3000);
-      }} />
 
       {/* Verified Section */}
       <section className="mx-auto max-w-[var(--fd-layout-width)] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
