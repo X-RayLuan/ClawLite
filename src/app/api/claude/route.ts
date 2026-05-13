@@ -3,24 +3,22 @@ import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 
-// Model pricing – USD per 1M tokens (matching OpenAI/Anthropic official pricing)
-// Note: ezrouter uses different model IDs. Map OpenAI-style names to ezrouter names.
+// Model pricing – USD per 1M tokens
 const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  // GPT-5.4 family (OpenAI official pricing)
+  // GPT-5.4 family
   "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
   "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
   "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
-  // Claude Sonnet 4.6 (Anthropic official pricing: $3/$15)
-  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
+  // Claude models – must match ezrouter model IDs exactly
   "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-sonnet-20250320": { inputPer1M: 3, outputPer1M: 15 },
-  // Claude Haiku 4.5 (Anthropic official pricing: $0.8/$4)
-  "claude-haiku-4-5": { inputPer1M: 0.8, outputPer1M: 4 },
   "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
-  // Claude Opus 4.7 (Anthropic official pricing: $15/$75)
-  "claude-opus-4-7": { inputPer1M: 15, outputPer1M: 75 },
-  // Claude Sonnet 4.5
+  "claude-sonnet-4-20250514": { inputPer1M: 3, outputPer1M: 15 },
+  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
   "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
+  "claude-opus-4-7": { inputPer1M: 15, outputPer1M: 75 },
+  "claude-opus-4-6": { inputPer1M: 15, outputPer1M: 75 },
+  "claude-opus-4-5": { inputPer1M: 15, outputPer1M: 75 },
+  "claude-haiku-4-5": { inputPer1M: 0.8, outputPer1M: 4 },
 };
 
 // Default pricing for unknown models
@@ -138,6 +136,17 @@ export async function POST(request: NextRequest) {
   const messages = body?.messages || [];
   const maxTokens = body?.max_tokens || 4096;
 
+  // Reject unknown models before hitting ezrouter – gives a clear error instead of a cryptic upstream message
+  if (!(model in MODEL_PRICING)) {
+    return NextResponse.json(
+      {
+        error: "model_not_supported",
+        message: `Model "${model}" is not supported. Supported models: ${Object.keys(MODEL_PRICING).join(", ")}`,
+      },
+      { status: 400 },
+    );
+  }
+
   // Rough token estimation: ~4 chars per token for input
   const inputText = JSON.stringify(messages);
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
@@ -171,7 +180,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "freeze_failed" }, { status: 500 });
   }
 
-  // 6. Forward to ezrouter
+  // 6. Forward to ezrouter (Anthropic Messages API)
   const ezrouterBaseUrl = (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "");
   const ezrouterToken = process.env.EZROUTER_AUTH_TOKEN;
   if (!ezrouterToken) {
@@ -183,17 +192,24 @@ export async function POST(request: NextRequest) {
   let ezrouterError: string | null = null;
   let actualTokensIn = estimatedTokensIn;
   let actualTokensOut = estimatedTokensOut;
-  let streamed = false;
+
+  // Convert OpenAI body to Anthropic format
+  const anthropicBody = {
+    model,
+    messages,
+    max_tokens: maxTokens,
+  };
 
   try {
-    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/claude/chat/completions`, {
+    const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/claude/v1/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
         Authorization: ezrouterToken,
         "X-Request-ID": requestId,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(anthropicBody),
     });
 
     ezrouterStatus = ezrouterResponse.status;
@@ -206,9 +222,22 @@ export async function POST(request: NextRequest) {
         errorBody = await ezrouterResponse.text();
       }
       ezrouterError = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterResponse.status}`;
+
+      console.error(
+        JSON.stringify({
+          type: "ezrouter_error",
+          requestId,
+          model,
+          ezrouterStatus: ezrouterResponse.status,
+          ezrouterUrl: `${ezrouterBaseUrl}/api/claude/v1/messages`,
+          errorBody,
+          errorMessage: ezrouterError,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
 
-    // Stream response to client
+    // Stream response – convert Anthropic SSE to OpenAI SSE
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -217,29 +246,44 @@ export async function POST(request: NextRequest) {
             controller.close();
             return;
           }
+          let buffer = "";
+          let idx = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            controller.enqueue(value);
-            streamed = true;
+            buffer += new TextDecoder().decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-            // Try to parse SSE to extract token usage
-            // Each chunk is a text line like "data: {...}"
-            const text = new TextDecoder().decode(value, { stream: true });
-            const lines = text.split("\n");
             for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                try {
-                  const parsed = JSON.parse(line.slice(6));
-                  if (parsed.usage?.prompt_tokens) {
-                    actualTokensIn = parsed.usage.prompt_tokens;
-                  }
-                  if (parsed.usage?.completion_tokens) {
-                    actualTokensOut = parsed.usage.completion_tokens;
-                  }
-                } catch {
-                  // ignore parse errors per chunk
+              if (line.startsWith("event: ")) {
+                continue;
+              }
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6).trim();
+              if (!data || data === "{}") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                // Extract token usage from message_stop event
+                if (parsed.type === "message_stop") {
+                  if (parsed.message?.usage?.input_tokens) actualTokensIn = parsed.message.usage.input_tokens;
+                  if (parsed.message?.usage?.output_tokens) actualTokensOut = parsed.message.usage.output_tokens;
+                  controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+                  continue;
                 }
+
+                // Convert Anthropic content_block_delta to OpenAI delta
+                if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+                  const text = parsed.delta.text;
+                  if (text) {
+                    const openaiChunk = `data: ${JSON.stringify({ choices: [{ index: idx, delta: { content: text } }] })}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(openaiChunk));
+                  }
+                }
+              } catch {
+                // ignore parse errors
               }
             }
           }
@@ -251,7 +295,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Return stream immediately — finally block runs after stream finishes
     return new Response(stream, {
       status: ezrouterStatus,
       headers: {
@@ -264,6 +307,17 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     ezrouterError = err?.message || "ezrouter_fetch_failed";
     ezrouterStatus = 502;
+
+    console.error(
+      JSON.stringify({
+        type: "ezrouter_fetch_failed",
+        requestId,
+        model,
+        ezrouterUrl: `${ezrouterBaseUrl}/api/claude/v1/messages`,
+        error: ezrouterError,
+        timestamp: new Date().toISOString(),
+      })
+    );
 
     return NextResponse.json(
       { error: ezrouterError },

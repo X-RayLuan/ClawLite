@@ -8,13 +8,9 @@ const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }>
   "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
   "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
   "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
-  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
+  // Claude models – ezrouter only supports date-stamped model IDs, not the new -4-6/-4-5 style names
   "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-sonnet-20250320": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-haiku-4-5": { inputPer1M: 0.8, outputPer1M: 4 },
   "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
-  "claude-opus-4-7": { inputPer1M: 15, outputPer1M: 75 },
-  "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
 };
 
 function hashSecret(secret: string) {
@@ -55,21 +51,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  // NOTE: /v1/models is intentionally unauthenticated — it only returns model metadata,
+  // not user-specific data. Actual chat completions require a valid API key via POST.
+  const authHeader = request.headers.get("authorization");
+  const apiKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   const supabase = getSupabaseAdminClient();
 
-  // 1. Parse and validate API Key
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "missing_api_key" }, { status: 401 });
-  }
-  const apiKey = authHeader.slice(7);
-  if (!apiKey) {
-    return NextResponse.json({ error: "missing_api_key" }, { status: 401 });
-  }
-
-  const keyInfo = await validateApiKey(supabase, apiKey);
-  if (!keyInfo) {
-    return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
+  // If an API key is provided, validate it (but don't require it for this endpoint)
+  let keyInfo: { keyId: string; accountId: string } | null = null;
+  if (apiKey) {
+    keyInfo = await validateApiKey(supabase, apiKey);
   }
 
   // 2. Try to fetch models from ezrouter using the server-side EZROUTER_AUTH_TOKEN
