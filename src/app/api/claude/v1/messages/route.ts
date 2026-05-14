@@ -234,6 +234,7 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
   let actualTokensIn = estimatedTokensIn;
   let actualTokensOut = estimatedTokensOut;
+  let ezrouterError = false;
 
   try {
     const ezrouterRes = await fetch(`${ezrouterBaseUrl}/api/claude/v1/messages`, {
@@ -255,6 +256,7 @@ export async function POST(request: NextRequest) {
         errorBody = await ezrouterRes.text();
       }
       const errorMessage = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterRes.status}`;
+      ezrouterError = true;
       console.error(
         JSON.stringify({
           type: "ezrouter_error",
@@ -292,6 +294,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err: any) {
+    ezrouterError = true;
     console.error(
       JSON.stringify({
         type: "ezrouter_fetch_failed",
@@ -307,28 +310,31 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     // Fire-and-forget billing after stream returns to client
-    const finalCost = await estimateCost(model, actualTokensIn, actualTokensOut);
-    chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_v1:${model}`)
-      .catch((err) => console.error("[claude/v1/messages] chargeBalance failed:", err));
+    // Only charge if ezrouter responded successfully
+    if (!ezrouterError) {
+      const finalCost = await estimateCost(model, actualTokensIn, actualTokensOut);
+      chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_v1:${model}`)
+        .catch((err) => console.error("[claude/v1/messages] chargeBalance failed:", err));
 
-    const frozenRemaining = estimatedCost - finalCost;
-    if (frozenRemaining > 0.01) {
-      import("@/lib/balance").then(({ refundBalance }) => {
-        refundBalance(keyInfo.accountId, frozenRemaining, freezeTxId, `claude_v1_refund:${model}`)
-          .catch(() => {});
-      });
+      const frozenRemaining = estimatedCost - finalCost;
+      if (frozenRemaining > 0.01) {
+        import("@/lib/balance").then(({ refundBalance }) => {
+          refundBalance(keyInfo.accountId, frozenRemaining, freezeTxId, `claude_v1_refund:${model}`)
+            .catch(() => {});
+        });
+      }
+
+      recordUsageAsync({
+        supabase,
+        accountId: keyInfo.accountId,
+        apiKeyId: keyInfo.keyId,
+        model,
+        tokensIn: actualTokensIn,
+        tokensOut: actualTokensOut,
+        costEstimate: finalCost,
+        status: "success",
+        requestId,
+      }).catch((err) => console.error("[claude/v1/messages] recordUsage failed:", err));
     }
-
-    recordUsageAsync({
-      supabase,
-      accountId: keyInfo.accountId,
-      apiKeyId: keyInfo.keyId,
-      model,
-      tokensIn: actualTokensIn,
-      tokensOut: actualTokensOut,
-      costEstimate: finalCost,
-      status: "success",
-      requestId,
-    }).catch((err) => console.error("[claude/v1/messages] recordUsage failed:", err));
   }
 }
