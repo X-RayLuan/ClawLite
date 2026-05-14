@@ -1,8 +1,138 @@
+export const revalidate = 60;
+
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { blogPosts, blogStaticParams, type BlogPost } from '@/data/blog/posts';
+import { getSupabaseAdminClient } from '@/lib/supabase-admin';
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+
+type FAQ = {
+  question: string;
+  answer: string;
+};
+
+type BlogPost = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  faqs?: FAQ[];
+  faqSchema?: string;
+  published_at: string;
+  created_at: string;
+};
+
+// keep for alias resolution only; actual data from DB
+const slugAliases: Record<string, string> = {
+  '2026-03-21-why-ai-teams-quit-after-the-demo': 'ai-agent-setup-friction',
+  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
+  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
+  'openclaw-setup-friction': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'managing-ai-cost-anxiety-with-clawlite': 'why-cheap-ai-tokens-still-feel-expensive-in-practice',
+  'the-real-ai-premium-is-not-power-it-is-reliability': 'why-boring-reliability-is-a-pricing-feature-in-ai-workflows',
+  'best-cheap-models-for-openclaw-tool-use': 'openclaw-cost-control-starts-with-routing-not-hype',
+  'what-is-a-self-hosted-ai-assistant': 'self-hosted-ai-assistant-with-less-setup-friction-and-more-predictable-spend',
+  'clawlite-vs-chatgpt-plus': 'best-chatgpt-alternative-for-developers',
+  'how-to-install-an-ai-assistant-easily': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'byok-ai-assistant-guide': 'byok-vs-managed-tokens-which-cost-model-fits-better',
+  'how-ai-browser-agents-automate-web-workflows-for-smb-teams': 'what-is-an-ai-browser-agent',
+  'openclaw-alternative': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
+  'how-to-install-openclaw': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
+  'clawlite-vs-openclaw': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
+  'best-ai-agent-platform': 'ai-assistant-buyers-guide-for-small-teams',
+  'openclaw-token-cost': 'openclaw-pricing-explained',
+  'what-is-clawlite': 'ai-assistant-buyers-guide-for-small-teams',
+  'openclaw-for-beginners': 'openclaw-setup-guide-for-beginners',
+  'clawlite-free-trial': 'ai-assistant-buyers-guide-for-small-teams',
+  'ai-browser-agent-vs-rpa': 'what-is-an-ai-browser-agent',
+  'best-ai-browser-automation-tools': 'what-is-an-ai-browser-agent',
+  'ai-browser-agents-vs-traditional-rpa-for-modern-operations': 'what-is-an-ai-browser-agent',
+  'clawlite-vs-chatgpt-plus-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
+  'best-affordable-ai-assistant-for-small-teams': 'ai-assistant-buyers-guide-for-small-teams',
+  'best-affordable-ai-assistant-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
+  'clawlite-vs-cursor': 'what-developers-should-optimize-before-choosing-ai-assistant',
+  'best-byok-ai-assistant': 'byok-vs-managed-tokens-which-cost-model-fits-better',
+  'openclaw-install-guide-fastest-way': 'how-to-install-openclaw-in-10-minutes',
+  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-vs-managed-tokens-which-cost-model-fits-better'
+};
+
+// Pre-generate known slugs at build time
+export async function generateStaticParams() {
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data } = await supabase
+      .from('blog_posts')
+      .select('slug')
+      .is('deleted_at', null)
+      .not('published_at', 'is', null);
+    return (data ?? []).map((row) => ({ slug: row.slug }));
+  } catch {
+    return [];
+  }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const res = await fetch(`${BASE_URL}/api/blog/${slug}`, { next: { revalidate: 60 } });
+  if (!res.ok) return { title: '404: This page could not be found.' };
+  const json = await res.json();
+  const post: BlogPost = json?.data;
+  if (!post) return { title: '404: This page could not be found.' };
+
+  return {
+    title: post.title,
+    description:
+      post.excerpt ??
+      normalizeContent(post.content).split('\n').find((l) => l.trim())?.slice(0, 160) ??
+      post.title,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt ?? post.title,
+      type: 'article',
+      publishedTime: post.published_at ?? post.created_at,
+    },
+    alternates: {
+      canonical: `https://clawlite.ai/blog/${slug}`
+    }
+  };
+}
+
+// ─── Data helpers ──────────────────────────────────────────────────────────────
+
+async function fetchPost(slug: string): Promise<BlogPost | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/blog/${slug}`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function buildFaqSchema(post: BlogPost) {
+  if (post.faqSchema) return post.faqSchema;
+  return JSON.stringify(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: (post.faqs ?? []).map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    },
+    null,
+    2
+  );
+}
+
+// ─── Content rendering ────────────────────────────────────────────────────────
 
 function renderInlineMarkdown(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
@@ -38,89 +168,6 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
   return nodes;
 }
 
-const slugAliases: Record<string, string> = {
-  '2026-03-21-why-ai-teams-quit-after-the-demo': 'ai-agent-setup-friction',
-  '2026-03-21-openclaw-vs-clawlite-installation-guide': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
-  '2026-03-21-cheap-ai-tokens-vs-cheap-ai-workflows': 'cheap-ai-tokens-vs-cheap-ai-workflows',
-  'openclaw-setup-friction': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
-  'managing-ai-cost-anxiety-with-clawlite': 'why-cheap-ai-tokens-still-feel-expensive-in-practice',
-  'the-real-ai-premium-is-not-power-it-is-reliability': 'why-boring-reliability-is-a-pricing-feature-in-ai-workflows',
-  'best-cheap-models-for-openclaw-tool-use': 'openclaw-cost-control-starts-with-routing-not-hype',
-  'what-is-a-self-hosted-ai-assistant': 'self-hosted-ai-assistant-with-less-setup-friction-and-more-predictable-spend',
-  'clawlite-vs-chatgpt-plus': 'best-chatgpt-alternative-for-developers',
-  'how-to-install-an-ai-assistant-easily': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
-  'byok-ai-assistant-guide': 'byok-vs-managed-tokens-which-cost-model-fits-better',
-  'how-ai-browser-agents-automate-web-workflows-for-smb-teams': 'what-is-an-ai-browser-agent',
-  'openclaw-alternative': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
-  'how-to-install-openclaw': 'how-to-install-openclaw-without-setup-chaos-and-budget-surprises',
-  'clawlite-vs-openclaw': 'openclaw-vs-clawlite-which-setup-makes-more-sense-for-real-work',
-  'best-ai-agent-platform': 'ai-assistant-buyers-guide-for-small-teams',
-  'openclaw-token-cost': 'openclaw-pricing-explained',
-  'what-is-clawlite': 'ai-assistant-buyers-guide-for-small-teams',
-  'openclaw-for-beginners': 'openclaw-setup-guide-for-beginners',
-  'clawlite-free-trial': 'ai-assistant-buyers-guide-for-small-teams',
-  'ai-browser-agent-vs-rpa': 'what-is-an-ai-browser-agent',
-  'best-ai-browser-automation-tools': 'what-is-an-ai-browser-agent',
-  'ai-browser-agents-vs-traditional-rpa-for-modern-operations': 'what-is-an-ai-browser-agent',
-  'clawlite-vs-chatgpt-plus-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
-  'best-affordable-ai-assistant-for-small-teams': 'ai-assistant-buyers-guide-for-small-teams',
-  'best-affordable-ai-assistant-for-developers': 'best-ai-assistant-for-developers-who-want-lower-cost-and-more-control',
-  'clawlite-vs-cursor': 'what-developers-should-optimize-before-choosing-ai-assistant',
-  'best-byok-ai-assistant': 'byok-vs-managed-tokens-which-cost-model-fits-better',
-  'openclaw-install-guide-fastest-way': 'how-to-install-openclaw-in-10-minutes',
-  'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control': 'byok-vs-managed-tokens-which-cost-model-fits-better'
-};
-
-export function generateStaticParams() {
-  return [
-    ...blogStaticParams(),
-    { slug: 'what-is-byok-for-ai-assistants-why-it-matters-for-cost-privacy-and-control' }
-  ];
-}
-
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const canonicalSlug = params.slug;
-  const post = getPost(params.slug);
-
-  if (!post) {
-    return {
-      title: '404: This page could not be found.'
-    };
-  }
-
-  return {
-    title: post.title,
-    description: normalizeContent(post.content).split('\n').find((line) => line.trim())?.slice(0, 160) ?? post.title,
-    alternates: {
-      canonical: `https://clawlite.ai/blog/${canonicalSlug}`
-    }
-  };
-}
-
-function getPost(slug: string): BlogPost | undefined {
-  return blogPosts[slugAliases[slug] ?? slug];
-}
-
-function buildFaqSchema(post: BlogPost) {
-  if (post.faqSchema) return post.faqSchema;
-  return JSON.stringify(
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: (post.faqs ?? []).map((faq) => ({
-        '@type': 'Question',
-        name: faq.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: faq.answer,
-        },
-      })),
-    },
-    null,
-    2
-  );
-}
-
 function normalizeContent(content: string) {
   const lines = content.split('\n');
   const cleaned: string[] = [];
@@ -128,59 +175,28 @@ function normalizeContent(content: string) {
   let skippingSources = false;
 
   const metadataPrefixes = [
-    '**Meta description:**',
-    '**Primary keyword:**',
-    '**Secondary keywords:**',
-    '**Search intent:**',
-    '**Updated:**',
-    '**Theme classification:**',
-    '**Audience:**',
-    '**Draft date:**',
-    '**Supporting keywords:**',
-    '**Topic type:**',
-    '**Insertion decision:**',
-    '**Proof/source links:**',
-    'Meta description:',
-    'Primary keyword:',
-    'Secondary keywords:',
-    'Search intent:',
-    'Updated:',
-    'Theme classification:',
-    'Audience:',
-    'Draft date:',
-    'Supporting keywords:',
-    'Topic type:',
-    'Insertion decision:',
-    'Proof/source links:'
+    '**Meta description:**', '**Primary keyword:**', '**Secondary keywords:**',
+    '**Search intent:**', '**Updated:**', '**Theme classification:**',
+    '**Audience:**', '**Draft date:**', '**Supporting keywords:**',
+    '**Topic type:**', '**Insertion decision:**', '**Proof/source links:**',
+    'Meta description:', 'Primary keyword:', 'Secondary keywords:',
+    'Search intent:', 'Updated:', 'Theme classification:', 'Audience:',
+    'Draft date:', 'Supporting keywords:', 'Topic type:',
+    'Insertion decision:', 'Proof/source links:'
   ];
 
   for (const line of lines) {
     const trimmed = line.trim();
-
-    if (trimmed === '```json') {
-      inJsonFence = true;
-      continue;
-    }
-    if (inJsonFence && trimmed === '```') {
-      inJsonFence = false;
-      continue;
-    }
+    if (trimmed === '```json') { inJsonFence = true; continue; }
+    if (inJsonFence && trimmed === '```') { inJsonFence = false; continue; }
     if (inJsonFence) continue;
-
-    if (trimmed === '## Sources') {
-      skippingSources = true;
-      continue;
-    }
-    if (skippingSources && trimmed.startsWith('## ')) {
-      skippingSources = false;
-    }
+    if (trimmed === '## Sources') { skippingSources = true; continue; }
+    if (skippingSources && trimmed.startsWith('## ')) { skippingSources = false; }
     if (skippingSources) continue;
-
     if (trimmed.startsWith('# ')) continue;
     if (trimmed === '## FAQ Schema') continue;
     if (trimmed === '## Quick Answer') continue;
-    if (metadataPrefixes.some((prefix) => trimmed.startsWith(prefix))) continue;
-
+    if (metadataPrefixes.some((p) => trimmed.startsWith(p))) continue;
     cleaned.push(line);
   }
 
@@ -192,16 +208,11 @@ function renderContent(content: string) {
   const elements: React.ReactNode[] = [];
   let paragraphBuffer: string[] = [];
   let bulletListBuffer: string[] = [];
-  const imagePattern = /^!\[([^\]]*)\]\(([^)]+)\)$/;
-  type OrderedListItem = {
-    text: string;
-    extra: string[];
-  };
-
-  let orderedListBuffer: OrderedListItem[] = [];
+  let orderedListBuffer: { text: string; extra: string[] }[] = [];
   let tableBuffer: string[] = [];
+  const imagePattern = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
-  const parseTableRow = (row: string) => row.split('|').slice(1, -1).map((cell) => cell.trim());
+  const parseTableRow = (row: string) => row.split('|').slice(1, -1).map((c) => c.trim());
   const isTableRow = (line: string) => /^\|.+\|$/.test(line);
   const isTableDivider = (line: string) => /^\|?(\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?$/.test(line);
 
@@ -222,8 +233,8 @@ function renderContent(content: string) {
     if (!bulletListBuffer.length) return;
     elements.push(
       <ul key={key} className="mb-6 list-disc pl-6 space-y-2 text-gray-700 leading-8">
-        {bulletListBuffer.map((item, index) => (
-          <li key={`${key}-${index}`}>{renderInlineMarkdown(item)}</li>
+        {bulletListBuffer.map((item, i) => (
+          <li key={`${key}-${i}`}>{renderInlineMarkdown(item)}</li>
         ))}
       </ul>
     );
@@ -234,12 +245,12 @@ function renderContent(content: string) {
     if (!orderedListBuffer.length) return;
     elements.push(
       <ol key={key} className="mb-6 list-decimal pl-6 space-y-2 text-gray-700 leading-8">
-        {orderedListBuffer.map((item, index) => (
-          <li key={`${key}-${index}`}>
+        {orderedListBuffer.map((item, i) => (
+          <li key={`${key}-${i}`}>
             <div>{renderInlineMarkdown(item.text)}</div>
-            {item.extra.map((extraLine, extraIndex) => (
-              <p key={`${key}-${index}-extra-${extraIndex}`} className="mt-2 text-gray-700 leading-8">
-                {renderInlineMarkdown(extraLine)}
+            {item.extra.map((el, j) => (
+              <p key={`${key}-${i}-extra-${j}`} className="mt-2 text-gray-700 leading-8">
+                {renderInlineMarkdown(el)}
               </p>
             ))}
           </li>
@@ -252,7 +263,7 @@ function renderContent(content: string) {
   const flushTable = (key: string) => {
     if (!tableBuffer.length) return;
     const [headerLine, ...rest] = tableBuffer;
-    const bodyLines = rest.filter((line) => !isTableDivider(line));
+    const bodyLines = rest.filter((l) => !isTableDivider(l));
     const headers = parseTableRow(headerLine);
     const rows = bodyLines.map(parseTableRow);
 
@@ -261,18 +272,18 @@ function renderContent(content: string) {
         <table className="min-w-full border border-gray-200 text-sm text-gray-700">
           <thead className="bg-gray-50">
             <tr>
-              {headers.map((header, index) => (
-                <th key={`th-${key}-${index}`} className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-900">
-                  {renderInlineMarkdown(header)}
+              {headers.map((h, i) => (
+                <th key={`th-${key}-${i}`} className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-900">
+                  {renderInlineMarkdown(h)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={`tr-${key}-${rowIndex}`} className="odd:bg-white even:bg-gray-50/50">
-                {row.map((cell, cellIndex) => (
-                  <td key={`td-${key}-${rowIndex}-${cellIndex}`} className="border border-gray-200 px-4 py-3 align-top">
+            {rows.map((row, ri) => (
+              <tr key={`tr-${key}-${ri}`} className="odd:bg-white even:bg-gray-50/50">
+                {row.map((cell, ci) => (
+                  <td key={`td-${key}-${ri}-${ci}`} className="border border-gray-200 px-4 py-3 align-top">
                     {renderInlineMarkdown(cell)}
                   </td>
                 ))}
@@ -282,7 +293,6 @@ function renderContent(content: string) {
         </table>
       </div>
     );
-
     tableBuffer = [];
   };
 
@@ -364,12 +374,7 @@ function renderContent(content: string) {
       const [, alt, src] = imageMatch;
       elements.push(
         <figure key={`img-${index}`} className="my-8">
-          <img
-            src={src}
-            alt={alt}
-            className="w-full rounded-xl border border-gray-200 shadow-sm"
-            loading="lazy"
-          />
+          <img src={src} alt={alt} className="w-full rounded-xl border border-gray-200 shadow-sm" loading="lazy" />
           {alt ? <figcaption className="mt-3 text-sm text-gray-500">{alt}</figcaption> : null}
         </figure>
       );
@@ -388,8 +393,11 @@ function renderContent(content: string) {
   return elements;
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getPost(params.slug);
+// ─── Page component ────────────────────────────────────────────────────────────
+
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await fetchPost(slug);
 
   if (!post) {
     notFound();
@@ -402,7 +410,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       <article className="max-w-4xl mx-auto px-4 py-16">
         <header className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
-          <time className="text-gray-600">{post.date}</time>
+          <time className="text-gray-600">{post.published_at ?? post.created_at}</time>
         </header>
 
         <div className="prose prose-lg max-w-none text-gray-800">

@@ -6,6 +6,7 @@ import { useLang } from '@/components/lang-provider';
 import { LangToggle } from '@/components/lang-toggle';
 
 const navItems = (lang: string) => [
+  { href: '/admin/blog', label: lang === 'zh' ? '博客' : 'Blog' },
   { href: '/admin/customers', label: lang === 'zh' ? '客户管理' : 'Customers' },
   { href: '/admin/usage', label: lang === 'zh' ? '消费统计' : 'Usage' },
   { href: '/admin/admins', label: lang === 'zh' ? '管理员' : 'Admins' },
