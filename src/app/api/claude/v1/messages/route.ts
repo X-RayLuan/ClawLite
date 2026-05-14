@@ -2,31 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
-
-// Model pricing – USD per 1M tokens
-const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
-  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-  "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
-  "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
-  "claude-sonnet-4-20250514": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-sonnet-4-6": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-sonnet-4-5": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-opus-4-7": { inputPer1M: 15, outputPer1M: 75 },
-  "claude-opus-4-6": { inputPer1M: 15, outputPer1M: 75 },
-  "claude-opus-4-5": { inputPer1M: 15, outputPer1M: 75 },
-  "claude-haiku-4-5": { inputPer1M: 0.8, outputPer1M: 4 },
-};
+import { getModelPricing } from "@/lib/model-pricing";
 
 const DEFAULT_PRICING = { inputPer1M: 2.5, outputPer1M: 10 };
 
-function getModelPricing(model: string) {
-  return MODEL_PRICING[model] ?? DEFAULT_PRICING;
-}
-
-function estimateCost(model: string, tokensIn: number, tokensOut: number): number {
-  const { inputPer1M, outputPer1M } = getModelPricing(model);
+async function estimateCost(model: string, tokensIn: number, tokensOut: number): Promise<number> {
+  const { inputPer1M, outputPer1M } = await getModelPricing(model);
   return (tokensIn / 1_000_000) * inputPer1M + (tokensOut / 1_000_000) * outputPer1M;
 }
 
@@ -181,14 +162,15 @@ export async function POST(request: NextRequest) {
   const maxTokens = body?.max_tokens || 4096;
   const stream = body?.stream ?? false;
 
-  // Reject unknown models
-  if (!(model in MODEL_PRICING)) {
+  // Reject unknown models (allow any model, will use default pricing if not found in ezrouter)
+  // Validation is permissive since ezrouter supports many models
+  if (!model) {
     return NextResponse.json(
       {
         type: "error",
         error: {
           type: "invalid_request_error",
-          message: `Model "${model}" is not supported. Supported models: ${Object.keys(MODEL_PRICING).join(", ")}`,
+          message: "model is required",
         },
       },
       { status: 400 },
@@ -206,7 +188,7 @@ export async function POST(request: NextRequest) {
   const inputText = JSON.stringify(messages);
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensOut = maxTokens;
-  const estimatedCost = estimateCost(model, estimatedTokensIn, estimatedTokensOut);
+  const estimatedCost = await estimateCost(model, estimatedTokensIn, estimatedTokensOut);
 
   if (balance.availableBalanceUsd < estimatedCost) {
     return NextResponse.json(
@@ -325,7 +307,7 @@ export async function POST(request: NextRequest) {
     );
   } finally {
     // Fire-and-forget billing after stream returns to client
-    const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
+    const finalCost = await estimateCost(model, actualTokensIn, actualTokensOut);
     chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `claude_v1:${model}`)
       .catch((err) => console.error("[claude/v1/messages] chargeBalance failed:", err));
 

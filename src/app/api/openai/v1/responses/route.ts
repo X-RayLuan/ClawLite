@@ -2,24 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
-
-// Model pricing – USD per 1M tokens (matching OpenAI official pricing)
-const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
-  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-  "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
-  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
-  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-};
+import { getModelPricing } from "@/lib/model-pricing";
 
 const DEFAULT_PRICING = { inputPer1M: 2.5, outputPer1M: 10 };
 
-function getModelPricing(model: string) {
-  return MODEL_PRICING[model] ?? DEFAULT_PRICING;
-}
-
-function estimateCost(model: string, tokensIn: number, tokensOut: number): number {
-  const { inputPer1M, outputPer1M } = getModelPricing(model);
+async function estimateCost(model: string, tokensIn: number, tokensOut: number): Promise<number> {
+  const { inputPer1M, outputPer1M } = await getModelPricing(model);
   return (tokensIn / 1_000_000) * inputPer1M + (tokensOut / 1_000_000) * outputPer1M;
 }
 
@@ -169,7 +157,7 @@ export async function POST(request: NextRequest) {
   // Rough token estimation
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
   const estimatedTokensOut = maxTokens;
-  const estimatedCost = estimateCost(model, estimatedTokensIn, estimatedTokensOut);
+  const estimatedCost = await estimateCost(model, estimatedTokensIn, estimatedTokensOut);
 
   if (balance.availableBalanceUsd < estimatedCost) {
     return NextResponse.json(
@@ -327,7 +315,7 @@ export async function POST(request: NextRequest) {
   } finally {
     // 7. Settle balance and record usage after stream is consumed
     if (!ezrouterError) {
-      const finalCost = estimateCost(model, actualTokensIn, actualTokensOut);
+      const finalCost = await estimateCost(model, actualTokensIn, actualTokensOut);
       try {
         await chargeBalance(keyInfo.accountId, finalCost, freezeTxId, `openai_v1_responses:${model}`);
       } catch (err) {
@@ -342,7 +330,7 @@ export async function POST(request: NextRequest) {
       model,
       tokensIn: actualTokensIn,
       tokensOut: actualTokensOut,
-      costEstimate: estimateCost(model, actualTokensIn, actualTokensOut),
+      costEstimate: await estimateCost(model, actualTokensIn, actualTokensOut),
       status: ezrouterError ? "error" : "success",
       requestId,
     });
