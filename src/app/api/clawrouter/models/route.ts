@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClawRouterUser } from "@/lib/clawrouter-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { getModels } from "@/lib/model-config";
 
 export const runtime = "nodejs";
-
-const SUPPORTED_MODELS = [
-  { id: "gpt-5.4", name: "GPT-5.4", provider: "openai", contextWindow: 1050000 },
-  { id: "gpt-5.4-mini", name: "GPT-5.4 Mini", provider: "openai", contextWindow: 400000 },
-  { id: "gpt-5.4-pro", name: "GPT-5.4 Pro", provider: "openai", contextWindow: 1050000 },
-  { id: "gpt-4o", name: "GPT-4o", provider: "openai", contextWindow: 128000 },
-  { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", contextWindow: 128000 },
-  { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "openai", contextWindow: 128000 },
-  { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", provider: "anthropic", contextWindow: 200000 },
-  { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku", provider: "anthropic", contextWindow: 200000 },
-  { id: "deepseek-chat", name: "DeepSeek Chat", provider: "deepseek", contextWindow: 128000 },
-  { id: "deepseek-reasoner", name: "DeepSeek Reasoner", provider: "deepseek", contextWindow: 128000 },
-  { id: "o3", name: "OpenAI o3", provider: "openai", contextWindow: 128000 },
-  { id: "o4-mini", name: "OpenAI o4-mini", provider: "openai", contextWindow: 128000 },
-  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "google", contextWindow: 1000000 },
-  { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "google", contextWindow: 128000 },
-  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "google", contextWindow: 2000000 },
-];
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,11 +44,22 @@ export async function GET(request: NextRequest) {
       rpmLimit: (entitlement as any)?.rpm_limit ?? (isFree ? 10 : null),
     };
 
+    // Fetch dynamic model list from model-config (backed by ezrouter)
+    const allModels = await getModels()
+    const modelList = Object.values(allModels).map((m) => ({
+      id: m.id,
+      name: m.name,
+      provider: m.providerId,
+      contextWindow: m.contextWindow,
+      inputPer1M: m.inputPer1M,
+      outputPer1M: m.outputPer1M,
+    }))
+
     // Model allowlist: if set, only those models are allowed
-    let models = SUPPORTED_MODELS;
+    let models = modelList;
     if (entitlement?.model_allowlist && Array.isArray(entitlement.model_allowlist) && entitlement.model_allowlist.length > 0) {
       const allowlist = new Set(entitlement.model_allowlist as string[]);
-      models = SUPPORTED_MODELS.filter((m) => allowlist.has(m.id));
+      models = modelList.filter((m) => allowlist.has(m.id));
     }
 
     return NextResponse.json(

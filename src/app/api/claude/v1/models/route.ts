@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-
-// Model pricing – mirrors the list in ../route.ts
-// Used as the fallback source of truth when ezrouter has no /v1/models endpoint.
-const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10 },
-  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-  "gpt-5.4-pro": { inputPer1M: 3.5, outputPer1M: 15 },
-  // Claude models – ezrouter only supports date-stamped model IDs, not the new -4-6/-4-5 style names
-  "claude-3-5-sonnet-20241022": { inputPer1M: 3, outputPer1M: 15 },
-  "claude-3-5-haiku-20241022": { inputPer1M: 0.8, outputPer1M: 4 },
-};
+import { getModels } from "@/lib/model-config";
 
 function hashSecret(secret: string) {
   return crypto.createHash("sha256").update(secret).digest("hex");
@@ -63,66 +53,21 @@ export async function GET(request: NextRequest) {
     keyInfo = await validateApiKey(supabase, apiKey);
   }
 
-  // 2. Try to fetch models from ezrouter using the server-side EZROUTER_AUTH_TOKEN
-  const ezrouterBaseUrl = (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "");
-  const ezrouterToken = process.env.EZROUTER_AUTH_TOKEN;
+  // 2. Fetch models dynamically from model-config (backed by ezrouter /api/model/list)
+  const ezModels = await getModels();
+  const createdAt = 1700000000;
 
-  if (ezrouterToken) {
-    try {
-      const ezrouterRes = await fetch(`${ezrouterBaseUrl}/api/openai/v1/models`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${ezrouterToken}`,
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (ezrouterRes.ok) {
-        const ezrouterData = await ezrouterRes.json();
-        // Transform ezrouter response to OpenAI-compatible format if needed
-        if (ezrouterData?.data && Array.isArray(ezrouterData.data)) {
-          return NextResponse.json(
-            {
-              object: "list",
-              data: ezrouterData.data.map((model: any) => ({
-                id: model.id,
-                object: "model",
-                created: model.created ?? 1700000000,
-                owned_by: model.owned_by ?? "clawlite",
-              })),
-            },
-            {
-              headers: {
-                "Cache-Control": "max-age=300", // cache 5 minutes
-              },
-            },
-          );
-        }
-      }
-    } catch (err) {
-      // ezrouter unavailable or timeout — fall through to hardcoded list
-      console.warn("[claude/v1/models] ezrouter fetch failed, using hardcoded list:", err);
-    }
-  }
-
-  // 3. Fallback: build model list from MODEL_PRICING
-  const createdAt = 1700000000; // 2023-11-14 – matching OpenAI's convention
-  const models = Object.keys(MODEL_PRICING).map((id) => ({
-    id,
+  const data = Object.values(ezModels).map((m) => ({
+    id: m.id,
     object: "model",
     created: createdAt,
-    owned_by: "clawlite",
+    owned_by: `clawlite/${m.providerId}`,
+    context_window: m.contextWindow,
+    input: m.inputPer1M,
+    output: m.outputPer1M,
   }));
 
-  return NextResponse.json(
-    {
-      object: "list",
-      data: models,
-    },
-    {
-      headers: {
-        "Cache-Control": "max-age=300",
-      },
-    },
-  );
+  return NextResponse.json({ object: "list", data }, {
+    headers: { "Cache-Control": "max-age=300" },
+  });
 }

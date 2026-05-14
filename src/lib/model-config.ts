@@ -1,11 +1,16 @@
 /**
- * ClawLite supported providers, models, and pricing configuration.
- * Single source of truth for all model-related info across the codebase.
+ * ClawLite model configuration.
+ * Dynamically fetched from ezrouter /api/model/list on startup, cached for 5 min.
+ * Single source of truth for supported models, providers, and pricing.
  *
- * Pricing source: OpenRouter API (https://openrouter.ai/api/v1/models)
- * which reflects official provider (OpenAI / Anthropic) prices.
- * Users pay 80% of official price (20% discount).
+ * Users pay 80% of the official provider price (20% discount).
  */
+
+function getEzRouterBaseUrl() {
+  return (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "")
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Provider = {
   id: string
@@ -13,223 +18,215 @@ export type Provider = {
   logo?: string
   baseUrl: string
   authFormat: "bearer" | "api-key"
-  status: "active" | "deprecated"
 }
 
 export type ModelPricing = {
-  inputPer1M: number   // USD per 1M input tokens (after 20% discount)
-  outputPer1M: number   // USD per 1M output tokens (after 20% discount)
+  inputPer1M: number
+  outputPer1M: number
 }
 
 export type Model = {
-  id: string                  // canonical short id, e.g. "gpt-5.4", "claude-sonnet-4-6"
-  providerId: string          // references PROVIDERS[id]
-  name: string                // display name
-  contextWindow: number      // max context tokens
-  inputPer1M: number          // official price per 1M input tokens (before discount)
-  outputPer1M: number         // official price per 1M output tokens (before discount)
-  supports: {
-    streaming?: boolean
-    tools?: boolean
-    vision?: boolean
-    reasoning?: boolean
-  }
+  id: string
+  providerId: string
+  name: string
+  description?: string
+  contextWindow: number
+  inputPer1M: number    // official price per 1M input tokens
+  outputPer1M: number   // official price per 1M output tokens
   status: "active" | "beta" | "deprecated"
 }
 
-// ─── PROVIDERS ────────────────────────────────────────────────────────────────
-
-export const PROVIDERS: Record<string, Provider> = {
-  openai: {
-    id: "openai",
-    name: "OpenAI",
-    logo: "https://openrouter.ai/providers/openai.svg",
-    baseUrl: "https://api.openai.com",
-    authFormat: "bearer",
-    status: "active",
-  },
-  anthropic: {
-    id: "anthropic",
-    name: "Anthropic",
-    logo: "https://openrouter.ai/providers/anthropic.svg",
-    baseUrl: "https://api.anthropic.com",
-    authFormat: "api-key",
-    status: "active",
-  },
-}
-
-// ─── DISCOUNT ────────────────────────────────────────────────────────────────
-
-const DISCOUNT = 0.8  // users pay 80% of official price
-
-function discounted(price: number): number {
-  return Math.round(price * DISCOUNT * 1000) / 1000
-}
-
-// ─── MODELS ──────────────────────────────────────────────────────────────────
-
-export const MODELS: Record<string, Model> = {
-
-  // ── OpenAI ───────────────────────────────────────────────────────────────
-
-  "gpt-5.4": {
-    id: "gpt-5.4",
-    providerId: "openai",
-    name: "GPT-5.4",
-    contextWindow: 1050000,
-    inputPer1M: 2.5,
-    outputPer1M: 15,
-    supports: { streaming: true, tools: true, vision: true, reasoning: true },
-    status: "active",
-  },
-
-  "gpt-5.4-mini": {
-    id: "gpt-5.4-mini",
-    providerId: "openai",
-    name: "GPT-5.4 Mini",
-    contextWindow: 400000,
-    inputPer1M: 0.75,
-    outputPer1M: 4.5,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "gpt-5.4-pro": {
-    id: "gpt-5.4-pro",
-    providerId: "openai",
-    name: "GPT-5.4 Pro",
-    contextWindow: 1050000,
-    inputPer1M: 30,
-    outputPer1M: 180,
-    supports: { streaming: true, tools: true, vision: true, reasoning: true },
-    status: "active",
-  },
-
-  "gpt-4o": {
-    id: "gpt-4o",
-    providerId: "openai",
-    name: "GPT-4o",
-    contextWindow: 128000,
-    inputPer1M: 2.5,
-    outputPer1M: 10,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "gpt-4o-mini": {
-    id: "gpt-4o-mini",
-    providerId: "openai",
-    name: "GPT-4o Mini",
-    contextWindow: 128000,
-    inputPer1M: 0.15,
-    outputPer1M: 0.6,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  // ── Anthropic ───────────────────────────────────────────────────────────
-
-  "claude-opus-4-7": {
-    id: "claude-opus-4-7",
-    providerId: "anthropic",
-    name: "Claude Opus 4.7",
-    contextWindow: 1000000,
-    inputPer1M: 5,
-    outputPer1M: 25,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "claude-opus-4-6": {
-    id: "claude-opus-4-6",
-    providerId: "anthropic",
-    name: "Claude Opus 4.6",
-    contextWindow: 1000000,
-    inputPer1M: 5,
-    outputPer1M: 25,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "claude-sonnet-4-6": {
-    id: "claude-sonnet-4-6",
-    providerId: "anthropic",
-    name: "Claude Sonnet 4.6",
-    contextWindow: 1000000,
-    inputPer1M: 3,
-    outputPer1M: 15,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "claude-opus-4-5": {
-    id: "claude-opus-4-5",
-    providerId: "anthropic",
-    name: "Claude Opus 4.5",
-    contextWindow: 1000000,
-    inputPer1M: 5,
-    outputPer1M: 25,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "claude-haiku-4-5": {
-    id: "claude-haiku-4-5",
-    providerId: "anthropic",
-    name: "Claude Haiku 4.5",
-    contextWindow: 200000,
-    inputPer1M: 1,
-    outputPer1M: 5,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-
-  "claude-3-5-haiku-20241022": {
-    id: "claude-3-5-haiku-20241022",
-    providerId: "anthropic",
-    name: "Claude 3.5 Haiku",
-    contextWindow: 200000,
-    inputPer1M: 0.8,
-    outputPer1M: 4,
-    supports: { streaming: true, tools: true, vision: true },
-    status: "active",
-  },
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-/**
- * Returns pricing for a model after 20% discount.
- */
-export function getModelPricing(modelId: string): ModelPricing {
-  const model = MODELS[modelId]
-  if (!model) {
-    // Unknown model – fall back to defaults
-    return { inputPer1M: discounted(2.5), outputPer1M: discounted(10) }
-  }
-  return {
-    inputPer1M: discounted(model.inputPer1M),
-    outputPer1M: discounted(model.outputPer1M),
+type EzrouterModel = {
+  Id: string
+  Name: string
+  Provider: string
+  Description?: string
+  ContextLength: number
+  Aliases?: string[]
+  Pricing: {
+    Kind: number
+    InputPerMillion: number
+    OutputPerMillion: number
+    CacheWritePerMillion?: number
+    CacheReadPerMillion?: number
+    [key: string]: unknown
   }
 }
 
+type ConfigCache = {
+  providers: Record<string, Provider>
+  models: Record<string, Model>
+  fetchedAt: number
+}
+
+const CACHE_TTL_MS = 5 * 60 * 1000
+const DISCOUNT = 0.8
+
+// ─── Provider mapping ─────────────────────────────────────────────────────────
+
+// Map ezrouter Provider name → ClawLite canonical provider id
+const PROVIDER_MAP: Record<string, { id: string; name: string; baseUrl: string; authFormat: "bearer" | "api-key" }> = {
+  openai:  { id: "openai",   name: "OpenAI",    baseUrl: "https://api.openai.com",     authFormat: "bearer" },
+  claude:  { id: "anthropic", name: "Anthropic", baseUrl: "https://api.anthropic.com",  authFormat: "api-key" },
+  gemini:  { id: "gemini",   name: "Google",     baseUrl: "https://generativelanguage.googleapis.com", authFormat: "bearer" },
+  deepseek: { id: "deepseek", name: "DeepSeek",  baseUrl: "https://api.deepseek.com",   authFormat: "bearer" },
+}
+
+function getCanonicalProviderId(ezrouterProvider: string): string {
+  return PROVIDER_MAP[ezrouterProvider]?.id ?? ezrouterProvider
+}
+
+// ─── Default providers ────────────────────────────────────────────────────────
+
+const DEFAULT_PROVIDERS: Record<string, Provider> = {
+  openai:   { id: "openai",   name: "OpenAI",    baseUrl: "https://api.openai.com",      authFormat: "bearer" },
+  anthropic: { id: "anthropic", name: "Anthropic", baseUrl: "https://api.anthropic.com",  authFormat: "api-key" },
+  gemini:   { id: "gemini",   name: "Google",     baseUrl: "https://generativelanguage.googleapis.com", authFormat: "bearer" },
+  deepseek: { id: "deepseek", name: "DeepSeek",   baseUrl: "https://api.deepseek.com",    authFormat: "bearer" },
+}
+
+// ─── Config cache ─────────────────────────────────────────────────────────────
+
+let configCache: ConfigCache | null = null
+
+async function fetchFromEzRouter(): Promise<ConfigCache> {
+  const baseUrl = getEzRouterBaseUrl()
+  const authToken = process.env.EZROUTER_AUTH_TOKEN
+
+  let ezModels: EzrouterModel[] = []
+
+  try {
+    const res = await fetch(`${baseUrl}/api/model/list`, {
+      headers: {
+        Authorization: authToken || "",
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      ezModels = data?.Data ?? []
+    } else {
+      console.warn(`[model-config] ezrouter returned ${res.status}`)
+    }
+  } catch (err) {
+    console.warn("[model-config] failed to fetch from ezrouter:", err)
+  }
+
+  // Build providers map from what ezrouter returned
+  const providers: Record<string, Provider> = {}
+  for (const m of ezModels) {
+    const pid = getCanonicalProviderId(m.Provider)
+    if (!providers[pid]) {
+      const meta = PROVIDER_MAP[m.Provider]
+      providers[pid] = meta
+        ? { id: meta.id, name: meta.name, baseUrl: meta.baseUrl, authFormat: meta.authFormat }
+        : { id: pid, name: m.Provider, baseUrl: baseUrl, authFormat: "bearer" }
+    }
+  }
+  // Fill in defaults for any provider we didn't see
+  for (const [id, p] of Object.entries(DEFAULT_PROVIDERS)) {
+    if (!providers[id]) providers[id] = p
+  }
+
+  // Build models map
+  const models: Record<string, Model> = {}
+  for (const m of ezModels) {
+    // Skip models with zero pricing (e.g. image generation models)
+    const p = m.Pricing
+    if (p.InputPerMillion === 0 && p.OutputPerMillion === 0) continue
+
+    // Skip image-only models
+    const id = m.Id.toLowerCase()
+    if (id.includes("image-") && !id.includes("codex")) continue
+
+    const providerId = getCanonicalProviderId(m.Provider)
+    models[m.Id] = {
+      id: m.Id,
+      providerId,
+      name: m.Name,
+      description: m.Description,
+      contextWindow: m.ContextLength,
+      inputPer1M: p.InputPerMillion,
+      outputPer1M: p.OutputPerMillion,
+      status: "active",
+    }
+  }
+
+  return { providers, models, fetchedAt: Date.now() }
+}
+
+async function getConfig(): Promise<ConfigCache> {
+  if (configCache && Date.now() - configCache.fetchedAt < CACHE_TTL_MS) {
+    return configCache
+  }
+
+  configCache = await fetchFromEzRouter()
+  const modelCount = Object.keys(configCache.models).length
+  console.log(`[model-config] loaded ${modelCount} models from ezrouter`)
+  return configCache
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 /**
- * Returns the canonical model record, or null if unknown.
+ * Returns all active providers.
  */
-export function getModel(modelId: string): Model | null {
-  return MODELS[modelId] ?? null
+export async function getProviders(): Promise<Record<string, Provider>> {
+  const { providers } = await getConfig()
+  return providers
+}
+
+/**
+ * Returns all active models keyed by id.
+ */
+export async function getModels(): Promise<Record<string, Model>> {
+  const { models } = await getConfig()
+  return models
+}
+
+/**
+ * Returns a single model by id, or null if not found.
+ */
+export async function getModel(id: string): Promise<Model | null> {
+  const { models } = await getConfig()
+  return models[id] ?? null
 }
 
 /**
  * Returns all models for a given provider.
  */
-export function getModelsByProvider(providerId: string): Model[] {
-  return Object.values(MODELS).filter((m) => m.providerId === providerId)
+export async function getModelsByProvider(providerId: string): Promise<Model[]> {
+  const { models } = await getConfig()
+  return Object.values(models).filter((m) => m.providerId === providerId)
 }
 
 /**
- * Returns all active models.
+ * Returns pricing for a model (after 20% discount).
+ * Falls back to default pricing for unknown models.
  */
-export function getAllModels(): Model[] {
-  return Object.values(MODELS).filter((m) => m.status !== "deprecated")
+export async function getModelPricing(
+  modelId: string
+): Promise<{ inputPer1M: number; outputPer1M: number }> {
+  const { models } = await getConfig()
+  const model = models[modelId]
+
+  if (model) {
+    return {
+      inputPer1M:  Math.round(model.inputPer1M  * DISCOUNT * 1000) / 1000,
+      outputPer1M: Math.round(model.outputPer1M * DISCOUNT * 1000) / 1000,
+    }
+  }
+
+  // Unknown model – use sensible defaults
+  return { inputPer1M: 2.0, outputPer1M: 8.0 }
+}
+
+/**
+ * Returns all model ids.
+ */
+export async function getModelIds(): Promise<string[]> {
+  const { models } = await getConfig()
+  return Object.keys(models)
 }
