@@ -81,6 +81,9 @@ export default function AdminUsagePage() {
       if (res.ok) {
         const json = await res.json();
         setOverview(json.data || null);
+      } else if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/admin/login';
       }
     } catch { /* silently fail */ }
     finally { setLoadingOverview(false); }

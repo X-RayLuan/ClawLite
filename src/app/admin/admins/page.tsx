@@ -118,6 +118,9 @@ export default function AdminsPage() {
       if (res.ok) {
         const json = await res.json();
         setAdmins(json.data || []);
+      } else if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/admin/login';
       }
     } catch { /* silently fail */ }
     finally { setLoading(false); }
@@ -138,6 +141,7 @@ export default function AdminsPage() {
         headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
       });
       if (res.ok) await fetchAdmins();
+      else if (res.status === 401) { localStorage.removeItem('admin_token'); window.location.href = '/admin/login'; }
     } catch { /* silently fail */ }
     finally { setDeletingId(null); }
   };

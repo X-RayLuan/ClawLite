@@ -207,6 +207,9 @@ export default function CustomersPage() {
         const json = await res.json();
         setCustomers(json.data?.customers || []);
         setPagination(json.data?.pagination || null);
+      } else if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/admin/login';
       }
     } catch { /* silently fail */ }
     finally { setLoading(false); }
