@@ -1,20 +1,23 @@
 /**
  * ClawLite model configuration.
- * Dynamically fetched from openrouter.ai public API on startup, cached for 5 min.
- * Single source of truth for supported models, providers, and pricing.
+ * Source: ezrouter /api/model/list (openai + anthropic only)
+ * Cache: written to data/model-cache.json, refreshed every 7 days.
  *
- * Pricing source: https://openrouter.ai/api/v1/models (public, no API key required)
- * Users pay 80% of the openrouter.ai benchmark price (20% discount).
+ * Users pay 80% of the ezrouter benchmark price (20% discount).
  */
 
+import { promises as fs } from "node:fs"
+import path from "node:path"
 
+// ─── Paths ────────────────────────────────────────────────────────────────────
+
+const CACHE_FILE = path.join(process.cwd(), "data", "model-cache.json")
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Provider = {
   id: string
   name: string
-  logo?: string
   baseUrl: string
   authFormat: "bearer" | "api-key"
 }
@@ -30,184 +33,200 @@ export type Model = {
   name: string
   description?: string
   contextWindow: number
-  inputPerM: number    // openrouter.ai benchmark price per 1M input tokens
-  outputPerM: number   // openrouter.ai benchmark price per 1M output tokens
+  inputPerM: number    // ezrouter benchmark price per 1M input tokens
+  outputPerM: number  // ezrouter benchmark price per 1M output tokens
   status: "active" | "beta" | "deprecated"
 }
 
-type OpenRouterModel = {
-  id: string
-  name: string
-  description?: string
-  context_length: number
-  pricing?: {
-    prompt?: string | number
-    completion?: string | number
-    [key: string]: unknown
-  }
-  [key: string]: unknown
-}
-
-type ConfigCache = {
+type ModelCache = {
+  version: number
+  fetchedAt: string   // ISO timestamp
   providers: Record<string, Provider>
   models: Record<string, Model>
-  fetchedAt: number
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000
+type EzrouterModel = {
+  Id: string
+  Name: string
+  Provider: string
+  Description?: string
+  ContextLength: number
+  Pricing: {
+    InputPerMillion: number
+    OutputPerMillion: number
+    [key: string]: unknown
+  }
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000   // 7 days
 const DISCOUNT = 0.8
 
-// ─── ClawLite supported model list ────────────────────────────────────────────
-// We only expose a curated subset of openrouter.ai models.
-// Format: openrouter_model_id → canonical id
+const TARGET_PROVIDERS = new Set(["openai", "anthropic"])
 
-const SUPPORTED_MODEL_IDS: Record<string, string> = {
-  // OpenAI
-  "openai/gpt-5.4":              "gpt-5.4",
-  "openai/gpt-5.4-mini":        "gpt-5.4-mini",
-  "openai/gpt-5.4-pro":          "gpt-5.4-pro",
-  "openai/gpt-4o":              "gpt-4o",
-  "openai/gpt-4o-mini":         "gpt-4o-mini",
-  // Anthropic
-  "anthropic/claude-opus-4.7":  "claude-opus-4-7",
-  "anthropic/claude-opus-4.6":  "claude-opus-4-6",
-  "anthropic/claude-sonnet-4.6": "claude-sonnet-4-6",
-  "anthropic/claude-opus-4.5":  "claude-opus-4-5",
-  "anthropic/claude-sonnet-4.5": "claude-sonnet-4-5",
-  "anthropic/claude-haiku-4.5": "claude-haiku-4-5",
-  // Google
-  "google/gemini-2.5-flash":     "gemini-2.5-flash",
-  "google/gemini-2.5-pro":      "gemini-2.5-pro",
-  // DeepSeek
-  "deepseek/deepseek-chat-v3-0324": "deepseek-chat",
-  "deepseek/deepseek-reasoner":    "deepseek-reasoner",
+// ─── Cache I/O ────────────────────────────────────────────────────────────────
+
+async function readCache(): Promise<ModelCache | null> {
+  try {
+    const raw = await fs.readFile(CACHE_FILE, "utf8")
+    return JSON.parse(raw) as ModelCache
+  } catch {
+    return null
+  }
 }
 
-const SUPPORTED_CANONICAL_IDS = new Set(Object.values(SUPPORTED_MODEL_IDS))
-
-// Provider mapping: openrouter provider name → ClawLite canonical provider
-const PROVIDER_MAP: Record<string, { id: string; name: string; baseUrl: string; authFormat: "bearer" | "api-key" }> = {
-  openai:    { id: "openai",    name: "OpenAI",    baseUrl: "https://api.openai.com",           authFormat: "bearer" },
-  anthropic: { id: "anthropic",  name: "Anthropic", baseUrl: "https://api.anthropic.com",         authFormat: "api-key" },
-  google:    { id: "gemini",    name: "Google",    baseUrl: "https://generativelanguage.googleapis.com", authFormat: "bearer" },
-  deepseek:  { id: "deepseek",  name: "DeepSeek",  baseUrl: "https://api.deepseek.com",          authFormat: "bearer" },
+async function writeCache(cache: ModelCache): Promise<void> {
+  await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), "utf8")
 }
 
-const DEFAULT_PROVIDERS: Record<string, Provider> = {
-  openai:    { id: "openai",    name: "OpenAI",    baseUrl: "https://api.openai.com",           authFormat: "bearer" },
-  anthropic: { id: "anthropic", name: "Anthropic", baseUrl: "https://api.anthropic.com",         authFormat: "api-key" },
-  gemini:    { id: "gemini",    name: "Google",    baseUrl: "https://generativelanguage.googleapis.com", authFormat: "bearer" },
-  deepseek:  { id: "deepseek",  name: "DeepSeek",  baseUrl: "https://api.deepseek.com",          authFormat: "bearer" },
-}
+// ─── Fetch from ezrouter ──────────────────────────────────────────────────────
 
-// ─── Config cache ─────────────────────────────────────────────────────────────
+async function fetchFromEzRouter(): Promise<{ providers: Record<string, Provider>; models: Record<string, Model> }> {
+  const baseUrl = (process.env.EZROUTER_BASE_URL || "https://openrouter.ezsite.ai").replace(/\/$/, "")
+  const authToken = process.env.EZROUTER_AUTH_TOKEN
 
-let configCache: ConfigCache | null = null
-
-async function fetchFromOpenRouter(): Promise<ConfigCache> {
-  let orModels: OpenRouterModel[] = []
+  let ezModels: EzrouterModel[] = []
 
   try {
-    // Public endpoint – no API key required
-    const res = await fetch("https://openrouter.ai/api/v1/models", {
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch(`${baseUrl}/api/model/list`, {
+      headers: {
+        Authorization: authToken || "",
+        "Content-Type": "application/json",
+      },
       cache: "no-store",
     })
 
     if (res.ok) {
       const data = await res.json()
-      orModels = data?.data ?? []
+      ezModels = data?.Data ?? []
     } else {
-      console.warn(`[model-config] openrouter returned ${res.status}`)
+      console.warn(`[model-config] ezrouter returned ${res.status}`)
     }
   } catch (err) {
-    console.warn("[model-config] failed to fetch from openrouter.ai:", err)
+    console.warn("[model-config] ezrouter fetch failed:", err)
   }
 
-  // Build providers
-  const providers: Record<string, Provider> = { ...DEFAULT_PROVIDERS }
+  // Build canonical provider map
+  const providers: Record<string, Provider> = {
+    openai:    { id: "openai",    name: "OpenAI",    baseUrl: "https://api.openai.com",      authFormat: "bearer" },
+    anthropic: { id: "anthropic", name: "Anthropic", baseUrl: "https://api.anthropic.com",  authFormat: "api-key" },
+  }
 
-  // Build models
+  // Map ezrouter provider "claude" → "anthropic"
+  const PROVIDER_MAP: Record<string, string> = {
+    openai: "openai",
+    claude: "anthropic",
+  }
+
   const models: Record<string, Model> = {}
 
-  for (const m of orModels) {
-    const canonicalId = SUPPORTED_MODEL_IDS[m.id]
-    if (!canonicalId) continue
+  for (const m of ezModels) {
+    const ezProvider = m.Provider
+    const canonicalProvider = PROVIDER_MAP[ezProvider]
 
-    const pricing = m.pricing
-    if (!pricing) continue
+    // Only include openai and anthropic
+    if (!canonicalProvider || !TARGET_PROVIDERS.has(canonicalProvider)) continue
 
-    const inputRaw = typeof pricing.prompt === "string" ? parseFloat(pricing.prompt) : (pricing.prompt ?? 0)
-    const outputRaw = typeof pricing.completion === "string" ? parseFloat(pricing.completion) : (pricing.completion ?? 0)
+    const p = m.Pricing
+    const inputPerM = p.InputPerMillion
+    const outputPerM = p.OutputPerMillion
 
-    // Skip zero-priced or invalid models
-    if (inputRaw === 0 && outputRaw === 0) continue
+    // Skip zero-priced models (e.g. gpt-image-*)
+    if (inputPerM === 0 && outputPerM === 0) continue
 
-    // Derive provider id from openrouter model id prefix
-    const orProvider = m.id.includes("/") ? m.id.split("/")[0] : "openai"
-    const providerMeta = PROVIDER_MAP[orProvider]
-    const providerId = providerMeta?.id ?? orProvider
-
-    // Ensure provider exists
-    if (!providers[providerId] && providerMeta) {
-      providers[providerId] = { id: providerMeta.id, name: providerMeta.name, baseUrl: providerMeta.baseUrl, authFormat: providerMeta.authFormat }
-    }
-
-    models[canonicalId] = {
-      id: canonicalId,
-      providerId,
-      name: m.name.replace(/^[a-zA-Z]+:\s*/, ""), // strip "OpenAI: " prefix
-      description: m.description,
-      contextWindow: m.context_length ?? 128000,
-      inputPerM: Math.round(inputRaw * 1e6 * 1000) / 1000,  // per 1M tokens
-      outputPerM: Math.round(outputRaw * 1e6 * 1000) / 1000,
+    models[m.Id] = {
+      id: m.Id,
+      providerId: canonicalProvider,
+      name: m.Name,
+      description: m.Description,
+      contextWindow: m.ContextLength,
+      inputPerM,
+      outputPerM,
       status: "active",
     }
   }
 
-  console.log(`[model-config] loaded ${Object.keys(models).length} models from openrouter.ai`)
-
-  return { providers, models, fetchedAt: Date.now() }
+  return { providers, models }
 }
 
-async function getConfig(): Promise<ConfigCache> {
-  if (configCache && Date.now() - configCache.fetchedAt < CACHE_TTL_MS) {
-    return configCache
+// ─── Lazy refresh ──────────────────────────────────────────────────────────────
+// Starts a background refresh if cache is stale. Does not block.
+
+let refreshPromise: Promise<void> | null = null
+
+async function refreshCacheIfStale(): Promise<ModelCache> {
+  const cache = await readCache()
+  const now = Date.now()
+
+  if (cache && now - new Date(cache.fetchedAt).getTime() < CACHE_TTL_MS) {
+    return cache
   }
 
-  configCache = await fetchFromOpenRouter()
-  return configCache
+  // If a refresh is already in progress, wait for it
+  if (refreshPromise) {
+    await refreshPromise
+    const updated = await readCache()
+    if (updated) return updated
+  }
+
+  refreshPromise = (async () => {
+    console.log("[model-config] cache stale, refreshing from ezrouter...")
+    const { providers, models } = await fetchFromEzRouter()
+    const newCache: ModelCache = {
+      version: 1,
+      fetchedAt: new Date().toISOString(),
+      providers,
+      models,
+    }
+    await writeCache(newCache)
+    console.log(`[model-config] cached ${Object.keys(models).length} models`)
+    refreshPromise = null
+  })()
+
+  await refreshPromise
+
+  const updated = await readCache()
+  return updated!
+}
+
+// ─── Init (call once at cold start) ─────────────────────────────────────────
+
+let initPromise: Promise<ModelCache> | null = null
+
+export async function initModelConfig(): Promise<ModelCache> {
+  if (initPromise) return initPromise
+  initPromise = refreshCacheIfStale()
+  return initPromise
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function getProviders(): Promise<Record<string, Provider>> {
-  const { providers } = await getConfig()
-  return providers
+  const cache = await initModelConfig()
+  return cache.providers
 }
 
 export async function getModels(): Promise<Record<string, Model>> {
-  const { models } = await getConfig()
-  return models
+  const cache = await initModelConfig()
+  return cache.models
 }
 
 export async function getModel(id: string): Promise<Model | null> {
-  const { models } = await getConfig()
+  const models: Record<string, Model> = await getModels()
   return models[id] ?? null
 }
 
 export async function getModelsByProvider(providerId: string): Promise<Model[]> {
-  const { models } = await getConfig()
-  return Object.values(models).filter((m) => m.providerId === providerId)
+  const models: Record<string, Model> = await getModels()
+  return (Object.values(models) as Model[]).filter((m) => m.providerId === providerId)
 }
 
 /**
- * Returns pricing after 20% discount (users pay 80% of openrouter.ai benchmark).
+ * Returns pricing after 20% discount (users pay 80% of ezrouter benchmark).
  */
-export async function getModelPricing(
-  modelId: string
-): Promise<ModelPricing> {
-  const { models } = await getConfig()
+export async function getModelPricing(modelId: string): Promise<ModelPricing> {
+  const models: Record<string, Model> = await getModels()
   const model = models[modelId]
 
   if (model) {
@@ -221,6 +240,6 @@ export async function getModelPricing(
 }
 
 export async function getModelIds(): Promise<string[]> {
-  const { models } = await getConfig()
+  const { models } = await getModels()
   return Object.keys(models)
 }
