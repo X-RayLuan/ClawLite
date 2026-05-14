@@ -6,7 +6,7 @@ import {
   MAC_INSTALLER_URL,
   WIN_INSTALLER_URL,
   getInstallerUrl
-} from '../src/lib/installer-links.ts'
+} from '../src/lib/installer-links'
 
 test('installer links keep macOS on the previous line and move Windows to v1.3.148', () => {
   assert.equal(INSTALLER_VERSION.windows, 'v1.3.148')

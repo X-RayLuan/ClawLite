@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     keyInfo = await validateApiKey(supabase, apiKey);
   }
 
-  // 2. Fetch models dynamically from model-config (backed by ezrouter /api/model/list)
+  // 2. Fetch models dynamically from model-config (backed by openrouter.ai)
   const ezModels = await getModels();
   const createdAt = 1700000000;
 
@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
     created: createdAt,
     owned_by: `clawlite/${m.providerId}`,
     context_window: m.contextWindow,
-    input: m.inputPer1M,
-    output: m.outputPer1M,
+    input: m.inputPerM,
+    output: m.outputPerM,
   }));
 
   return NextResponse.json({ object: "list", data }, {

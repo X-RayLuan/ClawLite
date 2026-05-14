@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
       name: m.name,
       provider: m.providerId,
       contextWindow: m.contextWindow,
-      inputPer1M: m.inputPer1M,
-      outputPer1M: m.outputPer1M,
+      inputPer1M: m.inputPerM,
+      outputPer1M: m.outputPerM,
     }))
 
     // Model allowlist: if set, only those models are allowed
