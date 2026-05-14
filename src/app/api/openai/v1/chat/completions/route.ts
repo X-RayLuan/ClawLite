@@ -162,7 +162,17 @@ export async function POST(request: NextRequest) {
   }
 
   // Update body with stripped model name for ezrouter
-  body = { ...body, model };
+  // Convert reasoning_effort → reasoning.effort for OpenRouter compatibility
+  if (body.reasoning_effort !== undefined) {
+    body = {
+      ...body,
+      model,
+      reasoning: { effort: body.reasoning_effort },
+    };
+    delete (body as any).reasoning_effort;
+  } else {
+    body = { ...body, model };
+  }
 
   // Rough token estimation
   const estimatedTokensIn = Math.ceil(inputText.length / 4);
