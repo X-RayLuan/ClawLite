@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("accounts")
-      .select("id, email, credit_balance_usd, created_at, updated_at as last_active, plan, billing_status", { count: "exact" });
+      .select("id, email, credit_balance_usd, created_at, updated_at, plan, billing_status", { count: "exact" });
 
     if (search) {
       query = query.ilike("email", `%${search}%`);
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       email: row.email,
       balance: Number(row.credit_balance_usd || 0),
       created_at: row.created_at,
-      last_active: row.last_active,
+      last_active: row.updated_at,
       plan: row.plan,
       billing_status: row.billing_status,
     }));
