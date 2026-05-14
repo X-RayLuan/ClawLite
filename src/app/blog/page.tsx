@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export const revalidate = 60;
 
@@ -11,23 +12,25 @@ export const metadata: Metadata = {
   }
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-
 type PostListItem = {
   slug: string;
   title: string;
   excerpt: string | null;
-  published_at: string;
+  published_at: string | null;
   created_at: string;
 };
 
 async function fetchPosts(): Promise<PostListItem[]> {
-  const res = await fetch(`${BASE_URL}/api/blog?page_size=100`, {
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  return (json?.data?.posts ?? []).filter((p: PostListItem) => p.published_at);
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('slug, title, excerpt, published_at, created_at')
+    .is('deleted_at', null)
+    .not('published_at', 'is', null)
+    .order('published_at', { ascending: false })
+    .limit(100);
+  if (error || !data) return [];
+  return data as PostListItem[];
 }
 
 export default async function BlogPage() {

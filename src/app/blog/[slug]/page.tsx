@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSupabaseAdminClient } from '@/lib/supabase-admin';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-
 type FAQ = {
   question: string;
   answer: string;
@@ -75,10 +73,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const res = await fetch(`${BASE_URL}/api/blog/${slug}`, { next: { revalidate: 60 } });
-  if (!res.ok) return { title: '404: This page could not be found.' };
-  const json = await res.json();
-  const post: BlogPost = json?.data;
+  const supabase = getSupabaseAdminClient();
+  const { data: post } = await supabase
+    .from('blog_posts')
+    .select('slug, title, excerpt, content, published_at, created_at')
+    .eq('slug', slug)
+    .is('deleted_at', null)
+    .not('published_at', 'is', null)
+    .single();
   if (!post) return { title: '404: This page could not be found.' };
 
   return {
@@ -103,10 +105,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function fetchPost(slug: string): Promise<BlogPost | null> {
   try {
-    const res = await fetch(`${BASE_URL}/api/blog/${slug}`, { next: { revalidate: 60 } });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json?.data ?? null;
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('slug, title, excerpt, content, faqs, published_at, created_at')
+      .eq('slug', slug)
+      .is('deleted_at', null)
+      .not('published_at', 'is', null)
+      .single();
+    if (error || !data) return null;
+    return data as unknown as BlogPost;
   } catch {
     return null;
   }
