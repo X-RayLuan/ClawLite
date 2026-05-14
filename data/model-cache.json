@@ -1,0 +1,300 @@
+{
+  "version": 1,
+  "fetchedAt": "2026-05-14T06:31:31.398Z",
+  "providers": {
+    "openai": {
+      "id": "openai",
+      "name": "OpenAI",
+      "baseUrl": "https://api.openai.com",
+      "authFormat": "bearer"
+    },
+    "anthropic": {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "baseUrl": "https://api.anthropic.com",
+      "authFormat": "api-key"
+    }
+  },
+  "models": {
+    "claude-opus-4-7": {
+      "id": "claude-opus-4-7",
+      "providerId": "anthropic",
+      "name": "Claude Opus 4.7",
+      "description": "Anthropic's most capable flagship model with 128K max output.",
+      "contextWindow": 1000000,
+      "inputPerM": 5,
+      "outputPerM": 25,
+      "status": "active"
+    },
+    "claude-opus-4-6": {
+      "id": "claude-opus-4-6",
+      "providerId": "anthropic",
+      "name": "Claude Opus 4.6",
+      "description": "Anthropic's most capable flagship model with 128K max output.",
+      "contextWindow": 1000000,
+      "inputPerM": 5,
+      "outputPerM": 25,
+      "status": "active"
+    },
+    "claude-sonnet-4-6": {
+      "id": "claude-sonnet-4-6",
+      "providerId": "anthropic",
+      "name": "Claude Sonnet 4.6",
+      "description": "Anthropic's best balance of performance and cost, near-Opus level coding.",
+      "contextWindow": 1000000,
+      "inputPerM": 3,
+      "outputPerM": 15,
+      "status": "active"
+    },
+    "claude-opus-4-5": {
+      "id": "claude-opus-4-5",
+      "providerId": "anthropic",
+      "name": "Claude Opus 4.5",
+      "description": "Anthropic's flagship hybrid reasoning model for complex agentic tasks.",
+      "contextWindow": 200000,
+      "inputPerM": 5,
+      "outputPerM": 25,
+      "status": "active"
+    },
+    "claude-sonnet-4-5": {
+      "id": "claude-sonnet-4-5",
+      "providerId": "anthropic",
+      "name": "Claude Sonnet 4.5",
+      "description": "Anthropic's hybrid reasoning model for complex agentic tasks.",
+      "contextWindow": 200000,
+      "inputPerM": 3,
+      "outputPerM": 15,
+      "status": "active"
+    },
+    "claude-sonnet-4": {
+      "id": "claude-sonnet-4",
+      "providerId": "anthropic",
+      "name": "Claude Sonnet 4",
+      "description": "Anthropic's balanced model with strong reasoning and coding capabilities.",
+      "contextWindow": 200000,
+      "inputPerM": 3,
+      "outputPerM": 15,
+      "status": "active"
+    },
+    "claude-haiku-4-5": {
+      "id": "claude-haiku-4-5",
+      "providerId": "anthropic",
+      "name": "Claude Haiku 4.5",
+      "description": "Anthropic's fastest model with near-frontier performance.",
+      "contextWindow": 200000,
+      "inputPerM": 1,
+      "outputPerM": 5,
+      "status": "active"
+    },
+    "gpt-5.5": {
+      "id": "gpt-5.5",
+      "providerId": "openai",
+      "name": "GPT-5.5",
+      "description": "OpenAI's flagship model with 1M+ context and top-tier reasoning.",
+      "contextWindow": 1050000,
+      "inputPerM": 5,
+      "outputPerM": 30,
+      "status": "active"
+    },
+    "gpt-5.4": {
+      "id": "gpt-5.4",
+      "providerId": "openai",
+      "name": "GPT-5.4",
+      "description": "OpenAI's most capable model for professional work.",
+      "contextWindow": 1050000,
+      "inputPerM": 2.5,
+      "outputPerM": 15,
+      "status": "active"
+    },
+    "gpt-5.4-mini": {
+      "id": "gpt-5.4-mini",
+      "providerId": "openai",
+      "name": "GPT-5.4 Mini",
+      "description": "OpenAI's strongest mini model yet for coding, computer use, and subagents.",
+      "contextWindow": 400000,
+      "inputPerM": 0.75,
+      "outputPerM": 4.5,
+      "status": "active"
+    },
+    "gpt-5.2": {
+      "id": "gpt-5.2",
+      "providerId": "openai",
+      "name": "GPT-5.2",
+      "description": "OpenAI's latest flagship model with 400K context and reasoning support.",
+      "contextWindow": 400000,
+      "inputPerM": 1.75,
+      "outputPerM": 14,
+      "status": "active"
+    },
+    "gpt-5.1": {
+      "id": "gpt-5.1",
+      "providerId": "openai",
+      "name": "GPT-5.1",
+      "description": "OpenAI's adaptive reasoning model with fast response and 272K context.",
+      "contextWindow": 272000,
+      "inputPerM": 1.25,
+      "outputPerM": 10,
+      "status": "active"
+    },
+    "gpt-5": {
+      "id": "gpt-5",
+      "providerId": "openai",
+      "name": "GPT-5",
+      "description": "OpenAI's powerful model for coding, reasoning, and agentic tasks.",
+      "contextWindow": 400000,
+      "inputPerM": 1.25,
+      "outputPerM": 10,
+      "status": "active"
+    },
+    "gpt-5-mini": {
+      "id": "gpt-5-mini",
+      "providerId": "openai",
+      "name": "GPT-5 Mini",
+      "description": "OpenAI's fast and cost-efficient version of GPT-5 for well-defined tasks.",
+      "contextWindow": 400000,
+      "inputPerM": 0.25,
+      "outputPerM": 2,
+      "status": "active"
+    },
+    "gpt-5-nano": {
+      "id": "gpt-5-nano",
+      "providerId": "openai",
+      "name": "GPT-5 Nano",
+      "description": "OpenAI's smallest and cheapest GPT-5 family model.",
+      "contextWindow": 400000,
+      "inputPerM": 0.05,
+      "outputPerM": 0.4,
+      "status": "active"
+    },
+    "gpt-4.1": {
+      "id": "gpt-4.1",
+      "providerId": "openai",
+      "name": "GPT-4.1",
+      "description": "OpenAI's reliable model with 1M context and strong coding performance.",
+      "contextWindow": 1000000,
+      "inputPerM": 2,
+      "outputPerM": 8,
+      "status": "active"
+    },
+    "gpt-4.1-mini": {
+      "id": "gpt-4.1-mini",
+      "providerId": "openai",
+      "name": "GPT-4.1 Mini",
+      "description": "OpenAI's efficient model balancing capability and cost with 1M context.",
+      "contextWindow": 1000000,
+      "inputPerM": 0.4,
+      "outputPerM": 1.6,
+      "status": "active"
+    },
+    "gpt-4.1-nano": {
+      "id": "gpt-4.1-nano",
+      "providerId": "openai",
+      "name": "GPT-4.1 Nano",
+      "description": "OpenAI's cheapest and fastest model for lightweight tasks.",
+      "contextWindow": 1000000,
+      "inputPerM": 0.1,
+      "outputPerM": 0.4,
+      "status": "active"
+    },
+    "gpt-4o": {
+      "id": "gpt-4o",
+      "providerId": "openai",
+      "name": "GPT-4o",
+      "description": "OpenAI's previous-generation multimodal model.",
+      "contextWindow": 128000,
+      "inputPerM": 2.5,
+      "outputPerM": 10,
+      "status": "active"
+    },
+    "gpt-4o-mini": {
+      "id": "gpt-4o-mini",
+      "providerId": "openai",
+      "name": "GPT-4o Mini",
+      "description": "OpenAI's previous-generation lightweight model.",
+      "contextWindow": 128000,
+      "inputPerM": 0.15,
+      "outputPerM": 0.6,
+      "status": "active"
+    },
+    "gpt-5.4-codex": {
+      "id": "gpt-5.4-codex",
+      "providerId": "openai",
+      "name": "GPT-5.4 Codex",
+      "description": "OpenAI's Codex coding agent powered by GPT-5.4.",
+      "contextWindow": 1050000,
+      "inputPerM": 2.5,
+      "outputPerM": 15,
+      "status": "active"
+    },
+    "gpt-5.3-codex-spark": {
+      "id": "gpt-5.3-codex-spark",
+      "providerId": "openai",
+      "name": "GPT-5.3 Codex Spark",
+      "description": "OpenAI's experimental agentic coding model with extended capabilities.",
+      "contextWindow": 400000,
+      "inputPerM": 1.75,
+      "outputPerM": 14,
+      "status": "active"
+    },
+    "gpt-5.3-codex": {
+      "id": "gpt-5.3-codex",
+      "providerId": "openai",
+      "name": "GPT-5.3 Codex",
+      "description": "OpenAI's most advanced agentic coding model for complex software tasks.",
+      "contextWindow": 400000,
+      "inputPerM": 1.75,
+      "outputPerM": 14,
+      "status": "active"
+    },
+    "gpt-5.2-codex": {
+      "id": "gpt-5.2-codex",
+      "providerId": "openai",
+      "name": "GPT-5.2 Codex",
+      "description": "OpenAI's latest agentic coding model optimized for complex software tasks.",
+      "contextWindow": 400000,
+      "inputPerM": 1.75,
+      "outputPerM": 14,
+      "status": "active"
+    },
+    "gpt-5.1-codex": {
+      "id": "gpt-5.1-codex",
+      "providerId": "openai",
+      "name": "GPT-5.1 Codex",
+      "description": "OpenAI's agentic coding model for software engineering workflows.",
+      "contextWindow": 400000,
+      "inputPerM": 1.25,
+      "outputPerM": 10,
+      "status": "active"
+    },
+    "gpt-5-codex": {
+      "id": "gpt-5-codex",
+      "providerId": "openai",
+      "name": "GPT-5 Codex",
+      "description": "OpenAI's foundational agentic coding model.",
+      "contextWindow": 400000,
+      "inputPerM": 1.25,
+      "outputPerM": 10,
+      "status": "active"
+    },
+    "gpt-5.1-codex-mini": {
+      "id": "gpt-5.1-codex-mini",
+      "providerId": "openai",
+      "name": "GPT-5.1 Codex Mini",
+      "description": "OpenAI's lightweight and cost-efficient agentic coding model.",
+      "contextWindow": 400000,
+      "inputPerM": 0.25,
+      "outputPerM": 2,
+      "status": "active"
+    },
+    "gpt-5.1-codex-max": {
+      "id": "gpt-5.1-codex-max",
+      "providerId": "openai",
+      "name": "GPT-5.1 Codex Max",
+      "description": "OpenAI's high-performance agentic coding model for complex workflows.",
+      "contextWindow": 400000,
+      "inputPerM": 1.25,
+      "outputPerM": 10,
+      "status": "active"
+    }
+  }
+}
