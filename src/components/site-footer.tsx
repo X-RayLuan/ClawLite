@@ -33,6 +33,9 @@ export function SiteFooter() {
           <Link href="/blog" className="text-stone-500 transition-colors hover:text-stone-900">
             {nav.blog ?? "Blog"}
           </Link>
+          <Link href="/admin/login" className="text-stone-400 transition-colors hover:text-stone-700 text-xs">
+            Admin
+          </Link>
           <a
             href="https://discord.com/invite/YgxA4HWJMx"
             target="_blank"
