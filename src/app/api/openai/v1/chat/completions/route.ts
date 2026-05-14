@@ -207,6 +207,7 @@ export async function POST(request: NextRequest) {
   let ezrouterError: string | null = null;
 
   try {
+    console.log("[openai/v1/chat/completions] ezrouter request:", { url: `${ezrouterBaseUrl}/api/openai/v1/chat/completions`, body });
     const ezrouterResponse = await fetch(`${ezrouterBaseUrl}/api/openai/v1/chat/completions`, {
       method: "POST",
       headers: {
@@ -216,6 +217,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(body),
     });
+    console.log("[openai/v1/chat/completions] ezrouter response status:", ezrouterResponse.status);
 
     ezrouterStatus = ezrouterResponse.status;
 
@@ -226,6 +228,7 @@ export async function POST(request: NextRequest) {
       } catch {
         errorBody = await ezrouterResponse.text();
       }
+      console.error("[openai/v1/chat/completions] ezrouter error:", errorBody);
       ezrouterError = errorBody?.error || errorBody?.message || `ezrouter_error:${ezrouterResponse.status}`;
     }
 
