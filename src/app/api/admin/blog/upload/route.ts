@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { createClient } from "@/lib/supabase-admin";
+import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+
+// Alias for clarity — getSupabaseAdminClient already creates a service-role client
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    const supabase = getSupabaseAdminClient();
     await ensureBucket(supabase);
 
     // Unique storage path: blog-images/YYYYMM/slug.[ext]
