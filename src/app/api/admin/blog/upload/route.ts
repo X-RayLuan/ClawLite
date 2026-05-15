@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { createClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Extensions allowlist
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg"]);
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const BUCKET = "blog-images";
 
-// POST /api/admin/blog/upload – Upload blog image
+// Ensure bucket exists (idempotent)
+async function ensureBucket(supabase: ReturnType<typeof createClient>) {
+  const { data, error } = await supabase.storage.getBucket(BUCKET).catch(() => ({ data: null, error: { message: "network" } }));
+  if (!data && !error) {
+    // Bucket doesn't exist — create it (public-read)
+    await supabase.storage.createBucket(BUCKET, {
+      public: true,
+      fileSizeLimit: MAX_SIZE_BYTES,
+    }).catch(() => {/* already created by another concurrent call */});
+  }
+}
+
+// POST /api/admin/blog/upload – Upload blog image to Supabase Storage
 export async function POST(request: NextRequest) {
   const authResult = requireAdmin(request);
   if (authResult instanceof NextResponse) return authResult;
@@ -44,24 +54,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build storage path: public/blog/uploads/
-    const uploadDir = path.join(process.cwd(), "public", "blog", "uploads");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
+    const supabase = createClient();
+    await ensureBucket(supabase);
 
-    // Unique filename: timestamp-random.xxx
+    // Unique storage path: blog-images/YYYYMM/slug.[ext]
+    const now = new Date();
+    const month = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
     const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const filePath = path.join(uploadDir, uniqueName);
+    const storagePath = `${month}/${uniqueName}`;
 
     const buffer = Buffer.from(await blob.arrayBuffer());
-    await writeFile(filePath, buffer);
+    const contentType = blob.type || `image/${ext === "svg" ? "svg+xml" : ext}`;
 
-    const publicUrl = `/blog/uploads/${uniqueName}`;
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .upload(storagePath, buffer, {
+        contentType,
+        upsert: false,
+      });
+
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: `upload failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
 
     return NextResponse.json({
       ok: true,
-      url: publicUrl,
+      url: urlData.publicUrl,
+      path: storagePath,
       filename: uniqueName,
       size: blob.size,
     });
