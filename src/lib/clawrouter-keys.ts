@@ -92,37 +92,46 @@ export async function listApiKeysForAccount(supabase: MinimalSupabaseClient, acc
   return (response.data || []).map(toApiKeyView);
 }
 
-export async function ensureClawRouterApiKey(supabase: MinimalSupabaseClient, accountId?: string | null) {
+export async function ensureClawRouterApiKey(
+  supabase: MinimalSupabaseClient,
+  accountId?: string | null,
+  name?: string
+) {
   if (!accountId) {
     throw new Error("missing_account_id");
   }
 
-  const existing = await supabase
-    .from("api_keys")
-    .select("id, account_id, name, key_prefix, status, created_at, last_used_at, secret_encrypted")
-    .eq("account_id", accountId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // When a name is provided, always create a new key with that name (no reuse).
+  // When no name is provided, reuse existing default key if one exists.
+  if (!name) {
+    const existing = await supabase
+      .from("api_keys")
+      .select("id, account_id, name, key_prefix, status, created_at, last_used_at, secret_encrypted")
+      .eq("account_id", accountId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (existing?.error && existing.error.code !== "PGRST116") {
-    throw new Error(existing.error.message || "failed_to_load_existing_api_key");
-  }
+    if (existing?.error && existing.error.code !== "PGRST116") {
+      throw new Error(existing.error.message || "failed_to_load_existing_api_key");
+    }
 
-  if (existing?.data) {
-    return { key: toApiKeyView(existing.data), created: false, plaintextSecret: null };
+    if (existing?.data) {
+      return { key: toApiKeyView(existing.data), created: false, plaintextSecret: null };
+    }
   }
 
   // Create new key — stored encrypted, revealed via revealApiKey
   const plaintextSecret = makePublicApiKey();
   const encryptedSecret = encryptSecret(plaintextSecret);
+  const keyName = name || "Default key";
 
   const insert = await supabase
     .from("api_keys")
     .insert({
       account_id: accountId,
-      name: "Default key",
+      name: keyName,
       key_prefix: makeKeyPrefix(plaintextSecret),
       secret_hash: hashSecret(plaintextSecret),
       secret_encrypted: encryptedSecret,

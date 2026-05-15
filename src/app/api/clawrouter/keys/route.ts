@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const { userId, email } = await getAuthenticatedClawRouterUser(accessToken);
     const supabase = getSupabaseAdminClient();
     const body = await request.json().catch(() => ({}));
-    const { force } = body;
+    const { force, name } = body;
 
     // Ensure the account exists with id = userId (consistent with ensureClawRouterAccount)
     // This avoids creating a duplicate account with auto-generated id when
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If force=true, delete all existing active keys first
-    if (force) {
+    // If force=true, delete all existing active keys first (only when creating/replacing default key)
+    if (force && !name) {
       await supabase
         .from("api_keys")
         .delete()
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         .eq("status", "active");
     }
 
-    const result = await ensureClawRouterApiKey(supabase, accountId);
+    const result = await ensureClawRouterApiKey(supabase, accountId, name);
     const delivery = await ensureManagedKeyDelivery({
       supabase,
       accountId,

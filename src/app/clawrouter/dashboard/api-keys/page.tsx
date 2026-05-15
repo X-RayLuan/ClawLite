@@ -317,14 +317,31 @@ export default function ApiKeysPage() {
       });
       const payload = await res.json().catch(() => null);
       if (res.ok && payload?.ok && payload.key) {
-        setKeys((prev) => [payload.key, ...prev]);
         setNewKeyName("");
-        // If plaintextSecret returned, show it in modal; otherwise close
-        if (payload.plaintextSecret) {
+        if (payload.created && payload.plaintextSecret) {
+          // Brand-new key — show the reveal modal
           setNewKeyResult({ ...payload.key, plaintextSecret: payload.plaintextSecret });
+          // Refresh list to pick up the new entry
+          const listRes = await fetch("/api/clawrouter/keys", {
+            headers: { Authorization: `Bearer ${accessToken}`, "Cache-Control": "no-store" },
+            cache: "no-store",
+          });
+          const listPayload = await listRes.json().catch(() => null);
+          if (listPayload?.ok) {
+            setKeys(listPayload.keys || []);
+          }
         } else {
+          // Named key already existed (created=false) or no plaintext to show — just refresh list
           setCreateOpen(false);
           setNewKeyResult(null);
+          const listRes = await fetch("/api/clawrouter/keys", {
+            headers: { Authorization: `Bearer ${accessToken}`, "Cache-Control": "no-store" },
+            cache: "no-store",
+          });
+          const listPayload = await listRes.json().catch(() => null);
+          if (listPayload?.ok) {
+            setKeys(listPayload.keys || []);
+          }
         }
       } else {
         setError(t.errors.create);
