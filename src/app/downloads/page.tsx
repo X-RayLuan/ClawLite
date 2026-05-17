@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DownloadApiKeySection } from "@/components/ui/download-api-key-section";
-import { MAC_INSTALLER_URL, WIN_INSTALLER_URL } from "@/lib/installer-links";
+import { getInstallerUrl } from "@/lib/installer-links";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLang } from "@/components/lang-provider";
 import { getContentForLang } from "@/lib/content";
@@ -16,6 +16,14 @@ export default function DownloadsPage() {
 
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<{ email?: string; access_token?: string } | null>(null);
+  const [macUrl, setMacUrl] = useState<string>('')
+  const [winUrl, setWinUrl] = useState<string>('')
+
+  // Resolve download URLs by IP归属地（国内→OSS，国际→GitHub）
+  useEffect(() => {
+    getInstallerUrl('macos').then(setMacUrl)
+    getInstallerUrl('windows').then(setWinUrl)
+  }, [])
 
   useEffect(() => {
     if (!supabase) {
@@ -69,8 +77,10 @@ export default function DownloadsPage() {
     if (user?.email) {
       navigator.clipboard.writeText(user.email).catch(() => {});
     }
-    const url = platform === "mac" ? MAC_INSTALLER_URL : WIN_INSTALLER_URL;
-    window.open(url, "_blank");
+    const url = platform === "mac" ? macUrl : winUrl;
+    if (url) {
+      window.open(url, "_blank");
+    }
   }
 
   const isLoggedIn = !!user?.email;
