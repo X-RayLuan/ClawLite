@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getInstallerUrl } from '@/lib/installer-links'
 
-function getReleaseLink(os: string) {
-  return getInstallerUrl(os)
+async function getReleaseLink(os: string) {
+  return getInstallerUrl(os as 'macos' | 'windows')
 }
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
-    const releaseLink = getReleaseLink(os)
+    const releaseLink = await getReleaseLink(os)
 
     // If email env is missing, return success with direct link fallback
     if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) {
