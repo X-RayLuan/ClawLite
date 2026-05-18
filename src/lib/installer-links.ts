@@ -9,8 +9,8 @@
  */
 
 export const INSTALLER_VERSION = {
-  macos: 'v1.5.264',
-  windows: 'v1.5.264'
+  macos: 'v1.5.265',
+  windows: 'v1.5.265'
 }
 
 // OSS 镜像（国内）
