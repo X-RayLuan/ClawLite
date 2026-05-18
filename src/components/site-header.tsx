@@ -13,6 +13,7 @@ export function SiteHeader() {
   const nav = getContentForLang(lang).nav;
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -46,6 +47,7 @@ export function SiteHeader() {
           <Link href="/marketing-agent-team" className="transition-colors hover:text-stone-900">{nav.marketingAgentTeam ?? "Marketing Agent Team"}</Link>
           <Link href="/skills" className="transition-colors hover:text-stone-900">{nav.skills ?? "Skills"}</Link>
           <Link href="/clawrouter" className="transition-colors hover:text-stone-900">{nav.clawrouter ?? "ClawRouter"}</Link>
+          <Link href="/pricing" className="transition-colors hover:text-stone-900">Pricing</Link>
           <Link href="/docs" className="transition-colors hover:text-stone-900">
             {nav.docs}
           </Link>
@@ -61,8 +63,49 @@ export function SiteHeader() {
             </Link>
           )}
           <LangToggle />
+          {/* Hamburger */}
+          <button
+            className="flex md:hidden p-1 text-stone-600 hover:text-stone-900"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-stone-300/50 bg-[rgba(248,244,237,0.98)] px-4 pb-4 pt-2 space-y-1">
+          {[
+            { href: "/", label: nav.home },
+            { href: "/setup", label: nav.setup ?? "Setup" },
+            { href: "/marketing-agent-team", label: nav.marketingAgentTeam ?? "Marketing Agent Team" },
+            { href: "/skills", label: nav.skills ?? "Skills" },
+            { href: "/clawrouter", label: nav.clawrouter ?? "ClawRouter" },
+            { href: "/pricing", label: "Pricing" },
+            { href: "/docs", label: nav.docs },
+          ].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-sm font-medium text-stone-600 hover:text-stone-900"
+            >
+              {label}
+            </Link>
+          ))}
+          {!loggedIn && (
+            <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-stone-500 hover:text-stone-900">
+              Login
+            </Link>
+          )}
+        </div>
+      )}
     </header>
   );
 }
