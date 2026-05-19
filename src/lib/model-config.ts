@@ -254,9 +254,62 @@ export async function getProviders(): Promise<Record<string, Provider>> {
   return cache.providers
 }
 
+// Fallback static models used when cache is unavailable
+const FALLBACK_MODELS: Record<string, Model> = {
+  "MiniMax-Text-01": {
+    id: "MiniMax-Text-01",
+    providerId: "minimax",
+    name: "MiniMax Text",
+    description: "MiniMax Text Model with 1M context",
+    contextWindow: 1024000,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
+  },
+  "MiniMax-Text-01-Vision": {
+    id: "MiniMax-Text-01-Vision",
+    providerId: "minimax",
+    name: "MiniMax Text + Vision",
+    description: "MiniMax Text + Vision Model",
+    contextWindow: 1024000,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
+  },
+  "abab6.5s-chat": {
+    id: "abab6.5s-chat",
+    providerId: "minimax",
+    name: "ABAB 6.5S Chat",
+    description: "MiniMax ABAB 6.5S Chat",
+    contextWindow: 245760,
+    inputPerM: 0.005,
+    outputPerM: 0.05,
+    status: "active",
+  },
+  "abab6.5g-chat": {
+    id: "abab6.5g-chat",
+    providerId: "minimax",
+    name: "ABAB 6.5G Chat",
+    description: "MiniMax ABAB 6.5G Chat",
+    contextWindow: 245760,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
+  },
+}
+
+const FALLBACK_PROVIDERS: Record<string, Provider> = {
+  minimax: { id: "minimax", name: "MiniMax", baseUrl: "https://api.minimax.chat/v1", authFormat: "bearer" },
+}
+
 export async function getModels(): Promise<Record<string, Model>> {
-  const cache = await initModelConfig()
-  return cache.models
+  try {
+    const cache = await initModelConfig()
+    return cache.models
+  } catch (err) {
+    console.warn("[model-config] getModels failed, using fallback:", err)
+    return FALLBACK_MODELS
+  }
 }
 
 export async function getModel(id: string): Promise<Model | null> {
