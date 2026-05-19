@@ -63,7 +63,7 @@ type EzrouterModel = {
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000   // 7 days
 const DISCOUNT = 0.8
 
-const TARGET_PROVIDERS = new Set(["openai", "anthropic"])
+const TARGET_PROVIDERS = new Set(["openai", "anthropic", "minimax"])
 
 // ─── Cache I/O ────────────────────────────────────────────────────────────────
 
@@ -111,12 +111,14 @@ async function fetchFromEzRouter(): Promise<{ providers: Record<string, Provider
   const providers: Record<string, Provider> = {
     openai:    { id: "openai",    name: "OpenAI",    baseUrl: "https://api.openai.com",      authFormat: "bearer" },
     anthropic: { id: "anthropic", name: "Anthropic", baseUrl: "https://api.anthropic.com",  authFormat: "api-key" },
+    minimax:   { id: "minimax",   name: "MiniMax",   baseUrl: "https://api.minimax.chat/v1", authFormat: "bearer" },
   }
 
   // Map ezrouter provider "claude" → "anthropic"
   const PROVIDER_MAP: Record<string, string> = {
     openai: "openai",
     claude: "anthropic",
+    minimax: "minimax",
   }
 
   const models: Record<string, Model> = {}
@@ -145,6 +147,48 @@ async function fetchFromEzRouter(): Promise<{ providers: Record<string, Provider
       outputPerM,
       status: "active",
     }
+  }
+
+  // Add MiniMax models (static, not from ezrouter)
+  models["MiniMax-Text-01"] = {
+    id: "MiniMax-Text-01",
+    providerId: "minimax",
+    name: "MiniMax Text",
+    description: "MiniMax Text Model with 1M context",
+    contextWindow: 1024000,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
+  }
+  models["MiniMax-Text-01-Vision"] = {
+    id: "MiniMax-Text-01-Vision",
+    providerId: "minimax",
+    name: "MiniMax Text + Vision",
+    description: "MiniMax Text + Vision Model",
+    contextWindow: 1024000,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
+  }
+  models["abab6.5s-chat"] = {
+    id: "abab6.5s-chat",
+    providerId: "minimax",
+    name: "ABAB 6.5S Chat",
+    description: "MiniMax ABAB 6.5S Chat",
+    contextWindow: 245760,
+    inputPerM: 0.005,
+    outputPerM: 0.05,
+    status: "active",
+  }
+  models["abab6.5g-chat"] = {
+    id: "abab6.5g-chat",
+    providerId: "minimax",
+    name: "ABAB 6.5G Chat",
+    description: "MiniMax ABAB 6.5G Chat",
+    contextWindow: 245760,
+    inputPerM: 0.01,
+    outputPerM: 0.10,
+    status: "active",
   }
 
   return { providers, models }
