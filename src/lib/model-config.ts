@@ -77,6 +77,9 @@ async function readCache(): Promise<ModelCache | null> {
 }
 
 async function writeCache(cache: ModelCache): Promise<void> {
+  try {
+    await fs.mkdir(path.dirname(CACHE_FILE), { recursive: true })
+  } catch { /* dir may already exist */ }
   await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), "utf8")
 }
 
