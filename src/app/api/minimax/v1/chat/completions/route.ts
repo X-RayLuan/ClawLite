@@ -4,10 +4,10 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { checkBalance, freezeBalance, chargeBalance } from "@/lib/balance";
 import { getModelPricing } from "@/lib/model-pricing";
 
-const DEFAULT_PRICING = { inputPer1M: 0.1, outputPer1M: 0.5 }; // MiniMax default pricing (to be confirmed)
+const DEFAULT_PRICING = { inputPer1M: 0.3, outputPer1M: 1.2 }; // MiniMax M2.7 official pricing
 
 const MINIMAX_BASE_URL = "https://api.minimax.chat/v1";
-const MINIMAX_MODEL = "MiniMax-Text-01";
+const MINIMAX_MODEL = "MiniMax-M2.7";
 
 async function estimateCost(model: string, tokensIn: number, tokensOut: number): Promise<number> {
   const { inputPer1M, outputPer1M } = await getModelPricing(model);

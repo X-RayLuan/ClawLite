@@ -153,44 +153,45 @@ async function fetchFromEzRouter(): Promise<{ providers: Record<string, Provider
   }
 
   // Add MiniMax models (static, not from ezrouter)
-  models["MiniMax-Text-01"] = {
-    id: "MiniMax-Text-01",
+  // MiniMax M2 series (official Pay-as-You-Go pricing from platform.minimax.io)
+  models["MiniMax-M2.7"] = {
+    id: "MiniMax-M2.7",
     providerId: "minimax",
-    name: "MiniMax Text",
-    description: "MiniMax Text Model with 1M context",
+    name: "MiniMax M2.7",
+    description: "MiniMax M2.7 — flagship text model",
     contextWindow: 1024000,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    inputPerM: 0.3,
+    outputPerM: 1.2,
     status: "active",
   }
-  models["MiniMax-Text-01-Vision"] = {
-    id: "MiniMax-Text-01-Vision",
+  models["MiniMax-M2.7-highspeed"] = {
+    id: "MiniMax-M2.7-highspeed",
     providerId: "minimax",
-    name: "MiniMax Text + Vision",
-    description: "MiniMax Text + Vision Model",
+    name: "MiniMax M2.7 Highspeed",
+    description: "MiniMax M2.7 highspeed variant",
     contextWindow: 1024000,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    inputPerM: 0.6,
+    outputPerM: 2.4,
     status: "active",
   }
-  models["abab6.5s-chat"] = {
-    id: "abab6.5s-chat",
+  models["MiniMax-M2.5"] = {
+    id: "MiniMax-M2.5",
     providerId: "minimax",
-    name: "ABAB 6.5S Chat",
-    description: "MiniMax ABAB 6.5S Chat",
-    contextWindow: 245760,
-    inputPerM: 0.005,
-    outputPerM: 0.05,
+    name: "MiniMax M2.5",
+    description: "MiniMax M2.5 text model",
+    contextWindow: 1024000,
+    inputPerM: 0.3,
+    outputPerM: 1.2,
     status: "active",
   }
-  models["abab6.5g-chat"] = {
-    id: "abab6.5g-chat",
+  models["MiniMax-M2.5-highspeed"] = {
+    id: "MiniMax-M2.5-highspeed",
     providerId: "minimax",
-    name: "ABAB 6.5G Chat",
-    description: "MiniMax ABAB 6.5G Chat",
-    contextWindow: 245760,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    name: "MiniMax M2.5 Highspeed",
+    description: "MiniMax M2.5 highspeed variant",
+    contextWindow: 1024000,
+    inputPerM: 0.6,
+    outputPerM: 2.4,
     status: "active",
   }
 
@@ -256,44 +257,44 @@ export async function getProviders(): Promise<Record<string, Provider>> {
 
 // Fallback static models used when cache is unavailable
 const FALLBACK_MODELS: Record<string, Model> = {
-  "MiniMax-Text-01": {
-    id: "MiniMax-Text-01",
+  "MiniMax-M2.7": {
+    id: "MiniMax-M2.7",
     providerId: "minimax",
-    name: "MiniMax Text",
-    description: "MiniMax Text Model with 1M context",
+    name: "MiniMax M2.7",
+    description: "MiniMax M2.7 — flagship text model",
     contextWindow: 1024000,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    inputPerM: 0.3,
+    outputPerM: 1.2,
     status: "active",
   },
-  "MiniMax-Text-01-Vision": {
-    id: "MiniMax-Text-01-Vision",
+  "MiniMax-M2.7-highspeed": {
+    id: "MiniMax-M2.7-highspeed",
     providerId: "minimax",
-    name: "MiniMax Text + Vision",
-    description: "MiniMax Text + Vision Model",
+    name: "MiniMax M2.7 Highspeed",
+    description: "MiniMax M2.7 highspeed variant",
     contextWindow: 1024000,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    inputPerM: 0.6,
+    outputPerM: 2.4,
     status: "active",
   },
-  "abab6.5s-chat": {
-    id: "abab6.5s-chat",
+  "MiniMax-M2.5": {
+    id: "MiniMax-M2.5",
     providerId: "minimax",
-    name: "ABAB 6.5S Chat",
-    description: "MiniMax ABAB 6.5S Chat",
-    contextWindow: 245760,
-    inputPerM: 0.005,
-    outputPerM: 0.05,
+    name: "MiniMax M2.5",
+    description: "MiniMax M2.5 text model",
+    contextWindow: 1024000,
+    inputPerM: 0.3,
+    outputPerM: 1.2,
     status: "active",
   },
-  "abab6.5g-chat": {
-    id: "abab6.5g-chat",
+  "MiniMax-M2.5-highspeed": {
+    id: "MiniMax-M2.5-highspeed",
     providerId: "minimax",
-    name: "ABAB 6.5G Chat",
-    description: "MiniMax ABAB 6.5G Chat",
-    contextWindow: 245760,
-    inputPerM: 0.01,
-    outputPerM: 0.10,
+    name: "MiniMax M2.5 Highspeed",
+    description: "MiniMax M2.5 highspeed variant",
+    contextWindow: 1024000,
+    inputPerM: 0.6,
+    outputPerM: 2.4,
     status: "active",
   },
 }
