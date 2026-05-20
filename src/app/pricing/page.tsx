@@ -34,6 +34,9 @@ export default async function PricingPage() {
   const anthropicModels = models
     .filter((m) => m.providerId === "anthropic")
     .sort((a, b) => b.inputPerM - a.inputPerM);
+  const minimaxModels = models
+    .filter((m) => m.providerId === "minimax")
+    .sort((a, b) => b.inputPerM - a.inputPerM);
 
   const officialInput = (m: (typeof models)[0]) => m.inputPerM;
   const officialOutput = (m: (typeof models)[0]) => m.outputPerM;
@@ -266,6 +269,84 @@ export default async function PricingPage() {
         <p className="mt-6 text-sm text-ink/40">
           All prices in USD. ClawLite routes through official provider APIs — no quality difference.
           Models powered by OpenAI and Anthropic respectively.
+        </p>
+      </section>
+
+      {/* MiniMax Models */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="mt-4 flex items-center gap-3">
+          <svg viewBox="0 0 30 30" className="h-6 w-6">
+            <circle cx="15" cy="15" r="15" fill="#8b5cf6" />
+            <path d="M10 15h10M15 10v10" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <h2 className="font-display text-2xl font-semibold text-ink">MiniMax</h2>
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="border-b border-black/10 text-left text-xs font-semibold uppercase tracking-wider text-ink/50">
+                <th className="pb-3 pr-4 font-medium">Model</th>
+                <th className="pb-3 px-4 text-right font-medium">Context</th>
+                <th className="pb-3 px-4 text-right font-medium">
+                  <span className="text-sea">ClawLite</span>
+                  <br />
+                  <span className="font-normal text-ink/40">Input / 1M tokens</span>
+                </th>
+                <th className="pb-3 px-4 text-right font-medium">
+                  <span className="text-sea">ClawLite</span>
+                  <br />
+                  <span className="font-normal text-ink/40">Output / 1M tokens</span>
+                </th>
+                <th className="pb-3 px-4 text-right font-medium">
+                  <span className="text-ink/40">Official</span>
+                  <br />
+                  <span className="font-normal text-ink/30">Input / 1M tokens</span>
+                </th>
+                <th className="pb-3 pl-4 text-right font-medium">
+                  <span className="text-ink/40">Official</span>
+                  <br />
+                  <span className="font-normal text-ink/30">Output / 1M tokens</span>
+                </th>
+                <th className="pb-3 pl-4 text-center font-medium">You Save</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/5">
+              {minimaxModels.map((m) => (
+                <tr key={m.id} className="hover:bg-black/[0.02]">
+                  <td className="py-3 pr-4">
+                    <div className="font-medium text-ink">{m.name}</div>
+                    <div className="mt-0.5 text-xs text-ink/40">{m.id}</div>
+                  </td>
+                  <td className="px-4 text-right text-ink/60">
+                    {formatContextWindow(m.contextWindow)}
+                  </td>
+                  <td className="px-4 text-right font-semibold text-sea">
+                    {formatPrice(officialInput(m))}
+                  </td>
+                  <td className="px-4 text-right font-semibold text-sea">
+                    {formatPrice(officialOutput(m))}
+                  </td>
+                  <td className="px-4 text-right text-ink/40">
+                    {formatPrice(officialInput(m))}
+                  </td>
+                  <td className="pl-4 text-right text-ink/40">
+                    {formatPrice(officialOutput(m))}
+                  </td>
+                  <td className="pl-4 text-center">
+                    <span className="inline-flex items-center rounded-full bg-ink/5 px-2 py-0.5 text-xs font-semibold text-ink/40">
+                      Official price
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-6 text-sm text-ink/40">
+          All prices in USD. ClawLite routes through official provider APIs — no quality difference.
+          MiniMax pricing is at official rates.
         </p>
 
         <div className="mt-8 flex gap-4">
