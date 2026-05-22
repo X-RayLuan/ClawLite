@@ -226,9 +226,10 @@ console.log(data);`,
 );`,
   };
 
-  const [activeTab, setActiveTab] = useState<"chat" | "models">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "models" | "agents">("chat");
   const [activeLang, setActiveLang] = useState<"curl" | "python" | "js">("curl");
   const [activeModelTab, setActiveModelTab] = useState<"openai" | "anthropic" | "minimax">("openai");
+  const [activeAgent, setActiveAgent] = useState<"claude-code" | "codex" | "openclaw" | "hermes">("claude-code");
 
   return (
     <main className="gradient-bg min-h-screen">
@@ -275,6 +276,14 @@ console.log(data);`,
               }`}
             >
               {t.modelsTitle}
+            </button>
+            <button
+              onClick={() => setActiveTab("agents")}
+              className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "agents" ? "border-blue-500 text-ink" : "border-transparent text-ink/40 hover:text-ink/70"
+              }`}
+            >
+              AI Agents
             </button>
           </div>
 
@@ -373,6 +382,156 @@ console.log(data);`,
               </div>
 
               <CodeBlock code={examples.models[activeLang]} lang={t.langs[activeLang]} />
+            </div>
+          )}
+
+          {activeTab === "agents" && (
+            <div>
+              <p className="text-ink/60 text-sm mb-6">
+                Configure these AI coding agents to use ClawRouter. Set the base URL and API key in your config or environment.
+              </p>
+
+              {/* Agent selector */}
+              <div className="flex gap-2 mb-6 flex-wrap">
+                {(["claude-code", "codex", "openclaw", "hermes"] as const).map((agent) => (
+                  <button
+                    key={agent}
+                    onClick={() => setActiveAgent(agent)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      activeAgent === agent
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-ink/60 hover:bg-gray-200"
+                    }`}
+                  >
+                    {agent === "claude-code" ? "Claude Code" :
+                     agent === "codex" ? "Codex" :
+                     agent === "openclaw" ? "OpenClaw" : "Hermes Agent"}
+                  </button>
+                ))}
+              </div>
+
+              {activeAgent === "claude-code" && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
+                    <CodeBlock
+                      code={`export CLAUDE_API_KEY="your_clawrouter_api_key"
+export CLAUDE_BASE_URL="https://clawlite.ai/v1"
+export CLAUDE_MODEL="openai/gpt-5.2"`}
+                      lang=".env"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Or in ~/.claude/settings.json</h3>
+                    <CodeBlock
+                      code={`{
+  "api_key": "your_clawrouter_api_key",
+  "base_url": "https://clawlite.ai/v1",
+  "model": "openai/gpt-5.2"
+}`}
+                      lang="JSON"
+                    />
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                    <strong>Tip:</strong> Set <code className="font-mono text-xs bg-green-100 px-1 rounded">CLAUDE_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> to route all calls through ClawRouter. Claude Code uses OpenAI-compatible endpoints.
+                  </div>
+                </div>
+              )}
+
+              {activeAgent === "codex" && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
+                    <CodeBlock
+                      code={`export OPENAI_API_KEY="your_clawrouter_api_key"
+export OPENAI_BASE_URL="https://clawlite.ai/v1"
+export OPENAI_MODEL="openai/gpt-5.2"`}
+                      lang=".env"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Or in project config</h3>
+                    <CodeBlock
+                      code={`# .codex/config
+{
+  "api_key": "your_clawrouter_api_key",
+  "base_url": "https://clawlite.ai/v1",
+  "model": "openai/gpt-5.2"
+}`}
+                      lang="JSON"
+                    />
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                    <strong>Tip:</strong> Codex is OpenAI-compatible. Set <code className="font-mono text-xs bg-green-100 px-1 rounded">OPENAI_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> and use model IDs with <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/</code> prefix.
+                  </div>
+                </div>
+              )}
+
+              {activeAgent === "openclaw" && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
+                    <CodeBlock
+                      code={`export OPENAI_API_KEY="your_clawrouter_api_key"
+export OPENAI_BASE_URL="https://clawlite.ai/v1"
+export OPENAI_MODEL="openai/gpt-5.2"`}
+                      lang=".env"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Or in ~/.openclaw/.env</h3>
+                    <CodeBlock
+                      code={`OPENAI_API_KEY=your_clawrouter_api_key
+OPENAI_BASE_URL=https://clawlite.ai/v1
+OPENAI_MODEL=openai/gpt-5.2`}
+                      lang=".env"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Or via Gateway Config</h3>
+                    <CodeBlock
+                      code={`# In openclaw config (gateway.yaml or config.json)
+model:
+  provider: openai
+  api_key: your_clawrouter_api_key
+  base_url: https://clawlite.ai/v1
+  model: openai/gpt-5.2`}
+                      lang="YAML"
+                    />
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                    <strong>Tip:</strong> OpenClaw uses the <code className="font-mono text-xs bg-green-100 px-1 rounded">OPENAI_BASE_URL</code> environment variable or <code className="font-mono text-xs bg-green-100 px-1 rounded">model.base_url</code> gateway config. Supports OpenAI-compatible API calls directly.
+                  </div>
+                </div>
+              )}
+
+              {activeAgent === "hermes" && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
+                    <CodeBlock
+                      code={`export HERMES_API_KEY="your_clawrouter_api_key"
+export HERMES_BASE_URL="https://clawlite.ai/v1"
+export HERMES_MODEL="openai/gpt-5.2"`}
+                      lang=".env"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-ink mb-1">Or in hermes.config.json</h3>
+                    <CodeBlock
+                      code={`{
+  "api_key": "your_clawrouter_api_key",
+  "base_url": "https://clawlite.ai/v1",
+  "model": "openai/gpt-5.2"
+}`}
+                      lang="JSON"
+                    />
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                    <strong>Tip:</strong> Hermes Agent uses OpenAI-compatible endpoints. Point <code className="font-mono text-xs bg-green-100 px-1 rounded">HERMES_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> and prefix model names with the provider (e.g. <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/gpt-5.2</code>).
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </ApiCard>
