@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ type: "error", error: { type: "invalid_request_error", message: "invalid_request_body" } }, { status: 400 });
   }
 
-  const model = body?.model || "claude-3-5-sonnet-20241022";
+  const model = (body?.model || "claude-3-5-sonnet-20241022").replace(/^anthropic\//i, '');
   const anthropicMessages: Array<{ role: string; content: string }> = body?.messages || [];
   const maxTokens = body?.max_tokens || 4096;
   const stream = body?.stream ?? false;
