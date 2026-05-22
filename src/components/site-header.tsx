@@ -47,6 +47,7 @@ export function SiteHeader() {
           <Link href="/marketing-agent-team" className="transition-colors hover:text-stone-900">{nav.marketingAgentTeam ?? "Marketing Agent Team"}</Link>
           <Link href="/skills" className="transition-colors hover:text-stone-900">{nav.skills ?? "Skills"}</Link>
           <Link href="/clawrouter" className="transition-colors hover:text-stone-900">{nav.clawrouter ?? "ClawRouter"}</Link>
+          <Link href="/clawrouter/api" className="transition-colors hover:text-stone-900">API</Link>
           <Link href="/pricing" className="transition-colors hover:text-stone-900">Pricing</Link>
           <Link href="/docs" className="transition-colors hover:text-stone-900">
             {nav.docs}
@@ -87,6 +88,7 @@ export function SiteHeader() {
             { href: "/marketing-agent-team", label: nav.marketingAgentTeam ?? "Marketing Agent Team" },
             { href: "/skills", label: nav.skills ?? "Skills" },
             { href: "/clawrouter", label: nav.clawrouter ?? "ClawRouter" },
+            { href: "/clawrouter/api", label: "API" },
             { href: "/pricing", label: "Pricing" },
             { href: "/docs", label: nav.docs },
           ].map(({ href, label }) => (
