@@ -270,28 +270,40 @@ export async function POST(request: NextRequest) {
       console.log("[v1/chat/completions] ezrouter response ← status:", upstreamStatus);
     }
 
-    // Stream response
+    // Stream response — log each chunk for debugging
     const stream = new ReadableStream({
       async start(controller) {
         try {
           const reader = upstreamResponse.body?.getReader();
-          if (!reader) { controller.close(); return; }
+          if (!reader) {
+            console.error("[v1/chat/completions] upstreamResponse.body is null — no reader");
+            controller.close();
+            return;
+          }
+          let chunkCount = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            chunkCount++;
             controller.enqueue(value);
             const text = new TextDecoder().decode(value, { stream: true });
             sseBuffer += text.replace(/\r\n/g, "\n");
+            // Log first few chunks for debugging
+            if (chunkCount <= 3) {
+              console.log(`[v1/chat/completions] chunk[${chunkCount}] (${value.byteLength}B):`, JSON.stringify(text.slice(0, 200)));
+            }
             const usage = parseSseUsage(sseBuffer);
             if (usage.tokensIn > 0) actualTokensIn = usage.tokensIn;
             if (usage.tokensOut > 0) actualTokensOut = usage.tokensOut;
           }
+          console.log(`[v1/chat/completions] stream done, total ${chunkCount} chunks, buffer size: ${sseBuffer.length}B`);
           // Flush remaining buffer
           const { tokensIn, tokensOut } = parseSseUsage(sseBuffer);
           if (tokensIn > 0) actualTokensIn = tokensIn;
           if (tokensOut > 0) actualTokensOut = tokensOut;
           controller.close();
         } catch (err) {
+          console.error("[v1/chat/completions] stream error:", err);
           controller.error(err);
         }
       },
