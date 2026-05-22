@@ -74,29 +74,6 @@ async function recordUsage(params: {
   }
 }
 
-// ─── SSE token parser ─────────────────────────────────────────────────────────
-
-function parseSseUsage(sseBuffer: string): { tokensIn: number; tokensOut: number } {
-  let tokensIn = 0;
-  let tokensOut = 0;
-  const lines = sseBuffer.split(/\n\n/);
-  for (const raw of lines) {
-    const line = raw.trimStart();
-    if (!line.startsWith("data: ")) continue;
-    const payload = line.slice(6).trim();
-    if (payload === "[DONE]") continue;
-    try {
-      const parsed = JSON.parse(payload);
-      const usage = parsed.usage ?? parsed;
-      if (usage?.prompt_tokens > 0) tokensIn = usage.prompt_tokens;
-      if (usage?.completion_tokens > 0) tokensOut = usage.completion_tokens;
-      if (usage?.input_tokens > 0) tokensIn = usage.input_tokens;
-      if (usage?.output_tokens > 0) tokensOut = usage.output_tokens;
-    } catch { /* ignore */ }
-  }
-  return { tokensIn, tokensOut };
-}
-
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 export const runtime = "nodejs";
@@ -241,14 +218,12 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
   let actualTokensIn = estimatedTokensIn;
   let actualTokensOut = estimatedTokensOut;
-  let sseBuffer = "";
-
   let upstreamStatus = 200;
   let upstreamError: string | null = null;
 
   try {
     // Log full ezrouter request (body may be large — redact auth header value)
-    const logHeaders = { ...upstreamHeaders, Authorization: '[REDACTED]' }
+    const logHeaders = { ...upstreamHeaders, Authorization: '***' }
     console.log("[v1/chat/completions] ezrouter request →", JSON.stringify({ url: upstreamUrl, headers: logHeaders, body: upstreamBody }, null, 2));
 
     const upstreamResponse = await fetch(upstreamUrl, {
@@ -265,12 +240,10 @@ export async function POST(request: NextRequest) {
       console.error("[v1/chat/completions] ezrouter error:", JSON.stringify({ status: upstreamStatus, error: errorBody }, null, 2));
       upstreamError = errorBody?.error?.message || errorBody?.error || `upstream_error:${upstreamResponse.status}`;
     } else {
-      // For streaming responses we can't read the body without breaking the stream,
-      // so just log success status here — the stream content speaks for itself
       console.log("[v1/chat/completions] ezrouter response ← status:", upstreamStatus);
     }
 
-    // Stream response — log each chunk for debugging
+    // Stream response
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -280,27 +253,65 @@ export async function POST(request: NextRequest) {
             controller.close();
             return;
           }
-          let chunkCount = 0;
+          let buffer = "";
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            chunkCount++;
-            controller.enqueue(value);
             const text = new TextDecoder().decode(value, { stream: true });
-            sseBuffer += text.replace(/\r\n/g, "\n");
-            // Log first few chunks for debugging
-            if (chunkCount <= 3) {
-              console.log(`[v1/chat/completions] chunk[${chunkCount}] (${value.byteLength}B):`, JSON.stringify(text.slice(0, 200)));
+            buffer += text.replace(/\r\n/g, "\n");
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              // Anthropic SSE: "event: <type>" + "data: <json>"
+              if (line.startsWith("event: ")) continue;
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6).trim();
+              if (!data || data === "{}") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                // message_stop — extract usage and send [DONE]
+                if (parsed.type === "message_stop") {
+                  if (parsed.message?.usage?.input_tokens) actualTokensIn = parsed.message.usage.input_tokens;
+                  if (parsed.message?.usage?.output_tokens) actualTokensOut = parsed.message.usage.output_tokens;
+                  controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+                  continue;
+                }
+
+                // content_block_delta — convert Anthropic text to OpenAI delta format
+                if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+                  const txt = parsed.delta.text;
+                  if (txt) {
+                    const openaiChunk = `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: txt } }] })}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(openaiChunk));
+                  }
+                }
+              } catch {
+                // ignore parse errors per line
+              }
             }
-            const usage = parseSseUsage(sseBuffer);
-            if (usage.tokensIn > 0) actualTokensIn = usage.tokensIn;
-            if (usage.tokensOut > 0) actualTokensOut = usage.tokensOut;
           }
-          console.log(`[v1/chat/completions] stream done, total ${chunkCount} chunks, buffer size: ${sseBuffer.length}B`);
+
           // Flush remaining buffer
-          const { tokensIn, tokensOut } = parseSseUsage(sseBuffer);
-          if (tokensIn > 0) actualTokensIn = tokensIn;
-          if (tokensOut > 0) actualTokensOut = tokensOut;
+          if (buffer.trim()) {
+            const line = buffer.trim();
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6).trim();
+              if (data && data !== "{}") {
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === "message_stop") {
+                    if (parsed.message?.usage?.input_tokens) actualTokensIn = parsed.message.usage.input_tokens;
+                    if (parsed.message?.usage?.output_tokens) actualTokensOut = parsed.message.usage.output_tokens;
+                    controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+          }
           controller.close();
         } catch (err) {
           console.error("[v1/chat/completions] stream error:", err);
@@ -312,7 +323,7 @@ export async function POST(request: NextRequest) {
     return new Response(stream, {
       status: upstreamStatus,
       headers: {
-        "Content-Type": upstreamResponse.headers.get("Content-Type") || "text/event-stream",
+        "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         "X-Request-ID": requestId,
         "Transfer-Encoding": "chunked",
