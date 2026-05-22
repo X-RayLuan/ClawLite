@@ -247,6 +247,10 @@ export async function POST(request: NextRequest) {
   let upstreamError: string | null = null;
 
   try {
+    // Log full ezrouter request (body may be large — redact auth header value)
+    const logHeaders = { ...upstreamHeaders, Authorization: '[REDACTED]' }
+    console.log("[v1/chat/completions] ezrouter request →", JSON.stringify({ url: upstreamUrl, headers: logHeaders, body: upstreamBody }, null, 2));
+
     const upstreamResponse = await fetch(upstreamUrl, {
       method: "POST",
       headers: upstreamHeaders,
@@ -258,7 +262,12 @@ export async function POST(request: NextRequest) {
     if (!upstreamResponse.ok) {
       let errorBody: any;
       try { errorBody = await upstreamResponse.json(); } catch { errorBody = await upstreamResponse.text(); }
+      console.error("[v1/chat/completions] ezrouter error:", JSON.stringify({ status: upstreamStatus, error: errorBody }, null, 2));
       upstreamError = errorBody?.error?.message || errorBody?.error || `upstream_error:${upstreamResponse.status}`;
+    } else {
+      // For streaming responses we can't read the body without breaking the stream,
+      // so just log success status here — the stream content speaks for itself
+      console.log("[v1/chat/completions] ezrouter response ← status:", upstreamStatus);
     }
 
     // Stream response
