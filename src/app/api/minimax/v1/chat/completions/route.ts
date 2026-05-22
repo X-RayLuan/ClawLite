@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_json_body" }, { status: 400 });
   }
 
-  const model = body?.model || MINIMAX_MODEL;
+  const model = (body?.model || MINIMAX_MODEL).replace(/^minimax\//i, '');
   const maxTokens = body?.max_tokens || 4096;
 
   // Support both messages and prompt formats
