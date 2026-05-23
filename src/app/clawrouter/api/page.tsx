@@ -416,7 +416,7 @@ console.log(data);`,
                     <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
                     <CodeBlock
                       code={`export CLAUDE_API_KEY="your_clawrouter_api_key"
-export CLAUDE_BASE_URL="https://clawlite.ai/v1"
+export CLAUDE_BASE_URL="https://clawlite.ai/api/v1"
 export CLAUDE_MODEL="openai/gpt-5.2"`}
                       lang=".env"
                     />
@@ -426,14 +426,14 @@ export CLAUDE_MODEL="openai/gpt-5.2"`}
                     <CodeBlock
                       code={`{
   "api_key": "your_clawrouter_api_key",
-  "base_url": "https://clawlite.ai/v1",
+  "base_url": "https://clawlite.ai/api/v1",
   "model": "openai/gpt-5.2"
 }`}
                       lang="JSON"
                     />
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                    <strong>Tip:</strong> Set <code className="font-mono text-xs bg-green-100 px-1 rounded">CLAUDE_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> to route all calls through ClawRouter. Claude Code uses OpenAI-compatible endpoints.
+                    <strong>Tip:</strong> Set <code className="font-mono text-xs bg-green-100 px-1 rounded">CLAUDE_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/api/v1</code> to route all calls through ClawRouter. Claude Code uses OpenAI-compatible endpoints.
                   </div>
                 </div>
               )}
@@ -444,7 +444,7 @@ export CLAUDE_MODEL="openai/gpt-5.2"`}
                     <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
                     <CodeBlock
                       code={`export OPENAI_API_KEY="your_clawrouter_api_key"
-export OPENAI_BASE_URL="https://clawlite.ai/v1"
+export OPENAI_BASE_URL="https://clawlite.ai/api/v1"
 export OPENAI_MODEL="openai/gpt-5.2"`}
                       lang=".env"
                     />
@@ -455,14 +455,14 @@ export OPENAI_MODEL="openai/gpt-5.2"`}
                       code={`# .codex/config
 {
   "api_key": "your_clawrouter_api_key",
-  "base_url": "https://clawlite.ai/v1",
+  "base_url": "https://clawlite.ai/api/v1",
   "model": "openai/gpt-5.2"
 }`}
                       lang="JSON"
                     />
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                    <strong>Tip:</strong> Codex is OpenAI-compatible. Set <code className="font-mono text-xs bg-green-100 px-1 rounded">OPENAI_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> and use model IDs with <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/</code> prefix.
+                    <strong>Tip:</strong> Codex is OpenAI-compatible. Set <code className="font-mono text-xs bg-green-100 px-1 rounded">OPENAI_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/api/v1</code> and use model IDs with <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/</code> prefix.
                   </div>
                 </div>
               )}
@@ -473,7 +473,7 @@ export OPENAI_MODEL="openai/gpt-5.2"`}
                     <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
                     <CodeBlock
                       code={`export OPENAI_API_KEY="your_clawrouter_api_key"
-export OPENAI_BASE_URL="https://clawlite.ai/v1"
+export OPENAI_BASE_URL="https://clawlite.ai/api/v1"
 export OPENAI_MODEL="openai/gpt-5.2"`}
                       lang=".env"
                     />
@@ -482,7 +482,7 @@ export OPENAI_MODEL="openai/gpt-5.2"`}
                     <h3 className="font-medium text-sm text-ink mb-1">Or in ~/.openclaw/.env</h3>
                     <CodeBlock
                       code={`OPENAI_API_KEY=your_clawrouter_api_key
-OPENAI_BASE_URL=https://clawlite.ai/v1
+OPENAI_BASE_URL=https://clawlite.ai/api/v1
 OPENAI_MODEL=openai/gpt-5.2`}
                       lang=".env"
                     />
@@ -494,7 +494,7 @@ OPENAI_MODEL=openai/gpt-5.2`}
 model:
   provider: openai
   api_key: your_clawrouter_api_key
-  base_url: https://clawlite.ai/v1
+  base_url: https://clawlite.ai/api/v1
   model: openai/gpt-5.2`}
                       lang="YAML"
                     />
@@ -511,7 +511,7 @@ model:
                     <h3 className="font-medium text-sm text-ink mb-1">Environment Variables</h3>
                     <CodeBlock
                       code={`export HERMES_API_KEY="your_clawrouter_api_key"
-export HERMES_BASE_URL="https://clawlite.ai/v1"
+export HERMES_BASE_URL="https://clawlite.ai/api/v1"
 export HERMES_MODEL="openai/gpt-5.2"`}
                       lang=".env"
                     />
@@ -521,14 +521,14 @@ export HERMES_MODEL="openai/gpt-5.2"`}
                     <CodeBlock
                       code={`{
   "api_key": "your_clawrouter_api_key",
-  "base_url": "https://clawlite.ai/v1",
+  "base_url": "https://clawlite.ai/api/v1",
   "model": "openai/gpt-5.2"
 }`}
                       lang="JSON"
                     />
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                    <strong>Tip:</strong> Hermes Agent uses OpenAI-compatible endpoints. Point <code className="font-mono text-xs bg-green-100 px-1 rounded">HERMES_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/v1</code> and prefix model names with the provider (e.g. <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/gpt-5.2</code>).
+                    <strong>Tip:</strong> Hermes Agent uses OpenAI-compatible endpoints. Point <code className="font-mono text-xs bg-green-100 px-1 rounded">HERMES_BASE_URL</code> to <code className="font-mono text-xs bg-green-100 px-1 rounded">https://clawlite.ai/api/v1</code> and prefix model names with the provider (e.g. <code className="font-mono text-xs bg-green-100 px-1 rounded">openai/gpt-5.2</code>).
                   </div>
                 </div>
               )}

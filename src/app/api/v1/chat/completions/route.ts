@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_json_body" }, { status: 400 });
   }
 
+  // DEBUG: log raw incoming request
+  console.log("[v1/chat/completions] incoming request body →", JSON.stringify({ model: body?.model, messagesCount: Array.isArray(body?.messages) ? body.messages.length : 0, hasMaxTokens: body?.max_tokens != null }, null, 2));
+
   const rawModel = body?.model;
   if (!rawModel || typeof rawModel !== "string") {
     return NextResponse.json({ error: "model_required" }, { status: 400 });
@@ -146,9 +149,17 @@ export async function POST(request: NextRequest) {
       "Content-Type": "application/json",
       Authorization: EZROUTER_TOKEN,
     };
-    upstreamBody = { ...body, model: upstreamModel };
-    delete (upstreamBody as any).model;
-    upstreamBody.model = upstreamModel;
+    // Strip provider prefix and convert reasoning_effort → reasoning.effort
+    if (body.reasoning_effort !== undefined) {
+      upstreamBody = {
+        ...body,
+        model: upstreamModel,
+        reasoning: { effort: body.reasoning_effort },
+      };
+      delete (upstreamBody as any).reasoning_effort;
+    } else {
+      upstreamBody = { ...body, model: upstreamModel };
+    }
   } else if (provider === "anthropic") {
     upstreamUrl = `${EZROUTER_BASE_URL}/api/claude/v1/messages`;
     upstreamHeaders = {
@@ -156,11 +167,15 @@ export async function POST(request: NextRequest) {
       Authorization: EZROUTER_TOKEN,
       "anthropic-version": "2023-06-01",
     };
-    // Anthropic uses max_tokens, not messages + model differently
+    // Extract system message (role=system) from messages array — Anthropic uses separate `system` field
+    const systemMsg = body.messages?.find((m: any) => m.role === "system");
+    const messagesWithoutSystem = body.messages?.filter((m: any) => m.role !== "system") || [];
     upstreamBody = {
       model: upstreamModel,
-      messages: body.messages,
+      system: systemMsg?.content || undefined,
+      messages: messagesWithoutSystem,
       max_tokens: body.max_tokens || 4096,
+      stream: true,
     };
   } else {
     // minimax — direct to MiniMax official API
@@ -172,7 +187,7 @@ export async function POST(request: NextRequest) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${MINIMAX_API_KEY}`,
     };
-    upstreamBody = { ...body, model: upstreamModel };
+    upstreamBody = { ...body, model: upstreamModel, stream: true };
   }
 
   // 6. Check balance
@@ -222,9 +237,8 @@ export async function POST(request: NextRequest) {
   let upstreamError: string | null = null;
 
   try {
-    // Log full ezrouter request (body may be large — redact auth header value)
-    const logHeaders = { ...upstreamHeaders, Authorization: '***' }
-    console.log("[v1/chat/completions] ezrouter request →", JSON.stringify({ url: upstreamUrl, headers: logHeaders, body: upstreamBody }, null, 2));
+    console.log("[v1/chat/completions] ezrouter request → model:", upstreamModel, "body-model:", upstreamBody.model, "url:", upstreamUrl);
+    console.log("[v1/chat/completions] ezrouter body keys:", Object.keys(upstreamBody).join(","));
 
     const upstreamResponse = await fetch(upstreamUrl, {
       method: "POST",
@@ -243,7 +257,7 @@ export async function POST(request: NextRequest) {
       console.log("[v1/chat/completions] ezrouter response ← status:", upstreamStatus);
     }
 
-    // Stream response
+    // Stream response — OpenAI: direct passthrough; Anthropic: convert SSE
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -255,6 +269,18 @@ export async function POST(request: NextRequest) {
           }
           let buffer = "";
 
+          if (provider === "openai" || provider === "minimax") {
+            // OpenAI / MiniMax: passthrough raw SSE chunks
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              controller.enqueue(value);
+            }
+            controller.close();
+            return;
+          }
+
+          // Anthropic: parse and convert SSE events to OpenAI format
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -264,7 +290,6 @@ export async function POST(request: NextRequest) {
             buffer = lines.pop() || "";
 
             for (const line of lines) {
-              // Anthropic SSE: "event: <type>" + "data: <json>"
               if (line.startsWith("event: ")) continue;
               if (!line.startsWith("data: ")) continue;
               const data = line.slice(6).trim();
@@ -272,16 +297,12 @@ export async function POST(request: NextRequest) {
 
               try {
                 const parsed = JSON.parse(data);
-
-                // message_stop — extract usage and send [DONE]
                 if (parsed.type === "message_stop") {
                   if (parsed.message?.usage?.input_tokens) actualTokensIn = parsed.message.usage.input_tokens;
                   if (parsed.message?.usage?.output_tokens) actualTokensOut = parsed.message.usage.output_tokens;
                   controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
                   continue;
                 }
-
-                // content_block_delta — convert Anthropic text to OpenAI delta format
                 if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
                   const txt = parsed.delta.text;
                   if (txt) {
@@ -289,9 +310,7 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(new TextEncoder().encode(openaiChunk));
                   }
                 }
-              } catch {
-                // ignore parse errors per line
-              }
+              } catch { /* ignore */ }
             }
           }
 
