@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       amount: Number(tx.amount_usd),
       balanceBefore: Number(tx.balance_before_usd),
       balanceAfter: Number(tx.balance_after_usd),
-      status: tx.status,
+      status: tx.tx_type,
       description: tx.metadata?.description || null,
       eventId: tx.event_id,
       createdAt: tx.created_at,

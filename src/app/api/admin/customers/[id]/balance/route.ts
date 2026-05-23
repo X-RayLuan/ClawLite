@@ -94,7 +94,6 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         amount_usd: amount,
         balance_before_usd: currentBalance,
         balance_after_usd: newBalance,
-        status: "completed",
         metadata: { description: reason },
       })
       .select("*")
