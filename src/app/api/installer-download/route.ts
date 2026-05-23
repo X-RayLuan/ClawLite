@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
-  const platform = request.nextUrl.searchParams.get("platform") || "mac";
+  const os = request.nextUrl.searchParams.get("os") || "mac";
 
   // 根据 IP 归属地选择下载源（国内→OSS，国际→GitHub）
-  const target = await getInstallerUrl(platform === "win" ? "windows" : "macos")
+  const target = await getInstallerUrl(os === "windows" ? "windows" : "macos")
 
   if (!email) {
     return NextResponse.redirect(target, 302);
