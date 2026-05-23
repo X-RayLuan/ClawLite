@@ -44,11 +44,11 @@ export async function GET(request: NextRequest) {
     const rows = (transactions || []).map((tx: any) => [
       tx.created_at,
       tx.tx_type,
-      tx.amount,
-      tx.balance_before,
-      tx.balance_after,
+      tx.amount_usd,
+      tx.balance_before_usd,
+      tx.balance_after_usd,
       tx.status,
-      tx.description || "",
+      tx.metadata?.description || tx.description || "",
     ]);
 
     const escapeCSV = (str: string) => {
