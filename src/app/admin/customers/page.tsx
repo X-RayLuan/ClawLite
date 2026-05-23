@@ -133,13 +133,13 @@ function BalanceAdjustModal({ open, onClose, customer, onSuccess }: {
     setSubmitting(true);
     setError('');
     try {
-      const res = await adminFetch(`/api/admin/customers/${customer?.id}`, {
+      const res = await adminFetch(`/api/admin/customers/${customer?.id}/balance`, {
         method: 'PATCH',
-        body: JSON.stringify({ balance_adjustment: val, note }),
+        body: JSON.stringify({ amount: val, reason: note }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || (lang === 'zh' ? '调整失败' : 'Adjustment failed'));
-      onSuccess(val);
+      onSuccess(json.data.new_balance);
       onClose();
     } catch (err: any) {
       setError(err.message);
@@ -235,9 +235,8 @@ export default function CustomersPage() {
     setShowAdjustModal(true);
   };
 
-  const handleBalanceSuccess = (adjustment: number) => {
+  const handleBalanceSuccess = (newBalance: number) => {
     if (!selectedCustomer) return;
-    const newBalance = selectedCustomer.balance + adjustment;
     const updated = { ...selectedCustomer, balance: newBalance };
     setSelectedCustomer(updated);
     setCustomers(cs => cs.map(c => c.id === updated.id ? updated : c));
