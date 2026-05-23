@@ -91,11 +91,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       .insert({
         account_id: id,
         tx_type: txType,
-        amount,
-        balance_before: currentBalance,
-        balance_after: newBalance,
+        amount_usd: amount,
+        balance_before_usd: currentBalance,
+        balance_after_usd: newBalance,
         status: "completed",
-        description: reason,
+        metadata: { description: reason },
       })
       .select("*")
       .single();

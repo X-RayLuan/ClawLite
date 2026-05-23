@@ -52,11 +52,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const mappedTransactions: Transaction[] = (transactions || []).map((tx: any) => ({
       id: tx.id,
       txType: tx.tx_type,
-      amount: Number(tx.amount),
-      balanceBefore: Number(tx.balance_before),
-      balanceAfter: Number(tx.balance_after),
+      amount: Number(tx.amount_usd),
+      balanceBefore: Number(tx.balance_before_usd),
+      balanceAfter: Number(tx.balance_after_usd),
       status: tx.status,
-      description: tx.description,
+      description: tx.metadata?.description || null,
       eventId: tx.event_id,
       createdAt: tx.created_at,
     }));
