@@ -10,8 +10,10 @@ import { promises as fs } from "node:fs"
 import path from "node:path"
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
-
-const CACHE_FILE = path.join(process.cwd(), "data", "model-cache.json")
+// Vercel serverless: /var/task is not writable, use /tmp for cache
+const CACHE_FILE = process.env.VERCEL
+  ? path.join("/tmp", "model-cache.json")
+  : path.join(process.cwd(), "data", "model-cache.json")
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
